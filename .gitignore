@@ -1,0 +1,12 @@
+*.pyc
+.git
+
+env
+
+node_modules/
+npm-debug.log
+bower_components/
+.module-cache
+
+# Contains private API keys
+config.yaml

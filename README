@@ -1,0 +1,3 @@
+Initial configuration:
+- Rename project/cfg/config-example.yaml to project/cfg/config.yaml with your own settings.
+- Set absolute path to config.yaml in project/config.py
