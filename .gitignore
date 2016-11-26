@@ -10,3 +10,6 @@ bower_components/
 
 # Contains private API keys
 config.yaml
+
+# Local database
+nido.db
