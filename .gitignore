@@ -13,3 +13,6 @@ config.yaml
 
 # Local database
 nido.db
+
+# Production
+prod/
