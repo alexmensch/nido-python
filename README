@@ -1,3 +1,7 @@
-Initial configuration:
+Initial configuration (to run from /dev):
 - Rename dev/cfg/config-example.yaml to dev/cfg/config.yaml with your own settings.
 - Set absolute path to config.yaml in dev/config.py
+- Use /run-dev.sh to run the application from the /dev environment.
+
+Use the script /push2prod.sh to copy the contents of /dev to /prod to allow you to
+run separate development and production versions.
