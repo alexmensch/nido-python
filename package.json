@@ -16,8 +16,8 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack",
-    "build-prod": "webpack --optimize-minimize --optimize-dedupe"
+    "build": "webpack --progress --optimize-occurence-order",
+    "build-prod": "webpack --progress --optimize-minimize --optimize-dedupe --optimize-occurence-order"
   },
   "repository": {
     "type": "git",

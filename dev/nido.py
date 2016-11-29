@@ -169,7 +169,7 @@ def show_status():
         sensor.conditions['relative_humidity'] = int(round(sensor.conditions['relative_humidity']))
         sensor.conditions['temp'] = int(round(sensor.conditions['temp']))
         weather.conditions['temp'] = int(round(weather.conditions['temp']))
-        return render_template('show_status.html', sensor=sensor.conditions, weather=weather.conditions, user_config=user_config, celsius_setting=celsius_setting, mode=Mode(user_config['mode']), mode_name=_MODE_NAME, status=Status(user_config['status']), status_name=_STATUS_NAME)
+        return render_template('index.html', sensor=sensor.conditions, weather=weather.conditions, user_config=user_config, celsius_setting=celsius_setting, mode=Mode(user_config['mode']), mode_name=_MODE_NAME, status=Status(user_config['status']), status_name=_STATUS_NAME)
     return render_template('new_user.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -185,7 +185,7 @@ def login():
             session['logged_in'] = True
             flash('You were logged in')
             return redirect(url_for('show_status'))
-    return render_template('login.html', error=error)
+    return render_template('index.html', error=error)
 
 @app.route('/logout')
 def logout():
