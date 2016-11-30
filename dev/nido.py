@@ -1,4 +1,5 @@
 import sqlite3
+import json
 from contextlib import closing
 from enum import Enum
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
@@ -81,13 +82,20 @@ def teardown_request(exception):
     if db is not None:
         db.close()
 
+# Helper function to set up a JSON response
+#
+def json_response(dict):
+    response = app.make_response(json.dumps(dict))
+    response.headers['Content-Type'] = 'application/json'
+    return response
+
 # Application routes
 #
-@app.route('/set_config', methods=['POST', 'GET'])
+@app.route('/set_config', methods=['POST'])
 def set_config():
     error = None
     if not session.get('logged_in'):
-        abort(401)
+        abort(403)
 
     if request.method == 'POST':
         if request.form['zipcode'] is None:
@@ -118,10 +126,10 @@ def set_config():
             return redirect(url_for('show_config'))
     return render_template('new_config.html', error=error, mode=Mode, mode_name=_MODE_NAME)
 
-@app.route('/config')
+@app.route('/get_config', methods=['POST'])
 def show_config():
     if not session.get('logged_in'):
-        return redirect(url_for('login'))
+        abort(403)
     user_config = query_db('select * from users join config on users.user_id = config.user_id', one=True)
     if user_config:
         return render_template('show_config.html', user_config=user_config, mode=Mode(user_config['mode']), mode_name=_MODE_NAME)
@@ -133,7 +141,7 @@ def show_config():
 def add_user():
     error = None
     if not session.get('logged_in'):
-        abort(401)
+        abort(403)
 
     if request.form['name'] is None:
         error = 'Missing name'
@@ -147,9 +155,13 @@ def add_user():
     return render_template('new_user.html', error=error)
 
 @app.route('/')
-def show_status():
+def render_ui():
+    return render_template('index.html')
+
+@app.route('/get_state', methods=['POST'])
+def get_state():
     if not session.get('logged_in'):
-        return redirect(url_for('login'))
+        abort(403)
     user = query_db('select * from users', one=True)
     if user:
         user_config = query_db('select * from users join config on users.user_id = config.user_id', one=True)
@@ -172,26 +184,50 @@ def show_status():
         return render_template('index.html', sensor=sensor.conditions, weather=weather.conditions, user_config=user_config, celsius_setting=celsius_setting, mode=Mode(user_config['mode']), mode_name=_MODE_NAME, status=Status(user_config['status']), status_name=_STATUS_NAME)
     return render_template('new_user.html')
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['POST'])
 def login():
-    error = None
-    if request.method == 'POST':
-        # Need to modify this section to take it from the users table
-        if request.form['username'] != cfg['flask']['username']:
-            error = 'Invalid username'
-        elif request.form['password'] != cfg['flask']['password']:
-            error = 'Invalid password'
-        else:
-            session['logged_in'] = True
-            flash('You were logged in')
-            return redirect(url_for('show_status'))
-    return render_template('index.html', error=error)
+    resp = {}
+    # TODO: Need to modify this section to take user/pass from the SQL table instead of the config file
+    if 'logged_in' in session:
+        try:
+            resp['message'] = 'User already logged in.'
+            resp['username'] = session['username']
+            resp['logged_in'] = True
+        except:
+            raise
+    else:
+        try:
+            if request.form['username'] != cfg['flask']['username'] or request.form['password'] != cfg['flask']['password']:
+                resp['error'] = 'Incorrect login credentials.'
+                resp['logged_in'] = False
+            else:
+                # Set (implicit create) session cookie (HTTP only) which all endpoints will check for
+                session['logged_in'] = True
+                session['username'] = request.form['username']
+                resp['message'] = 'User has been logged in.'
+                resp['username'] = request.form['username']
+                resp['logged_in'] = True
+        except:
+            raise
 
-@app.route('/logout')
+    return json_response(resp)
+
+@app.route('/logout', methods=['POST'])
 def logout():
-    session.pop('logged_in', None)
-    flash('You were logged out')
-    return redirect(url_for('login'))
+    # Note that clear() removes every key from the session dict, which causes the cookie to be destroyed
+    resp = {}
+    if 'logged_in' in session:
+        try:
+            resp['message'] = 'User has been logged out.'
+            resp['username'] = session['username']
+            resp['logged_in'] = False
+            session.clear()
+        except:
+            raise
+    else:
+        resp['error'] = 'User not logged in.'
+        resp['logged_in'] = False
+    return json_response(resp)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=cfg['flask']['port'])

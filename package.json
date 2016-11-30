@@ -4,7 +4,10 @@
   "private": true,
   "description": "Home thermostat that runs on a Raspberry Pi",
   "main": "dev/nido.py",
-  "dependencies": {},
+  "dependencies": {
+    "es6-promise": "^4.0.5",
+    "isomorphic-fetch": "^2.2.1"
+  },
   "devDependencies": {
     "react": "^15.4.0",
     "react-dom": "^15.4.0",

@@ -1,9 +1,5 @@
 {% extends "layout.html" %}
 {% block react %}
-  {% if session.logged_in %} 
-    <div id="nido" loginState="true"></div>
-  {% else %}
-    <div id="nido" loginState="false"></div>
-  {% endif %}
+    <div id="nido"></div>
     <script src="{{ url_for('static', filename='js/nido.js') }}"></script>
 {% endblock %}
