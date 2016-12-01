@@ -2,7 +2,7 @@ import requests
 import json
 # Custom modules
 from Adafruit_BME280 import *
-from config import NidoConfig
+from NidoConfig import NidoConfig
 
 class Sensor():
     def __init__(self, mode=BME280_OSAMPLE_8, celsius=True):

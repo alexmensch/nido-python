@@ -5,23 +5,17 @@ from enum import Enum
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
 from validate_email import validate_email
 from lib.CollectData import Sensor, LocalWeather
-from config import NidoConfig
+from lib.NidoConfig import NidoConfig
 
 # Configuration
-cfg = NidoConfig().get_config()
-DEBUG = cfg['flask']['debug']
-SECRET_KEY = cfg['flask']['secret_key']
+config = NidoConfig()
+DEBUG = config.get_config()['flask']['debug']
+SECRET_KEY = config.get_config()['flask']['secret_key']
 
 # Initialize the application
 #
 app = Flask(__name__)
 app.config.from_object(__name__)
-
-# Define some custom exception handling
-#
-class NidoDatabaseError(Exception):
-    """ Some kind of error in our database; data validation problem """
-    pass
 
 # Define some enums
 #
@@ -49,110 +43,135 @@ _STATUS_NAME = {
         Status.cooling: 'Cooling'
         }
 
-# SQLite3 database functions
+# JSON response object
 #
-def connect_db():
-    db = sqlite3.connect(cfg['db']['database'])
-    db.row_factory = sqlite3.Row
-    return db
+class JSONResponse():
+    def __init__(self):
+        self.status = 200
+        self.data = {}
+        return
 
-def init_db():
-    with closing(connect_db()) as db:
-        with app.open_resource(cfg['db']['schema'], mode='r') as f:
-            db.cursor().executescript(f.read())
-        db.commit()
+    def get_flask_response(self):
+        response = app.make_response(json.dumps(self.data))
+        response.headers['Content-Type'] = 'application/json'
+        response.status_code = self.status
+        return response
 
-def query_db(query, args=(), one=False, db=None):
-    if db == None:
-        db = g.db
-    cur = db.execute(query, args)
-    rv = cur.fetchall()
-    cur.close()
-    return (rv[0] if rv else None) if one else rv
+# Helper function to validate JSON in requests
+# An array of tuples is passed in of the form ( 'name', type )
+# Where:
+#        'name' is the key we expect in the dict
+#        type is a type we can compare the corresponding value to using isinstance()
+def validate_json_req(req, valid):
+    # Get the JSON from the request object
+    req_data = req.get_json()
 
-# Set up common request functions to make database connection available
-#
-@app.before_request
-def before_request():
-    g.db = connect_db()
+    # Number of elements must match
+    if len(valid) != len(req_data.keys()):
+        return false
 
-@app.teardown_request
-def teardown_request(exception):
-    db = getattr(g, 'db', None)
-    if db is not None:
-        db.close()
+    # Check that each element in the valid list exists and that the type matches
+    for i in valid:
+        if i[0] not in req_data:
+            return false
+        if not isinstance(req_data[i[0]], i[1]):
+            return false
 
-# Helper function to set up a JSON response
-#
-def json_response(dict):
-    response = app.make_response(json.dumps(dict))
-    response.headers['Content-Type'] = 'application/json'
-    return response
+    # No tests failed
+    return true
 
 # Application routes
+#   All routes are POST-only and should only return JSON.
+#   The / route only serves to return the React-based UI
 #
 @app.route('/set_config', methods=['POST'])
 def set_config():
-    error = None
+    # Return unauthorized error if session cookie is not set
     if not session.get('logged_in'):
         abort(403)
 
-    if request.method == 'POST':
-        if request.form['zipcode'] is None:
-            error = 'Missing Zipcode'
-        elif request.form['user_location_name'] is None:
-            error = 'Missing thermostat location name'
-        elif request.form['set_temp'] is None:
-            error = 'No temperature set point provided'
-        else:
-            # Single user system :)
-            user_id = 1
-            auto_location_name = LocalWeather(request.form['zipcode']).conditions['location_name']
-            set_values = [
-                    user_id,
-                    int(request.form['zipcode']),
-                    int(request.form['celsius']),
-                    request.form['user_location_name'],
-                    auto_location_name,
-                    int(request.form['mode']),
-                    int(request.form['set_temp'])
-                    ]
-            if query_db('select * from config where user_id = 1', one=True):
-                g.db.execute('update config set user_id = ?, zipcode = ?, celsius = ?, user_location_name = ?, auto_location_name = ?, mode = ?, set_temp = ? where user_id = 1', set_values)
+    # Initialize response object
+    resp = JSONResponse()
+    # Make sure we received JSON
+    if request.get_json() is None:
+        resp.data['error'] = 'Did not receive a JSON request. Check MIME type and request body.'
+        resp.status = 400
+    else:
+        # Expect to receive a json dict with following structure
+        validation = [
+                ( 'location', [int, int] ),
+                ( 'location_name', basestring ),
+                ( 'nido_location', basestring ),
+                ( 'celsius', bool ),
+                ( 'mode', int ),
+                ( 'set_temperature', int )
+                ]
+        # Update local configuration with user data
+        if validate_json_req(request, validation):
+            cfg = config.get_config()
+            cfg['settings'] = request.get_json()
+            try:
+                config.set_config(cfg)
+            except:
+                raise
             else:
-                g.db.execute('insert into config (user_id, zipcode, celsius, user_location_name, auto_location_name, mode, set_temp) values (?, ?, ?, ?, ?, ?, ?)', set_values)
-            g.db.commit()
-            flash('Settings saved')
-            return redirect(url_for('show_config'))
-    return render_template('new_config.html', error=error, mode=Mode, mode_name=_MODE_NAME)
+                resp.data['message'] = 'Settings updated successfully.'
+        else:
+            resp.data['error'] = 'JSON in request was invalid.'
+
+    return resp.get_flask_response()
 
 @app.route('/get_config', methods=['POST'])
-def show_config():
+def get_config():
+    # Return unauthorized error if session cookie is not set
     if not session.get('logged_in'):
         abort(403)
-    user_config = query_db('select * from users join config on users.user_id = config.user_id', one=True)
-    if user_config:
-        return render_template('show_config.html', user_config=user_config, mode=Mode(user_config['mode']), mode_name=_MODE_NAME)
-    elif query_db('select * from users', one=True):
-        return redirect(url_for('set_config'))
-    return redirect(url_for('show_status'))
+    
+    # Initialize response dict
+    resp = JSONResponse()
+    # Get config
+    cfg = config.get_config()
+    # Check that settings config section exists
+    if 'settings' in cfg:
+        resp.data['settings'] = cfg['settings']
+    else:
+        resp.data['error'] = 'No settings available.'
+
+    return resp.get_flask_response()
 
 @app.route('/add_user', methods=['POST'])
 def add_user():
-    error = None
+    # Return unauthorized error if session cookie is not set
     if not session.get('logged_in'):
         abort(403)
 
-    if request.form['name'] is None:
-        error = 'Missing name'
-    elif validate_email(request.form['email'], verify=True) is False:
-        error = 'Invalid email address'
+    # Initialize response dict
+    resp = JSONResponse()
+    # Make sure we received JSON
+    if request.get_json() is None:
+        resp.data['error'] = 'Did not receive a JSON request. Check MIME type and request body.'
+        resp.status = 400
     else:
-        g.db.execute('insert into users (name, email) values (?, ?)', [request.form['name'], request.form['email']])
-        g.db.commit()
-        flash('New user successfully created')
-        return redirect(url_for('show_config'))
-    return render_template('new_user.html', error=error)
+        # Expect to receive a json dict with following structure
+        validation = [
+                ( 'name_first', basestring ),
+                ( 'name_last', basestring ),
+                ( 'email', basestring )
+                ]
+        # Update local configuration with user data
+        if validate_json_req(request, validation):
+            cfg = config.get_config()
+            cfg['user'] = request.get_json()
+            try:
+                config.set_config(cfg)
+            except:
+                raise
+            else:
+                resp.data['message'] = 'User added successfully.'
+        else:
+            resp.data['error'] = 'JSON in request was invalid.'
+
+    return resp.get_flask_response()
 
 @app.route('/')
 def render_ui():
@@ -160,74 +179,78 @@ def render_ui():
 
 @app.route('/get_state', methods=['POST'])
 def get_state():
+    # Return unauthorized error if session cookie is not set
     if not session.get('logged_in'):
         abort(403)
-    user = query_db('select * from users', one=True)
-    if user:
-        user_config = query_db('select * from users join config on users.user_id = config.user_id', one=True)
-        if user_config is None:
-            flash('Please configure Nido to continue')
-            return redirect(url_for('set_config'))
-        # Get current weather and sensor data
-        if user_config['celsius'] == 1:
-            celsius_setting = True
-        elif user_config['celsius'] == 0:
-            celsius_setting = False
-        else:
-            raise NidoDatabaseError('Invalid Boolean value in database for Celsius setting')
-        sensor = Sensor(celsius=celsius_setting)
-        weather = LocalWeather(zipcode=user_config['zipcode'], celsius=celsius_setting)
-        # Round up readings to whole numbers
-        sensor.conditions['relative_humidity'] = int(round(sensor.conditions['relative_humidity']))
-        sensor.conditions['temp'] = int(round(sensor.conditions['temp']))
-        weather.conditions['temp'] = int(round(weather.conditions['temp']))
-        return render_template('index.html', sensor=sensor.conditions, weather=weather.conditions, user_config=user_config, celsius_setting=celsius_setting, mode=Mode(user_config['mode']), mode_name=_MODE_NAME, status=Status(user_config['status']), status_name=_STATUS_NAME)
-    return render_template('new_user.html')
+
+    # Initialize response object
+    resp = JSONResponse()
+    # Get config
+    cfg = config.get_config()
+    
+    # Check if settings are available
+    if 'settings' in cfg:
+        # Return current settings
+        resp.data['settings'] = cfg['settings']
+        try:
+            # TODO: Pull state from Controller object
+            # resp.data['state'] = ...
+            pass
+        except:
+            raise
+    else:
+        resp.data['error'] = 'No settings. Has Nido been configured yet?'
+
+    return resp.get_flask_response()
 
 @app.route('/login', methods=['POST'])
 def login():
-    resp = {}
-    # TODO: Need to modify this section to take user/pass from the SQL table instead of the config file
+    # Intialize response object
+    resp = JSONResponse()
+    # Get config
+    cfg = config.get_config()
+    
     if 'logged_in' in session:
         try:
-            resp['message'] = 'User already logged in.'
-            resp['username'] = session['username']
-            resp['logged_in'] = True
+            resp.data['message'] = 'User already logged in.'
+            resp.data['username'] = session['username']
+            resp.data['logged_in'] = True
         except:
             raise
     else:
         try:
             if request.form['username'] != cfg['flask']['username'] or request.form['password'] != cfg['flask']['password']:
-                resp['error'] = 'Incorrect login credentials.'
-                resp['logged_in'] = False
+                resp.data['error'] = 'Incorrect login credentials.'
+                resp.data['logged_in'] = False
             else:
                 # Set (implicit create) session cookie (HTTP only) which all endpoints will check for
                 session['logged_in'] = True
                 session['username'] = request.form['username']
-                resp['message'] = 'User has been logged in.'
-                resp['username'] = request.form['username']
-                resp['logged_in'] = True
+                resp.data['message'] = 'User has been logged in.'
+                resp.data['username'] = request.form['username']
+                resp.data['logged_in'] = True
         except:
             raise
 
-    return json_response(resp)
+    return resp.get_flask_response()
 
 @app.route('/logout', methods=['POST'])
 def logout():
-    # Note that clear() removes every key from the session dict, which causes the cookie to be destroyed
-    resp = {}
+    # Initialize response object
+    resp = JSONResponse()
     if 'logged_in' in session:
         try:
-            resp['message'] = 'User has been logged out.'
-            resp['username'] = session['username']
-            resp['logged_in'] = False
+            resp.data['message'] = 'User has been logged out.'
+            resp.data['username'] = session['username']
+            resp.data['logged_in'] = False
+            # Note that clear() removes every key from the session dict, which causes the cookie to be destroyed
             session.clear()
         except:
             raise
     else:
-        resp['error'] = 'User not logged in.'
-        resp['logged_in'] = False
+        resp.data['error'] = 'User not logged in.'
+        resp.data['logged_in'] = False
     return json_response(resp)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=cfg['flask']['port'])
+    app.run(host='0.0.0.0', port=config.get_config()['flask']['port'])
