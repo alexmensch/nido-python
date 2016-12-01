@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "description": "Home thermostat that runs on a Raspberry Pi",
-  "main": "dev/nido.py",
+  "main": "app/nido.py",
   "dependencies": {
     "es6-promise": "^4.0.5",
     "isomorphic-fetch": "^2.2.1"

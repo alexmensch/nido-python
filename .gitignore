@@ -6,15 +6,15 @@ env
 
 node_modules/
 npm-debug.log
-bower_components/
 .module-cache
 
 # Contains private API keys
 config.yaml
 
-# Local database
-nido.db
-
 # Production
 prod/
-dist/
+
+# Local convenience scripts
+push2prod.sh
+run-dev.sh
+run-prod.sh

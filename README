@@ -1,7 +1,17 @@
-Initial configuration (to run from /dev):
-- Rename dev/cfg/config-example.yaml to dev/cfg/config.yaml with your own settings.
-- Set absolute path to config.yaml in dev/config.py
-- Use /run-dev.sh to run the application from the /dev environment.
+Installation:
+- Run install.sh to install required Python modules and Node.js components.
+- (TODO) Update crontab with hardware control script
 
-Use the script /push2prod.sh to copy the contents of /dev to /prod to allow you to
-run separate development and production versions.
+Initial configuration:
+- Rename app/cfg/config-example.yaml to app/cfg/config.yaml with your own settings.
+- Set absolute path to config.yaml in app/lib/NidoConfig.py.
+
+Generating a test build:
+- npm run build
+
+Generating a production build
+- npm run build-prod
+
+Running the application:
+- sudo python app/nido.py
+  Note: sudo is required due to hardware access to GPIO pins

@@ -31,7 +31,7 @@ import yaml
 class NidoConfig():
     def __init__(self):
         try:
-            self.config_file = file('/home/pi/nido/dev/cfg/config.yaml', 'r+')
+            self.config_file = file('/home/pi/nido/app/cfg/config.yaml', 'r+')
         except:
             raise
         else:
