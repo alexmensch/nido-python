@@ -1,5 +1,5 @@
-import sqlite3
 import json
+from numbers import Number
 from contextlib import closing
 from enum import Enum
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
@@ -58,7 +58,7 @@ class JSONResponse():
         return response
 
 # Helper function to validate JSON in requests
-# An array of tuples is passed in of the form ( 'name', type )
+# A list of tuples is passed in of the form ( 'name', type )
 # Where:
 #        'name' is the key we expect in the dict
 #        type is a type we can compare the corresponding value to using isinstance()
@@ -80,16 +80,24 @@ def validate_json_req(req, valid):
     # No tests failed
     return true
 
+# Decorator for routes that require a session cookie
+#
+def require_session(route):
+    def check_session(self, *args, **kwargs):
+        if not session.get('logged_in'):
+            abort(403)
+        else:
+            return route(self, *args, **kwargs)
+
+    return check_session
+
 # Application routes
 #   All routes are POST-only and should only return JSON.
 #   The / route only serves to return the React-based UI
 #
 @app.route('/set_config', methods=['POST'])
+@require_session
 def set_config():
-    # Return unauthorized error if session cookie is not set
-    if not session.get('logged_in'):
-        abort(403)
-
     # Initialize response object
     resp = JSONResponse()
     # Make sure we received JSON
@@ -99,12 +107,12 @@ def set_config():
     else:
         # Expect to receive a json dict with following structure
         validation = [
-                ( 'location', [int, int] ),
+                ( 'location', [Number, Number] ),
                 ( 'location_name', basestring ),
                 ( 'nido_location', basestring ),
                 ( 'celsius', bool ),
-                ( 'mode', int ),
-                ( 'set_temperature', int )
+                ( 'mode', Number ),
+                ( 'set_temperature', Number )
                 ]
         # Update local configuration with user data
         if validate_json_req(request, validation):
@@ -122,11 +130,8 @@ def set_config():
     return resp.get_flask_response()
 
 @app.route('/get_config', methods=['POST'])
+@require_session
 def get_config():
-    # Return unauthorized error if session cookie is not set
-    if not session.get('logged_in'):
-        abort(403)
-    
     # Initialize response dict
     resp = JSONResponse()
     # Get config
@@ -140,11 +145,8 @@ def get_config():
     return resp.get_flask_response()
 
 @app.route('/add_user', methods=['POST'])
+@require_session
 def add_user():
-    # Return unauthorized error if session cookie is not set
-    if not session.get('logged_in'):
-        abort(403)
-
     # Initialize response dict
     resp = JSONResponse()
     # Make sure we received JSON
@@ -178,11 +180,8 @@ def render_ui():
     return render_template('index.html')
 
 @app.route('/get_state', methods=['POST'])
+@require_session
 def get_state():
-    # Return unauthorized error if session cookie is not set
-    if not session.get('logged_in'):
-        abort(403)
-
     # Initialize response object
     resp = JSONResponse()
     # Get config

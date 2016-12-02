@@ -16,5 +16,5 @@ prod/
 
 # Local convenience scripts
 push2prod.sh
-run-dev.sh
-run-prod.sh
+run-nido.sh
+nohup.out
