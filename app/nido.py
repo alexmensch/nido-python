@@ -1,5 +1,6 @@
 import json
 from numbers import Number
+from functools import wraps
 from contextlib import closing
 from enum import Enum
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
@@ -83,6 +84,7 @@ def validate_json_req(req, valid):
 # Decorator for routes that require a session cookie
 #
 def require_session(route):
+    @wraps(route)
     def check_session(self, *args, **kwargs):
         if not session.get('logged_in'):
             abort(403)
