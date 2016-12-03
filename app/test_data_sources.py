@@ -1,7 +1,7 @@
 from lib.CollectData import Sensor, LocalWeather
 
-sensor = Sensor()
-weather = LocalWeather(94115)
+s = Sensor()
+w = LocalWeather()
 
-print repr(sensor.conditions)
-print repr(weather.conditions)
+print repr(s.get_conditions())
+print repr(w.get_conditions())

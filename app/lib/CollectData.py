@@ -125,11 +125,11 @@ class LocalWeather():
                 # 'current_observation' data was available, parse conditions
                 try:
                     self.conditions = {
-                            'zipcode': observation_data['display_location']['zip'],
                             'location': {
                                 'full': observation_data['display_location']['full'],
                                 'city': observation_data['display_location']['city'],
                                 'state': observation_data['display_location']['state'],
+                                'zipcode': observation_data['display_location']['zip'],
                                 'country': observation_data['display_location']['country'],
                                 'coordinates': {
                                     'latitude': observation_data['display_location']['latitude'],
