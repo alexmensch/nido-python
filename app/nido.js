@@ -70,13 +70,13 @@ var LoginForm = React.createClass({
                 <h2>Login</h2>
                 <form className="form-horizontal">
                     <div className="form-group">
-                        <label for="inputUsername" className="col-sm-2 control-label">Username</label>
+                        <label htmlFor="inputUsername" className="col-sm-2 control-label">Username</label>
                         <div className="col-sm-3">
                             <input type="text" className="form-control" id="inputUsername" placeholder="Username" />
                         </div>
                     </div>
                     <div className="form-group">
-                        <label for="inputPassword" className="col-sm-2 control-label">Password</label>
+                        <label htmlFor="inputPassword" className="col-sm-2 control-label">Password</label>
                         <div className="col-sm-3">
                             <input type="password" className="form-control" id="inputPassword" placeholder="Password" />
                         </div>

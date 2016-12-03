@@ -204,6 +204,12 @@ def get_state():
 
     return resp.get_flask_response()
 
+@app.route('/get_weather', methods=['POST'])
+def get_weather():
+    resp = JSONResponse()
+
+    return resp.get_flask_response()
+
 @app.route('/login', methods=['POST'])
 def login():
     # Intialize response object

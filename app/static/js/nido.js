@@ -79,6 +79,10 @@
 	    return response.json();
 	}
 
+	function fetchGenError(error) {
+	    console.log('Request failed', error);
+	}
+
 	/* ********
 	 * React components
 	 * ********
@@ -121,9 +125,7 @@
 	            if (json['logged_in']) {
 	                that.props.setLogin(true);
 	            }
-	        }).catch(function (error) {
-	            console.log('Request failed', error);
-	        });
+	        }).catch(fetchGenError);
 	    },
 
 	    render: function render() {
