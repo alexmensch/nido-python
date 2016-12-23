@@ -43,7 +43,8 @@ class LocalWeather():
         # Unix time of last request to implement basic caching
         self.last_req = 0
         # Cache expiry period in seconds
-        self._CACHE_EXPIRY = 60
+        # 900 == 15 minutes
+        self._CACHE_EXPIRY = 900
         self.api_key = NidoConfig().get_config()['wunderground']['api_key']
 
     def set_zipcode(self, zipcode):
@@ -80,6 +81,7 @@ class LocalWeather():
 
         # Determine location query type
         # API documentation here: http://api.wunderground.com/weather/api/d/docs?d=data/index
+        # Prefer lat,long over zipcode
         if (self.location is None) and (self.zipcode is None):
             query = 'autoip'
         elif self.location:

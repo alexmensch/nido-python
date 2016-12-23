@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from lib.CollectData import Sensor, LocalWeather
 
 s = Sensor()

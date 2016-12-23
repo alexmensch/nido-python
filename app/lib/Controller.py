@@ -1,18 +1,14 @@
-import sqlite3
 from enum import Enum
 import RPi.GPIO as GPIO
-from lib.CollectData import Sensor
-from nido import Mode, Status, connect_db, query_db
-from config import NidoConfig
+from CollectData import Sensor
+from NidoConstants import Mode, Status
+from NidoConfig import NidoConfig
 
 # This is the controller code that determines whether the heating / cooling system
 # should be enabled based on the thermostat set point.
-# 
-# This script should run as a cron job.
 #
-# Optional future cool stuff to create predictive heating / cooling times:
-# 1. [Heating|Cooling] ON:  Record starting difference between inside/outside temperature and start time
-# 2. [Heating|Cooling] OFF: Record end difference between inside/outside temperature and time elapsed
+# TODO: Turn this into a Class instead :-)
+# TODO: Record start/stop times for all heating/cooling events
 
 # Configuration
 cfg = NidoConfig().get_config()

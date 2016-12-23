@@ -145,7 +145,7 @@
 	                    { className: "form-group" },
 	                    _react2.default.createElement(
 	                        "label",
-	                        { "for": "inputUsername", className: "col-sm-2 control-label" },
+	                        { htmlFor: "inputUsername", className: "col-sm-2 control-label" },
 	                        "Username"
 	                    ),
 	                    _react2.default.createElement(
@@ -159,7 +159,7 @@
 	                    { className: "form-group" },
 	                    _react2.default.createElement(
 	                        "label",
-	                        { "for": "inputPassword", className: "col-sm-2 control-label" },
+	                        { htmlFor: "inputPassword", className: "col-sm-2 control-label" },
 	                        "Password"
 	                    ),
 	                    _react2.default.createElement(

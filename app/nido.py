@@ -2,7 +2,6 @@ import json
 from numbers import Number
 from functools import wraps
 from contextlib import closing
-from enum import Enum
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
 from validate_email import validate_email
 from lib.CollectData import Sensor, LocalWeather
@@ -17,32 +16,6 @@ SECRET_KEY = config.get_config()['flask']['secret_key']
 #
 app = Flask(__name__)
 app.config.from_object(__name__)
-
-# Define some enums
-#
-class Mode(Enum):
-    off = 0
-    heat = 1
-    cool = 2
-    heat_cool = 3
-
-_MODE_NAME = {
-        Mode.off: 'Off',
-        Mode.heat: 'Heat',
-        Mode.cool: 'Cool',
-        Mode.heat_cool: 'Heat/Cool'
-        }
-
-class Status(Enum):
-    off = 0
-    heating = 1
-    cooling = 2
-
-_STATUS_NAME = {
-        Status.off: 'Off',
-        Status.heating: 'Heating',
-        Status.cooling: 'Cooling'
-        }
 
 # JSON response object
 #
@@ -207,6 +180,8 @@ def get_state():
 @app.route('/get_weather', methods=['POST'])
 def get_weather():
     resp = JSONResponse()
+
+    # TODO: Call CollectData.LocalWeather to get latest weather information
 
     return resp.get_flask_response()
 
