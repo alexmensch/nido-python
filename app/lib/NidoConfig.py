@@ -6,8 +6,7 @@ import yaml
 #   heat_pin
 #   cool_pin
 # behavior
-#   hysteresis_c
-#   hysteresis_f
+#   hysteresis
 # flask
 #   port
 #   debug
@@ -31,22 +30,14 @@ import yaml
 
 class NidoConfig():
     def __init__(self):
-        try:
-            self.config_file = file('/home/pi/nido/app/cfg/config.yaml', 'r+')
-        except:
-            raise
-        else:
-            self.config = yaml.load(self.config_file)
-            return
+        self._CONFIG = '/home/pi/nido/app/cfg/config.yaml'
+        return
     
     def get_config(self):
-        return self.config
+        with open(self._CONFIG, 'r') as f:
+            return yaml.load(f)
 
     def set_config(self, config):
-        self.config = config
-        try:
-            yaml.dump(self.config, self.config_file)
-        except:
-            raise
-        else:
-            return
+        with open(self._CONFIG, 'w') as f:
+            yaml.dump(config, f)
+        return
