@@ -46,17 +46,17 @@ class NidoController():
             self.shutdown()
             raise ControllerError('Both heating and cooling pins were enabled. Both pins disabled as a precaution.')
         elif GPIO.input(self._HEATING):
-            return Status.heating.value
+            return Status.Heating.value
         elif GPIO.input(self._COOLING):
-            return Status.cooling.value
+            return Status.Cooling.value
         else:
-            return Status.off.value
+            return Status.Off.value
 
     def _enable_heating(self, status, temp, set_temp, hysteresis):
         if ( (temp + hysteresis) < set_temp ):
             GPIO.output(self._HEATING, True)
             GPIO.output(self._COOLING, False)
-        elif ( (temp < set_temp) and (status is Status.heating) ):
+        elif ( (temp < set_temp) and (status is Status.Heating) ):
             GPIO.output(self._HEATING, True)
             GPIO.output(self._COOLING, False)
         return
@@ -65,7 +65,7 @@ class NidoController():
         if ( (temp + hysteresis) > set_temp ):
             GPIO.output(self._HEATING, False)
             GPIO.output(self._COOLING, True)
-        elif ( (temp > set_temp) and (status is Status.cooling) ):
+        elif ( (temp > set_temp) and (status is Status.Cooling) ):
             GPIO.output(self._HEATING, False)
             GPIO.output(self._COOLING, True)
         return
@@ -94,15 +94,15 @@ class NidoController():
                 self.shutdown()
                 raise
 
-        if mode is Mode.off:
+        if mode is Mode.Off:
             self.shutdown()
-        elif mode is Mode.heat:
+        elif mode is Mode.Heat:
             if temp < set_temp:
                 self._enable_heating(status, temp, set_temp, hysteresis)
             else:
                 self.shutdown()
         else:
-            # Additional modes can be enabled in future, eg. Mode.cool, Mode.heat_cool
+            # Additional modes can be enabled in future, eg. Mode.Cool, Mode.Heat_Cool
             self.shutdown()
 
         return

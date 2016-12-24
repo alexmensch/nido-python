@@ -6,7 +6,7 @@ from flask import Flask, request, session, g, redirect, url_for, abort, render_t
 from validate_email import validate_email
 from lib.CollectData import Sensor, LocalWeather
 from lib.NidoConfig import NidoConfig
-from lib.NidoController import NidoController
+from lib.Controller import NidoController
 from lib.NidoConstants import Status
 
 # Configuration
@@ -73,11 +73,11 @@ def signal_daemon():
 #
 def require_session(route):
     @wraps(route)
-    def check_session(self, *args, **kwargs):
+    def check_session(*args, **kwargs):
         if not session.get('logged_in'):
             abort(403)
         else:
-            return route(self, *args, **kwargs)
+            return route(*args, **kwargs)
 
     return check_session
 
@@ -191,7 +191,7 @@ def get_state():
         if 'error' in sensor_data:
             resp.data['error'] = sensor_data['error']
         else:
-            resp.data['state']['conditions'] = sensor_data
+            resp.data['state'].update(sensor_data)
 
     return resp.get_flask_response()
 
