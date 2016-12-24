@@ -6,6 +6,8 @@ from flask import Flask, request, session, g, redirect, url_for, abort, render_t
 from validate_email import validate_email
 from lib.CollectData import Sensor, LocalWeather
 from lib.NidoConfig import NidoConfig
+from lib.NidoController import NidoController
+from lib.NidoConstants import Status
 
 # Configuration
 config = NidoConfig()
@@ -174,21 +176,22 @@ def render_ui():
 def get_state():
     # Initialize response object
     resp = JSONResponse()
-    # Get config
-    cfg = config.get_config()
     
-    # Check if settings are available
-    if 'settings' in cfg:
-        # Return current settings
-        resp.data['settings'] = cfg['settings']
-        try:
-            # TODO: Pull state from Controller object
-            # resp.data['state'] = ...
-            pass
-        except:
-            raise
+    try:
+        # Throws a ControllerError exception on error
+        state = NidoController().get_status()
+        # Returns a JSON dict with an 'error' key on error
+        sensor_data = Sensor().get_conditions()
+    except Exception as e:
+        resp.data['error'] = 'Exception getting current state: {} {}'.format(type(e), str(e))
     else:
-        resp.data['error'] = 'No settings. Has Nido been configured yet?'
+        resp.data['state'] = {
+                'status': Status(state).name,
+                }
+        if 'error' in sensor_data:
+            resp.data['error'] = sensor_data['error']
+        else:
+            resp.data['state']['conditions'] = sensor_data
 
     return resp.get_flask_response()
 
@@ -196,7 +199,11 @@ def get_state():
 def get_weather():
     resp = JSONResponse()
 
-    # TODO: Call CollectData.LocalWeather to get latest weather information
+    # Any errors will be passed through
+    # The receiving application should note the retrieval_age value as necessary
+    # TODO: Support caching built into the LocalWeather() object by storing the object in the session
+    #       Needs to be a serializable object (see Flask documentation)
+    resp.data = LocalWeather().get_conditions()
 
     return resp.get_flask_response()
 
