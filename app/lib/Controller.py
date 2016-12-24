@@ -11,6 +11,9 @@ class ControllerError(Exception):
         self.msg = msg
         return
 
+    def __str__(self):
+        return repr(self.msg)
+
 # TODO: Record start/stop times for all heating/cooling events
 class NidoController():
     """This is the controller code that determines whether the heating / cooling system
@@ -38,10 +41,9 @@ class NidoController():
 
         return
 
-    @staticmethod
-    def get_status():
+    def get_status(self):
         if (GPIO.input(self._HEATING) and GPIO.input(self._COOLING)):
-            self._shutdown()
+            self.shutdown()
             raise ControllerError('Both heating and cooling pins were enabled. Both pins disabled as a precaution.')
         elif GPIO.input(self._HEATING):
             return Status.heating.value
@@ -50,8 +52,7 @@ class NidoController():
         else:
             return Status.off.value
 
-    @staticmethod
-    def _enable_heating(status, temp, set_temp, hysteresis):
+    def _enable_heating(self, status, temp, set_temp, hysteresis):
         if ( (temp + hysteresis) < set_temp ):
             GPIO.output(self._HEATING, True)
             GPIO.output(self._COOLING, False)
@@ -60,8 +61,7 @@ class NidoController():
             GPIO.output(self._COOLING, False)
         return
     
-    @staticmethod
-    def _enable_cooling(status, temp, set_temp, hysteresis):
+    def _enable_cooling(self, status, temp, set_temp, hysteresis):
         if ( (temp + hysteresis) > set_temp ):
             GPIO.output(self._HEATING, False)
             GPIO.output(self._COOLING, True)
@@ -70,8 +70,7 @@ class NidoController():
             GPIO.output(self._COOLING, True)
         return
     
-    @staticmethod
-    def _shutdown():
+    def shutdown(self):
         GPIO.output(self._HEATING, False)
         GPIO.output(self._COOLING, False)
         return
@@ -89,21 +88,21 @@ class NidoController():
                 set_temp = config['settings']['set_temperature']
                 hysteresis = config['behavior']['hysteresis']
             except KeyError as e:
-                self._shutdown()
+                self.shutdown()
                 raise ControllerError('Encountered KeyError getting current Nido status: {}'.format(e))
             except:
-                self._shutdown()
+                self.shutdown()
                 raise
 
         if mode is Mode.off:
-            self._shutdown()
+            self.shutdown()
         elif mode is Mode.heat:
             if temp < set_temp:
                 self._enable_heating(status, temp, set_temp, hysteresis)
             else:
-                self._shutdown()
+                self.shutdown()
         else:
             # Additional modes can be enabled in future, eg. Mode.cool, Mode.heat_cool
-            self._shutdown()
+            self.shutdown()
 
         return

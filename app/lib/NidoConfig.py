@@ -26,6 +26,11 @@ import yaml
 #   name_first
 #   name_last
 #   email
+# daemon
+#   pid_file
+#   log_file
+#   work_dir
+#   poll_interval
 #############
 
 class NidoConfig():

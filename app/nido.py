@@ -1,4 +1,4 @@
-import json
+import json, os, signal
 from numbers import Number
 from functools import wraps
 from contextlib import closing
@@ -54,6 +54,19 @@ def validate_json_req(req, valid):
     # No tests failed
     return true
 
+# Helper function to send a signal to the Nido daemon
+def signal_daemon():
+    try:
+        f = open(config.get_config()['daemon']['pid_file'])
+    except IOError:
+        # In the event of a file error, just ignore
+        pass
+    else:
+        pid = int(f.read().strip())
+        os.kill(pid, signal.SIGUSR1)
+    finally:
+        f.close()
+
 # Decorator for routes that require a session cookie
 #
 def require_session(route):
@@ -99,6 +112,8 @@ def set_config():
                 raise
             else:
                 resp.data['message'] = 'Settings updated successfully.'
+                # Send signal to daemon, if running, to trigger update
+                signal_daemon()
         else:
             resp.data['error'] = 'JSON in request was invalid.'
 
