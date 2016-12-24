@@ -1,6 +1,5 @@
 Installation:
 - Run install.sh to install required Python modules and Node.js components.
-- (TODO) Update crontab with hardware control script
 
 Initial configuration:
 - Rename app/cfg/config-example.yaml to app/cfg/config.yaml with your own settings.
@@ -13,5 +12,6 @@ Generating a production build
 - npm run build-prod
 
 Running the application:
-- sudo python app/nido.py
+- sudo python app/nido.py        (Flask server)
+- sudo python app/nidod.py start (daemon)
   Note: sudo is required due to hardware access to GPIO pins
