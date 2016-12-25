@@ -10,14 +10,14 @@ import "isomorphic-fetch";
 
 function fetchStatus(response) {  
     if (response.status >= 200 && response.status < 300) {  
-        return Promise.resolve(response)  
+        return Promise.resolve(response)
     } else {  
-        return Promise.reject(new Error(response.statusText))  
+        return Promise.reject(new Error(response.statusText))
     }  
 }
 
 function fetchJSON(response) {  
-    return response.json()  
+    return response.json()
 }
 
 function fetchGenError(error) {
@@ -31,7 +31,7 @@ function fetchGenError(error) {
 
 var Dashboard = React.createClass({
     render: function() {
-        return <div>You are logged in and have reached the dashboard.</div>;
+        return <div>You are logged in and have reached the dashboard. New user: {this.props.newUser.toString()}</div>;
     }
 });
 
@@ -92,10 +92,18 @@ var LoginForm = React.createClass({
     }
 });
 
+var Loading = React.createClass({
+    render: function() {
+        return <div>You are at the loading page.</div>;
+    }
+});
+
 var Nido = React.createClass({
     getInitialState: function() {
         return {
-            loginState: false
+            loadingState: true,
+            loginState: false,
+            newUserState: false
         };
     },
 
@@ -104,17 +112,70 @@ var Nido = React.createClass({
             loginState: state
         });
     },
+
+    setLoadingState: function(state) {
+        this.setState({
+            loadingState: state
+        });
+    },
+
+    setNewUserState: function(state) {
+        this.setState({
+            newUserState: state
+        });
+    },
+
+    componentDidMount: function() {
+        // Preserve scope 
+        var that = this;
+        // Make a request to /get_config and check response to determine what to do next
+        fetch('/get_config', {
+            method: 'POST',
+            credentials: 'include'
+        })
+        // Valid response status?
+        .then(function(response) {
+            if ( (response.status == 403) || (response.status >= 200 && response.status < 300) ) {
+                return Promise.resolve(response)
+            } else {  
+                return Promise.reject(new Error(response.statusText))
+            }  
+        })
+        // Is the user logged in?
+        .then(function(response) {
+            if ( response.status == 403 ) {
+                that.setLoginState(false);
+            } else {
+                that.setLoginState(true);
+                return response.json();
+            }
+        })
+        // Did we get an error in the response?
+        // Error response from /get_config indicates that configuration needs to be set
+        .then(function(json) {
+            if ( 'error' in json ) {
+                that.setNewUserState(true);
+            }
+        })
+        .catch(fetchGenError);
+
+        // No longer need loading status
+        that.setLoadingState(false);
+    },
     
     render: function() {
-        if (this.state.loginState) {
-            return <Dashboard setLogin={this.setLoginState} />;
+        if (this.state.loadingState) {
+            return <Loading />;
         } else {
-            return <LoginForm setLogin={this.setLoginState} />;
+            if (this.state.loginState) {
+                return <Dashboard setLogin={this.setLoginState} newUser={this.state.newUserState} />;
+            } else {
+                return <LoginForm setLogin={this.setLoginState} />;
+            }
         }
     }
 });
 
-// Render and pass Flask login state to Nido component
 ReactDOM.render(
   <Nido />,
   document.getElementById('nido')

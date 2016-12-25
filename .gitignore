@@ -17,4 +17,8 @@ prod/
 # Local convenience scripts
 push2prod.sh
 run-nido.sh
+
+# Webpack'd JS
+app/static/js/nido.js
+
 nohup.out

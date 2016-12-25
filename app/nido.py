@@ -136,9 +136,9 @@ def get_config():
 
     return resp.get_flask_response()
 
-@app.route('/add_user', methods=['POST'])
+@app.route('/set_user', methods=['POST'])
 @require_session
-def add_user():
+def set_user():
     # Initialize response dict
     resp = JSONResponse()
     # Make sure we received JSON
@@ -177,6 +177,7 @@ def get_state():
     # Initialize response object
     resp = JSONResponse()
     
+    # TODO: Add daemon state
     try:
         # Throws a ControllerError exception on error
         state = NidoController().get_status()
@@ -185,6 +186,7 @@ def get_state():
     except Exception as e:
         resp.data['error'] = 'Exception getting current state: {} {}'.format(type(e), str(e))
     else:
+        # Heating / Cooling / Off
         resp.data['state'] = {
                 'status': Status(state).name,
                 }
