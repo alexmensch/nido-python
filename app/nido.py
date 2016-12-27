@@ -271,7 +271,7 @@ def logout():
     else:
         resp.data['error'] = 'User not logged in.'
         resp.data['logged_in'] = False
-    return json_response(resp)
+    return resp.get_flask_response()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=config.get_config()['flask']['port'])
