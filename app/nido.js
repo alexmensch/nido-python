@@ -94,7 +94,7 @@ var LoginForm = React.createClass({
 
 var Loading = React.createClass({
     render: function() {
-        return <div>You are at the loading page.</div>;
+        return <div className="loading"></div>;
     }
 });
 
@@ -145,6 +145,7 @@ var Nido = React.createClass({
         .then(function(response) {
             if ( response.status == 403 ) {
                 that.setLoginState(false);
+                that.setLoadingState(false);
             } else {
                 that.setLoginState(true);
                 return response.json();
@@ -156,11 +157,9 @@ var Nido = React.createClass({
             if ( 'error' in json ) {
                 that.setNewUserState(true);
             }
+            that.setLoadingState(false);
         })
         .catch(fetchGenError);
-
-        // No longer need loading status
-        that.setLoadingState(false);
     },
     
     render: function() {
