@@ -167,6 +167,21 @@ def set_user():
 
     return resp.get_flask_response()
 
+@app.route('/get_user', methods=['POST'])
+@require_session
+def get_user():
+    # Initialize response dict
+    resp = JSONResponse()
+    # Get config
+    cfg = config.get_config()
+    # Check that user config section exists
+    if 'user' in cfg:
+        resp.data['user'] = cfg['user']
+    else:
+        resp.data['error'] = 'No user settings available.'
+
+    return resp.get_flask_response()
+
 @app.route('/')
 def render_ui():
     return render_template('index.html')
