@@ -21,7 +21,7 @@ function fetchJSON(response) {
 }
 
 function fetchGenError(error) {
-    console.log('Request failed', error);
+    console.log('Request failed: ', error);
 }
 
 /* ********
@@ -31,7 +31,8 @@ function fetchGenError(error) {
 
 var Dashboard = React.createClass({
     render: function() {
-        return <div>You are logged in and have reached the dashboard. New user: {this.props.newUser.toString()}</div>;
+        var ui = this.props.userInfo ? this.props.userInfo.toString() : 'None';
+        return <div>You are logged in and have reached the dashboard. User info available: {ui}</div>;
     }
 });
 
@@ -53,10 +54,6 @@ var LoginForm = React.createClass({
         .then(fetchStatus)
         .then(fetchJSON)
         .then(function(json) {
-            // DEBUG
-            console.log('Response message: ' + json['message']);
-            console.log('Error message: ' + json['error']);
-            // DEBUG
             // TODO: Incorporate message/error text into user feedback.
             if (json['logged_in']) {
                 that.props.setLogin(true);
@@ -103,7 +100,7 @@ var Nido = React.createClass({
         return {
             loadingState: true,
             loginState: false,
-            newUserState: false
+            userInfo: undefined
         };
     },
 
@@ -119,17 +116,17 @@ var Nido = React.createClass({
         });
     },
 
-    setNewUserState: function(state) {
+    setUserInfo: function(info) {
         this.setState({
-            newUserState: state
+            userInfo: info
         });
     },
 
     componentDidMount: function() {
         // Preserve scope 
         var that = this;
-        // Make a request to /get_config and check response to determine what to do next
-        fetch('/get_config', {
+        // Make a request to /get_user and check response to determine what to do next
+        fetch('/get_user', {
             method: 'POST',
             credentials: 'include'
         })
@@ -148,16 +145,13 @@ var Nido = React.createClass({
                 that.setLoadingState(false);
             } else {
                 that.setLoginState(true);
-                return response.json();
+                response.json().then(function(json) {
+                    if ( 'user' in json ) {
+                        that.setUserInfo(json['user']);
+                    }
+                    that.setLoadingState(false);
+                });
             }
-        })
-        // Did we get an error in the response?
-        // Error response from /get_config indicates that configuration needs to be set
-        .then(function(json) {
-            if ( 'error' in json ) {
-                that.setNewUserState(true);
-            }
-            that.setLoadingState(false);
         })
         .catch(fetchGenError);
     },
@@ -167,7 +161,7 @@ var Nido = React.createClass({
             return <Loading />;
         } else {
             if (this.state.loginState) {
-                return <Dashboard setLogin={this.setLoginState} newUser={this.state.newUserState} />;
+                return <Dashboard setLogin={this.setLoginState} userInfo={this.state.userInfo} />;
             } else {
                 return <LoginForm setLogin={this.setLoginState} />;
             }
