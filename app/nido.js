@@ -8,7 +8,7 @@ import "isomorphic-fetch";
  * ********
  */
 
-function fetchStatus(response) {  
+function fetchCheckStatus(response) {  
     if (response.status >= 200 && response.status < 300) {  
         return Promise.resolve(response)
     } else {  
@@ -16,12 +16,35 @@ function fetchStatus(response) {
     }  
 }
 
-function fetchJSON(response) {  
+function fetchResponseJSON(response) {  
     return response.json()
 }
 
-function fetchGenError(error) {
+function fetchGenericError(error) {
     console.log('Request failed: ', error);
+}
+
+/* ********
+ * fetch() calls
+ * ********
+ */
+
+function fetchData(updateFunc, route, key) {
+    fetch('/' + route, {
+        method: 'POST',
+        credentials: 'include'
+    })
+    .then(fetchCheckStatus)
+    .then(fetchResponseJSON)
+    .then(function(json) {
+        if (json) {
+            updateFunc(json, key);
+        } else {
+            return Promise.reject(new Error('No JSON in reponse body.'))
+        }
+    }).catch(fetchGenericError);
+    
+    return
 }
 
 /* ********
@@ -30,9 +53,53 @@ function fetchGenError(error) {
  */
 
 var Dashboard = React.createClass({
+    getInitialState: function() {
+        return {
+            config: undefined,
+            state: undefined,
+            weather: undefined,
+            user: this.props.userInfo
+        };
+    },
+
+    updateDashboardState: function(data, key) {
+        if ( key in data ) {
+            this.setState({
+                [key]: data[key]
+            });
+        } else if ( 'error' in data ) {
+            this.setState({
+                [key]: data
+            });
+        } else {
+            throw('Unexpected error retrieving ' + key + ' data. Server returned: ' + data);
+        }
+    },
+
+    componentDidMount: function() {
+        // This component only loads if the user is logged in
+        // Make calls to get_config, get_state, get_weather and get_user (if necessary)
+        fetchData(this.updateDashboardState, 'get_config', 'config');
+        fetchData(this.updateDashboardState, 'get_state', 'state');
+        fetchData(this.updateDashboardState, 'get_weather', 'weather');
+        if ( this.state.user == undefined ) {
+            fetchData(this.updateDashboardState, 'get_user', 'user');
+        }
+    },
+
     render: function() {
-        var ui = this.props.userInfo ? this.props.userInfo.toString() : 'None';
-        return <div>You are logged in and have reached the dashboard. User info available: {ui}</div>;
+        return(
+                <div>
+                <p><strong>Config:</strong></p>
+                <p>{JSON.stringify(this.state.config)}</p>
+                <p><strong>State:</strong></p>
+                <p>{JSON.stringify(this.state.state)}</p>
+                <p><strong>Weather:</strong></p>
+                <p>{JSON.stringify(this.state.weather)}</p>
+                <p><strong>User:</strong></p>
+                <p>{JSON.stringify(this.state.user)}</p>
+                </div>
+              );
     }
 });
 
@@ -51,14 +118,14 @@ var LoginForm = React.createClass({
             body: form,
             credentials: 'include'
         })
-        .then(fetchStatus)
-        .then(fetchJSON)
+        .then(fetchCheckStatus)
+        .then(fetchResponseJSON)
         .then(function(json) {
             // TODO: Incorporate message/error text into user feedback.
             if (json['logged_in']) {
                 that.props.setLogin(true);
             }
-        }).catch(fetchGenError);
+        }).catch(fetchGenericError);
     },
 
     render: function() {
@@ -153,7 +220,7 @@ var Nido = React.createClass({
                 });
             }
         })
-        .catch(fetchGenError);
+        .catch(fetchGenericError);
     },
     
     render: function() {

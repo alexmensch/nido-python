@@ -107,13 +107,13 @@ def set_config():
         # Update local configuration with user data
         if validate_json_req(request, validation):
             cfg = config.get_config()
-            cfg['settings'] = request.get_json()
+            cfg['config'] = request.get_json()
             try:
                 config.set_config(cfg)
             except:
                 raise
             else:
-                resp.data['message'] = 'Settings updated successfully.'
+                resp.data['message'] = 'Configuration updated successfully.'
                 # Send signal to daemon, if running, to trigger update
                 signal_daemon()
         else:
@@ -129,8 +129,8 @@ def get_config():
     # Get config
     cfg = config.get_config()
     # Check that settings config section exists
-    if 'settings' in cfg:
-        resp.data['settings'] = cfg['settings']
+    if 'config' in cfg:
+        resp.data['config'] = cfg['config']
     else:
         resp.data['error'] = 'No settings available.'
 

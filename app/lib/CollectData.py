@@ -75,7 +75,7 @@ class LocalWeather():
 
         # If we made a request within caching period and have a cached result, use that instead
         if self.conditions and (interval < self._CACHE_EXPIRY) and (interval >= 0):
-            resp['conditions'] = self.conditions
+            resp['weather'] = self.conditions
             resp['retrieval_age'] = interval
             return resp
 
@@ -98,7 +98,7 @@ class LocalWeather():
             resp['error'] = 'Error retrieving local weather: {}'.format(e)
             # If we have any cached conditions (regardless of age), return them
             if self.conditions:
-                resp['conditions'] = self.conditions
+                resp['weather'] = self.conditions
                 resp['retrieval_age'] = interval
         else:
             # Request was successful, parse response JSON
@@ -114,14 +114,14 @@ class LocalWeather():
                     resp['error'] = 'Unknown Wunderground API error. Response data: ' + str(r_json)
                     # If we have any cached conditions (regardless of age), return them
                     if self.conditions:
-                        resp['conditions'] = self.conditions
+                        resp['weather'] = self.conditions
                         resp['retrieval_age'] = interval
                 else:
                     # Return error type and description from Wunderground API
                     resp['error'] = 'Wunderground API error (' + api_error['type'] + '): ' + api_error['description']
                     # If we have any cached conditions (regardless of age), return them
                     if self.conditions:
-                        resp['conditions'] = self.conditions
+                        resp['weather'] = self.conditions
                         resp['retrieval_age'] = interval
             else:
                 # 'current_observation' data was available, parse conditions
@@ -151,7 +151,7 @@ class LocalWeather():
                     resp['error'] = 'Error parsing Wunderground API data: {}' + str(e)
                 else:
                     # Otherwise, if we successfully got here, everything actually worked!
-                    resp['conditions'] = self.conditions
+                    resp['weather'] = self.conditions
                     # Reset retrieval time and update response
                     self.last_req = int(time.time())
                     resp['retrieval_age'] = 0

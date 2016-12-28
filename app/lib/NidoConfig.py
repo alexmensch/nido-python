@@ -15,7 +15,7 @@ import yaml
 #   password
 # wunderground
 #   api_key
-# settings
+# config
 #   location: [latitude, longitude]
 #   location_name
 #   nido_location
