@@ -24,7 +24,9 @@ app.config.from_object(__name__)
 class JSONResponse():
     def __init__(self):
         self.status = 200
-        self.data = {}
+        self.data = {
+                'version': config.get_version()
+                }
         return
 
     def get_flask_response(self):
@@ -132,6 +134,8 @@ def get_config():
     if 'config' in cfg:
         resp.data['config'] = cfg['config']
     else:
+        schema = config.get_schema('config')
+        resp.data['config'] = schema
         resp.data['error'] = 'No settings available.'
 
     return resp.get_flask_response()
@@ -247,9 +251,12 @@ def login():
                 # Set (implicit create) session cookie (HTTP only) which all endpoints will check for
                 session['logged_in'] = True
                 session['username'] = request.form['username']
-                resp.data['message'] = 'User has been logged in.'
-                resp.data['username'] = request.form['username']
                 resp.data['logged_in'] = True
+                if 'config' not in cfg:
+                    resp.data['message'] = 'User has been logged in, but Nido requires initial configuration.'
+                    resp.data['config_required'] = True
+                else:
+                    resp.data['message'] = 'User has been logged in.'
         except:
             raise
 
