@@ -10,3 +10,11 @@ class Status(Enum):
     Off = 0
     Heating = 1
     Cooling = 2
+
+class FormTypes(Enum):
+    text = 0
+    password = 1
+    checkbox = 2
+    radio = 3
+    select = 4
+    textarea = 5

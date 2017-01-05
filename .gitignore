@@ -1,6 +1,7 @@
 *.pyc
 .git
 *.swp
+*.swo
 
 env
 
