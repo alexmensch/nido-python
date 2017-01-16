@@ -2,16 +2,17 @@ GPIO:
         heat_pin: 26
         cool_pin: 20
 behavior:
-        hysteresis_c: 1
-        hysteresis_f: 1
+        hysteresis: 0.6
 flask:
         port: 8080
-        debug: False
-        secret_key: some-very-long-string
-        username: your-user
+        debug: True
+        secret_key: your-secret-key
+        username: your-username
         password: your-password
 wunderground:
-        api_key: your-api-key-from-wunderground
-db:
-        schema: /home/user/nido/db/schema.sql
-        database: /home/user/nido/db/nido.db
+        api_key: your-api-key
+daemon:
+        pid_file: /tmp/nido.pid
+        work_dir: /tmp
+        log_file: /var/log/nidod.log
+        poll_interval: 300

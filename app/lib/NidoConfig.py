@@ -76,20 +76,6 @@ class NidoConfig():
                         'label': 'Set point'
                         }
                     },
-                'user': {
-                    'name_first': {
-                        'form_data': (FormTypes.text.name, None),
-                        'label': 'First name'
-                        },
-                    'name_last': {
-                        'form_data': (FormTypes.text.name, None),
-                        'label': 'Last name'
-                        },
-                    'email': {
-                        'form_data': (FormTypes.text.name, None),
-                        'label': 'Email'
-                        }
-                    },
                 'daemon': {
                     'pid_file': {
                         'form_data': (FormTypes.text.name, '/tmp/nidod.pid'),

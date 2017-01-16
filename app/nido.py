@@ -134,55 +134,13 @@ def get_config():
     if 'config' in cfg:
         resp.data['config'] = cfg['config']
     else:
-        schema = config.get_schema('config')
-        resp.data['config'] = schema
-        resp.data['error'] = 'No settings available.'
-
-    return resp.get_flask_response()
-
-@app.route('/set_user', methods=['POST'])
-@require_session
-def set_user():
-    # Initialize response dict
-    resp = JSONResponse()
-    # Make sure we received JSON
-    if request.get_json() is None:
-        resp.data['error'] = 'Did not receive a JSON request. Check MIME type and request body.'
-        resp.status = 400
-    else:
-        # Expect to receive a json dict with following structure
-        validation = [
-                ( 'name_first', basestring ),
-                ( 'name_last', basestring ),
-                ( 'email', basestring )
-                ]
-        # Update local configuration with user data
-        if validate_json_req(request, validation):
-            cfg = config.get_config()
-            cfg['user'] = request.get_json()
-            try:
-                config.set_config(cfg)
-            except:
-                raise
-            else:
-                resp.data['message'] = 'User added successfully.'
+        try:
+            schema = config.get_schema('config')
+        except:
+            resp.data['error'] = 'Unable to retrieve config schema.'
         else:
-            resp.data['error'] = 'JSON in request was invalid.'
-
-    return resp.get_flask_response()
-
-@app.route('/get_user', methods=['POST'])
-@require_session
-def get_user():
-    # Initialize response dict
-    resp = JSONResponse()
-    # Get config
-    cfg = config.get_config()
-    # Check that user config section exists
-    if 'user' in cfg:
-        resp.data['user'] = cfg['user']
-    else:
-        resp.data['error'] = 'No user settings available.'
+            resp.data['config'] = schema
+            resp.data['config_required'] = True
 
     return resp.get_flask_response()
 
@@ -252,11 +210,7 @@ def login():
                 session['logged_in'] = True
                 session['username'] = request.form['username']
                 resp.data['logged_in'] = True
-                if 'config' not in cfg:
-                    resp.data['message'] = 'User has been logged in, but Nido requires initial configuration.'
-                    resp.data['config_required'] = True
-                else:
-                    resp.data['message'] = 'User has been logged in.'
+                resp.data['message'] = 'User has been logged in.'
         except:
             raise
 
