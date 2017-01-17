@@ -37,20 +37,12 @@ function fetchGenericError(error) {
  * ********
  */
 
-function fetchData(route, key) {
+function fetchData(route) {
     return fetch('/' + route, {
         method: 'POST',
         credentials: 'include'
     })
-    .then(fetchCheckStatus2xx)
-    .then(fetchResponseJSON)
-    .then(function(json) {
-        if (json) {
-            return Promise.resolve({json: json, key: key});
-        } else {
-            return Promise.reject(new Error('No JSON in reponse body.'))
-        }
-    }).catch(fetchGenericError);
+    .catch(fetchGenericError);
 }
 
 /* ********
@@ -286,7 +278,7 @@ var Login = React.createClass({
         .then(fetchResponseJSON)
         .then(function(json) {
             // TODO: Incorporate message/error text into user feedback.
-            if ('logged_in' in json) {
+            if (json['logged_in'] == true) {
                 that.props.setView('dashboard');
             }
         }).catch(fetchGenericError);
@@ -330,51 +322,62 @@ var Nido = React.createClass({
         });
     },
 
-    updateState: function(responseObject) {
-        var newState = {};
-        newState[responseObject.key] = responseObject.json;
-        this.setState(newState);
+    refreshServerState: function() {
+        var that = this;
+        var serverStates = ['config', 'state', 'weather'];
+
+        for (let i = 0; i < serverStates.length; i++) {
+            let serverState = serverStates[i];
+            fetchData('get_' + serverState)
+                .then(fetchCheckStatus2xx)
+                .then(fetchResponseJSON)
+                .then(function(json) {
+                    let newState = {};
+                    newState[serverState] = json;
+                    that.setState(newState);
+                })
+                .catch(fetchGenericError);
+        }
     },
 
     componentDidMount: function() {
-        // Preserve scope 
         var that = this;
-        fetch('/get_config', {
-            method: 'POST',
-            credentials: 'include'
-        })
-        .then(fetchCheckStatus2xx403)
-        .then(function(response) {
-            if ( response.status == 403 ) {
-                that.setView('login');
-                return Promise.resolve();
-            } else {
-                return response.json();
-            }
-        })
-        .then(function(json) {
-            // Return here if we got a 403 response
-            if (json == undefined) return Promise.resolve();
+        // Get config server state and set view depending on response
+        fetchData('get_config')
+            .then(fetchCheckStatus2xx403)
+            .then(function(response) {
+                if ( response.status == 403 ) {
+                    that.setView('login');
+                    return Promise.resolve();
+                } else {
+                    return response.json();
+                }
+            })
+            .then(function(json) {
+                // Return if we got a 403 response
+                if (json == undefined) return Promise.resolve();
 
-            // Fetch state and weather info
-            fetchData('get_state', 'state')
-                .then(that.updateState);
-            fetchData('get_weather', 'weather')
-                .then(that.updateState);
-            
-            // Set config state
-            that.setState({
-                config: json
-            });
+                // Set config state
+                that.setState({
+                    config: json,
+                    view: 'dashboard'
+                });
+            })
+            .catch(fetchGenericError);
+    },
 
-            // Set Dashboard or Config view depending on get_config response
-            if ( 'config_required' in json ) {
-                that.setView('config');
-            } else {
-                that.setView('dashboard');
+    componentDidUpdate: function(prevProps, prevState) {
+        if (prevState.view != this.state.view) {
+            if (this.state.view != 'login') {
+                this.refreshServerState();
             }
-        })
-        .catch(fetchGenericError);
+        }
+        if ( prevState.config != this.state.config
+             && this.state.config['config_required'] == true
+             && this.state.view != 'config'
+             ) {
+            this.setView('config');
+        }
     },
     
     render: function() {
