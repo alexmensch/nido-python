@@ -1,9 +1,7 @@
 import json
 from numbers import Number
 from functools import wraps
-from contextlib import closing
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
-from validate_email import validate_email
 from lib.Nido import Sensor, LocalWeather, Config, Controller, Status
 
 # Configuration
