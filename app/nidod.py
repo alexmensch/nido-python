@@ -3,14 +3,13 @@
 import sys, time, signal
 from datetime import datetime
 from lib.Daemon import Daemon
-from lib.NidoConfig import NidoConfig
-from lib.Controller import NidoController
+from lib.Nido import Config, Controller
 
 class NidoDaemon(Daemon):
     def run(self):
         # Get poll interval from config
         try:
-            config = NidoConfig().get_config()
+            config = Config().get_config()
         except Exception as e:
             sys.stderr.write('{} [Error] Unable to read configuration file: {}\n'.format(datetime.utcnow(), e))
             self.stop()
@@ -23,9 +22,9 @@ class NidoDaemon(Daemon):
 
         # Instantiate controller object
         try:
-            self.controller = NidoController()
+            self.controller = Controller()
         except Exception as e:
-            sys.stderr.write('{} [Error] Unable to instantiate NidoController: {}\n'.format(datetime.utcnow(), e))
+            sys.stderr.write('{} [Error] Unable to instantiate Controller: {}\n'.format(datetime.utcnow(), e))
             self.stop()
 
         # Set up signal handler to trigger updates
@@ -50,7 +49,7 @@ class NidoDaemon(Daemon):
 
     def quit(self):
         try:
-            NidoController().shutdown()
+            Controller().shutdown()
         except Exception as e:
             sys.stderr.write('{} [Error] *CRITICAL*: unable to shutdown GPIO pins: {}\n'.format(datetime.utcnow(), e))
         return
@@ -59,7 +58,7 @@ class NidoDaemon(Daemon):
 # Start of execution
 ###
 
-config = NidoConfig().get_config()
+config = Config().get_config()
 pid_file = config['daemon']['pid_file']
 work_dir = config['daemon']['work_dir']
 log_file = config['daemon']['log_file']

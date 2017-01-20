@@ -1,16 +1,16 @@
-import json, os, signal
+import json
 from numbers import Number
 from functools import wraps
 from contextlib import closing
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
 from validate_email import validate_email
-from lib.CollectData import Sensor, LocalWeather
-from lib.NidoConfig import NidoConfig
-from lib.Controller import NidoController
-from lib.NidoConstants import Status
+from lib.Nido import Sensor, LocalWeather, Config, Controller, Status
 
 # Configuration
-config = NidoConfig()
+config = Config()
+# Validate configuration file before we continue
+if config.validate() == False:
+    exit('Error: incomplete configuration, please verify config.yaml settings.')
 DEBUG = config.get_config()['flask']['debug']
 SECRET_KEY = config.get_config()['flask']['secret_key']
 
@@ -49,27 +49,14 @@ def validate_json_req(req, valid):
         return false
 
     # Check that each element in the valid list exists and that the type matches
-    for i in valid:
-        if i[0] not in req_data:
+    for element in valid:
+        if element[0] not in req_data:
             return false
-        if not isinstance(req_data[i[0]], i[1]):
+        if not isinstance(req_data[element[0]], element[1]):
             return false
 
     # No tests failed
     return true
-
-# Helper function to send a signal to the Nido daemon
-def signal_daemon():
-    try:
-        f = open(config.get_config()['daemon']['pid_file'])
-    except IOError:
-        # In the event of a file error, just ignore
-        pass
-    else:
-        pid = int(f.read().strip())
-        os.kill(pid, signal.SIGUSR1)
-    finally:
-        f.close()
 
 # Decorator for routes that require a session cookie
 #
@@ -93,23 +80,26 @@ def set_config():
     # Initialize response object
     resp = JSONResponse()
     # Make sure we received JSON
-    if request.get_json() is None:
+    if request.get_json() == None:
         resp.data['error'] = 'Did not receive a JSON request. Check MIME type and request body.'
         resp.status = 400
     else:
         # Expect to receive a json dict with following structure
+        # TODO: Improve validation
+        #       eg. location should be a list of only two numbers
+        #       eg. modes_available be a list of lists with two values
         validation = [
-                ( 'location', [Number, Number] ),
-                ( 'location_name', basestring ),
-                ( 'nido_location', basestring ),
+                ( 'location', list ),
                 ( 'celsius', bool ),
-                ( 'mode', Number ),
+                ( 'modes_available', list ),
                 ( 'set_temperature', Number )
                 ]
         # Update local configuration with user data
         if validate_json_req(request, validation):
             cfg = config.get_config()
-            cfg['config'] = request.get_json()
+            new_config = request.get_json()
+            cfg['config'] = new_config
+            cfg['config']['modes'] = config.list_modes(new_config['modes_available'])
             try:
                 config.set_config(cfg)
             except:
@@ -117,7 +107,7 @@ def set_config():
             else:
                 resp.data['message'] = 'Configuration updated successfully.'
                 # Send signal to daemon, if running, to trigger update
-                signal_daemon()
+                Controller.signal_daemon(config.get_config()['daemon']['pid_file'])
         else:
             resp.data['error'] = 'JSON in request was invalid.'
 
@@ -134,13 +124,7 @@ def get_config():
     if 'config' in cfg:
         resp.data['config'] = cfg['config']
     else:
-        try:
-            schema = config.get_schema('config')
-        except:
-            resp.data['error'] = 'Unable to retrieve config schema.'
-        else:
-            resp.data['config'] = schema
-            resp.data['config_required'] = True
+        resp.data['error'] = 'Unable to retrieve config schema.'
 
     return resp.get_flask_response()
 
@@ -157,7 +141,7 @@ def get_state():
     # TODO: Add daemon state
     try:
         # Throws a ControllerError exception on error
-        state = NidoController().get_status()
+        state = Controller().get_status()
         # Returns a JSON dict with an 'error' key on error
         sensor_data = Sensor().get_conditions()
     except Exception as e:
