@@ -97,11 +97,12 @@ def set_config():
             cfg = config.get_config()
             new_config = request.get_json()
             cfg['config'] = new_config
+            # Generate list of modes from available modes
             cfg['config']['modes'] = config.list_modes(new_config['modes_available'])
             try:
                 config.set_config(cfg)
-            except:
-                raise
+            except Exception as e:
+                resp.data['error'] = 'Server error updating configuration: {}'.format(e)
             else:
                 resp.data['message'] = 'Configuration updated successfully.'
                 # Send signal to daemon, if running, to trigger update
