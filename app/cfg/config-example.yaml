@@ -1,18 +1,18 @@
 GPIO:
-        heat_pin: 26
-        cool_pin: 20
+    heat_pin: 26
+    cool_pin: 20
 behavior:
-        hysteresis: 0.6
+    hysteresis: 0.6
 flask:
-        port: 8080
-        debug: True
-        secret_key: your-secret-key
-        username: your-username
-        password: your-password
+    port: 8080
+    debug: True
+    secret_key: your-secret-key
+    username: your-username
+    password: your-password
 wunderground:
-        api_key: your-api-key
+    api_key: your-api-key
 daemon:
-        pid_file: /tmp/nido.pid
-        work_dir: /tmp
-        log_file: /var/log/nidod.log
-        poll_interval: 300
+    pid_file: /tmp/nido.pid
+    work_dir: /tmp
+    log_file: /var/log/nidod.log
+    poll_interval: 300
