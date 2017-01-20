@@ -4,94 +4,83 @@ from NidoConstants import Mode, FormTypes
 class NidoConfig():
     def __init__(self):
         self._CONFIG = '/home/pi/nido/app/cfg/config.yaml'
-        self._SCHEMA_VERSION = '1.0.0'
+        self._SCHEMA_VERSION = '1.0'
         self._SCHEMA = {
                 'GPIO': {
                     'heat_pin': {
-                        'form_data': (FormTypes.text.name, None),
-                        'label': 'Heating pin'
+                        'required': True
                         },
                     'cool_pin': {
-                        'form_data': (FormTypes.text.name, None),
-                        'label': 'Cooling pin'
+                        'required': True
                         },
                     },
                 'behavior': {
                     'hysteresis': {
-                        'form_data': (FormTypes.text.name, 0.6),
-                        'label': 'Hysteresis'
+                        'required': False,
+                        'default': 0.6
                         }
                     },
                 'flask': {
                     'port': {
-                        'form_data': (FormTypes.text.name, 8080),
-                        'label': 'Port'
+                        'required': True
                         },
                     'debug': {
-                        'form_data': (FormTypes.radio.name, [ False, True ]),
-                        'label': 'Debug'
+                        'required': False,
+                        'default': False
                         },
-                    'secret-key': {
-                        'form_data': (FormTypes.text.name, None),
-                        'label': 'Secret key'
+                    'secret_key': {
+                        'required': True
                         },
                     'username': {
-                        'form_data': (FormTypes.text.name, None),
-                        'label': 'Username'
+                        'required': True
                         },
                     'password': {
-                        'form_data': (FormTypes.password.name, None),
-                        'label': 'Password'
+                        'required': True
                         }
                     },
                 'wunderground': {
                     'api_key': {
-                        'form_data': (FormTypes.text.name, None),
-                        'label': 'API key'
+                        'required': True
                         }
                     },
                 'config': {
                     'location': {
-                        'form_data': (FormTypes.text.name, '0.0,0.0'),
-                        'label': 'Location'
-                        },
-                    'location_name': {
                         'form_data': (FormTypes.text.name, None),
-                        'label': 'Location name'
-                        },
-                    'nido_location': {
-                        'form_data': (FormTypes.text.name, 'My Home'),
-                        'label': 'Nido location'
+                        'label': 'Location',
+                        'required': False
                         },
                     'celsius': {
-                        'form_data': (FormTypes.radio.name, [ 'Celsius', 'Fahrenheit' ]),
-                        'label': 'Temperature'
+                        'required': False,
+                        'default': True
                         },
-                    'mode': {
-                        'form_data': (FormTypes.select.name, [ Mode.Off.name, Mode.Heat.name, Mode.Cool.name, Mode.Heat_Cool.name ]),
-                        'label': 'Mode'
+                    'modes_available': {
+                        'form_data': (FormTypes.checkbox.name, [ [ Mode.Heat.name, True ], [ Mode.Cool.name, False ] ]),
+                        'label': 'Available modes',
+                        'required': False,
+                        'default': [ Mode.Heat.name ]
                         },
                     'set_temperature': {
-                        'form_data': (FormTypes.text.name, 21),
-                        'label': 'Set point'
+                        'required': False,
+                        'default': 21
+                        },
+                    'modes': {
+                        'required': False,
+                        'default': [ Mode.Off.name, Mode.Heat.name ]
                         }
                     },
                 'daemon': {
                     'pid_file': {
-                        'form_data': (FormTypes.text.name, '/tmp/nidod.pid'),
-                        'label': 'PID file'
+                        'required': True
                         },
                     'log_file': {
-                        'form_data': (FormTypes.text.name, '/var/log/nidod.log'),
-                        'label': 'Log file'
+                        'required': True
                         },
                     'work_dir': {
-                        'form_data': (FormTypes.text.name, '/tmp'),
-                        'label': 'Working directory'
+                        'required': True
                         },
                     'poll_interval': {
-                        'form_data': (FormTypes.text.name, 300),
-                        'label': 'Poll interval'
+                        'required': False,
+                        'default': 300
                         }
                     }
                 }
@@ -103,7 +92,7 @@ class NidoConfig():
 
     def set_config(self, config):
         with open(self._CONFIG, 'w') as f:
-            yaml.dump(config, f)
+            yaml.dump(config, f, default_flow_style=False, indent=4)
         return
 
     def get_schema(self, section):
@@ -111,3 +100,41 @@ class NidoConfig():
 
     def get_version(self):
         return self._SCHEMA_VERSION
+
+    def validate(self):
+        config = self.get_config()
+
+        # Iterate through schema and check required flag against loaded config
+        for section in self._SCHEMA:
+            for setting in self._SCHEMA[section]:
+                if self._SCHEMA[section][setting]['required'] == True:
+                    if section not in config:
+                        return False
+                    elif setting not in config[section]:
+                        return False
+                # If setting is not required, check if a default value exists
+                #   and set it if not set in the config
+                elif 'default' in self._SCHEMA[section][setting]:
+                    if section not in config:
+                        default_setting = {
+                                section: {
+                                    setting: self._SCHEMA[section][setting]['default']
+                                    }
+                                }
+                        config.update(default_setting)
+                    elif setting not in config[section]:
+                        config[section][setting] = self._SCHEMA[section][setting]['default']
+
+        # Write any changes to config back to disk and return True since we found all required settings
+        self.set_config(config)
+        return True
+
+    @staticmethod
+    def list_modes(modes_available):
+        modes = [ Mode.Off.name ]
+        for mode in modes_available:
+            if mode[1] is True:
+                modes.append(mode[0])
+        if len(modes) == 3:
+            modes.append(Mode.Heat_Cool.name)
+        return modes
