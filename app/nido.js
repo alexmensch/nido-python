@@ -67,7 +67,7 @@ var FormButton = React.createClass({
 
 var FormRow = React.createClass({
     // Received props:
-    // labelClass, inputDivClass, inputType, inputPlaceholder (string or list), labelText
+    // labelClass, inputDivClass, inputType, inputPlaceholder (string or list), labelText, inputId
     render: function() {
         var input_id = this.props.inputId ? this.props.inputId : 'input-' + this.props.labelText;
         switch(this.props.inputType) {
@@ -173,21 +173,43 @@ var Config = React.createClass({
     }
 });
 
+var Dashboard = React.createClass({
+    // Props: setView (function), config (JSON), state (JSON), weather (JSON)
+    render: function() {
+        // Show Loading component unless we've received all props
+        if ( this.props.config && this.props.state && this.props.weather ) {
+            return(
+                    <div id="dashboard">
+                        <Toolbar setView={this.props.setView} />
+                        <NidoState state={this.props.state} config={this.props.config} />
+                        <Weather weather={this.props.weather} config={this.props.config} />
+                    </div>
+                );
+        } else {
+            return (
+                <div id="dashboard">
+                    <Loading />
+                </div>
+                );
+        }
+    }
+});
+
 var Toolbar = React.createClass({
     // Props: setView (function)
-    configAction: function() {
+    homeawayAction: function() {
         return
     },
 
-    logoutAction: function() {
+    configAction: function() {
         return
     },
 
     render: function() {
         return (
                 <div id="toolbar">
+                    <ToolbarButton icon={undefined} action={this.homeawayAction} />
                     <ToolbarButton icon={undefined} action={this.configAction} />
-                    <ToolbarButton icon={undefined} action={this.logoutAction} />
                 </div>
                 );
     }
@@ -196,38 +218,51 @@ var Toolbar = React.createClass({
 var ToolbarButton = React.createClass({
     // Props: icon, action (function)
     render: function() {
-        return <span>ToolbarButton</span>;
-    }
-});
-
-var Dashboard = React.createClass({
-    // Props: setView (function), config (JSON), state (JSON), weather (JSON)
-    render: function() {
-        return(
-                <div>
-                    <Toolbar setView={this.props.setView} />
-                    <div id="dashboard">
-                        <NidoState state={this.props.state} config={this.props.config} />
-                        <Weather weather={this.props.weather} />
-                    </div>
-                </div>
-              );
+        return (
+            <div id="toolbarbutton">
+                <span>{this.props.action.name} </span>;
+            </div>
+            );
     }
 });
 
 var NidoState = React.createClass({
     // Props: state (JSON), config (JSON)
     render: function() {
+        let rh = this.props.state.conditions.relative_humidity;
         return(
             <div>
                 <div id="nidoState">
-                    <div><strong>State:</strong>{JSON.stringify(this.props.state)}</div>
-                    <div><strong>Config:</strong>{JSON.stringify(this.props.config)}</div>
+                    <Temperature temp={this.props.state.conditions.temp_c} celsius={this.props.config.celsius} />
+                    <div className="rh">RH: {rh}%</div>
                 </div>
                 <div id="userControls">
-                    <div id="changeSetpoint"><ChangeSetpoint config={this.props.config} /></div>
-                    <div id="onOff"><OnOff config={this.props.config} /></div>
+                    <ChangeSetpoint config={this.props.config} />
+                    <ChangeMode config={this.props.config} />
                 </div>
+            </div>
+            );
+    }
+});
+
+var Temperature = React.createClass({
+    // Props: temp (float), celsius (boolean)
+    c_to_f: function(temp) {
+        let new_temp = ( ( temp * 9 ) / 5 ) + 32;
+        return new_temp
+    },
+
+    round: function(temp) {
+        return Math.round(temp)
+    },
+
+    render: function() {
+        let display_temp = this.props.celsius ? this.props.temp : this.c_to_f(temp);
+        display_temp = this.round(display_temp);
+        return(
+            <div className="temp">
+                <span className="tempVal">{display_temp}</span>
+                <span className="tempUnit">&deg;{this.props.celsius ? 'C' : 'F'}</span>
             </div>
             );
     }
@@ -236,25 +271,117 @@ var NidoState = React.createClass({
 var ChangeSetpoint = React.createClass({
     // Props: config (JSON)
     render: function() {
-        return <span>ChangeSetpoint</span>;
+        return (
+            <div id="changeSetpoint">
+                <button type="button" className="btn">
+                    <span className="glyphicon glyphicon-triangle-top">&nbsp;</span>
+                </button>
+                <button type="button" className="btn">
+                    <span className="glyphicon glyphicon-triangle-bottom">&nbsp;</span>
+                </button>
+            </div>
+            );
     }
 });
 
-var OnOff = React.createClass({
+var ChangeMode = React.createClass({
     // Props: config (JSON)
+    getInitialState: function() {
+        return {
+            mode: this.props.config.mode_set
+        };
+    },
+
+    setMode: function(e) {
+        console.log('Mode change was clicked');
+        return
+    },
+
     render: function() {
-        return <span>OnOff</span>;
+        return (
+            <div id="changeMode">
+                <Temperature temp={this.props.config.set_temperature} celsius={this.props.config.celsius} />
+                <ShowMode action={this.setMode} mode={this.state.mode} />
+            </div>
+            );
+    }
+});
+
+var ShowMode = React.createClass({
+    // Props: mode (string)
+    render: function() {
+        switch(this.props.mode) {
+            case 'Off':
+                return (
+                    <div id="showMode" onClick={this.props.action}>
+                        <span>OFF</span>
+                    </div>
+                    );
+                break;
+            case 'Heat':
+                return (
+                    <div id="showMode" onClick={this.props.action}>
+                        <span className="glyphicon glyphicon-fire">&nbsp;</span>
+                    </div>
+                    );
+                break;
+            case 'Cool':
+                return (
+                    <div id="showMode" onClick={this.props.action}>
+                        <span className="glyphicon glyphicon-asterisk">&nbsp;</span>
+                    </div>
+                    );
+                break;
+            case 'Heat_Cool':
+                return (
+                    <div id="showMode" onClick={this.props.action}>
+                        <span className="glyphicon glyphicon-fire">&nbsp;</span>
+                        <span className="glyphicon glyphicon-asterisk">&nbsp;</span>
+                    </div>
+                    );
+                break;
+            default:
+                return (
+                    <div id="showMode" onClick={this.props.action}>
+                        <span className="glyphicon glyphicon-flash">&nbsp;</span>
+                    </div>
+                    );
+        }
     }
 });
 
 var Weather = React.createClass({
-    // Props: weather (JSON)
+    // Props: weather (JSON), config (JSON)
     render: function() {
         return(
             <div id="weather">
-                <div><strong>Weather:</strong>{JSON.stringify(this.props.weather)}</div>
+                <WeatherIcon icon={this.props.weather.condition.icon_url} />
+                <Temperature temp={this.props.weather.temp_c} celsius={this.props.config.celsius} />
+                <TempHighLow />
+                <SunriseSunset />
             </div>
             );
+    }
+});
+
+var WeatherIcon = React.createClass({
+    // Props: icon (string)
+    render: function() {
+        return <div>Weather icon</div>;
+    }
+});
+
+var TempHighLow = React.createClass({
+    // Props: ?
+    render: function() {
+        return <div>High / Low</div>;
+    }
+});
+
+var SunriseSunset = React.createClass({
+    // Props: ?
+    render: function() {
+        return <div>Sunrise / Sunset</div>;
     }
 });
 
@@ -326,6 +453,7 @@ var Nido = React.createClass({
         var that = this;
         var serverStates = ['config', 'state', 'weather'];
 
+        // Initiate async requests to the list of endpoints
         for (let i = 0; i < serverStates.length; i++) {
             let serverState = serverStates[i];
             fetchData('get_' + serverState)
@@ -333,7 +461,7 @@ var Nido = React.createClass({
                 .then(fetchResponseJSON)
                 .then(function(json) {
                     let newState = {};
-                    newState[serverState] = json;
+                    newState[serverState] = json[serverState];
                     that.setState(newState);
                 })
                 .catch(fetchGenericError);
@@ -342,41 +470,27 @@ var Nido = React.createClass({
 
     componentDidMount: function() {
         var that = this;
-        // Get config server state and set view depending on response
+        // Make a call to get_config to see if the user is logged in already
         fetchData('get_config')
             .then(fetchCheckStatus2xx403)
             .then(function(response) {
                 if ( response.status == 403 ) {
                     that.setView('login');
-                    return Promise.resolve();
                 } else {
-                    return response.json();
+                    that.setView('dashboard');
                 }
-            })
-            .then(function(json) {
-                // Return if we got a 403 response
-                if (json == undefined) return Promise.resolve();
-
-                // Set config state
-                that.setState({
-                    config: json,
-                    view: 'dashboard'
-                });
+                return Promise.resolve();
             })
             .catch(fetchGenericError);
     },
 
     componentDidUpdate: function(prevProps, prevState) {
+        // Refresh data from server any time we change state,
+        // except when we've moved into the login state
         if (prevState.view != this.state.view) {
             if (this.state.view != 'login') {
                 this.refreshServerState();
             }
-        }
-        if ( prevState.config != this.state.config
-             && this.state.config['config_required'] == true
-             && this.state.view != 'config'
-             ) {
-            this.setView('config');
         }
     },
     

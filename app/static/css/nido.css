@@ -31,15 +31,15 @@ body {
   -webkit-box-align: center;
   -ms-flex-align: center;
   align-items: center;
-  background: #eeeeee;
+  background: #dddddd;
 }
 
 .loading {
   border-radius: 50%;
   width: 25px;
   height: 25px;
-  border: 0.25rem solid rgba(255, 255, 255, 0.2);
-  border-top-color: white;
+  border: 0.25rem solid rgba(85, 85, 85, 1);
+  border-top-color: #dddddd;
   -webkit-animation: spin 1s infinite linear;
   animation: spin 1s infinite linear;
 }
