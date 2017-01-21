@@ -200,7 +200,6 @@ class ControllerError(Exception):
     def __str__(self):
         return repr(self.msg)
 
-# TODO: Record start/stop times for all heating/cooling events
 class Controller():
     """This is the controller code that determines whether the heating / cooling system
     should be enabled based on the thermostat set point."""
@@ -268,10 +267,10 @@ class Controller():
             raise
         else:
             try:
-                mode = config['settings']['mode']
+                mode = config['config']['mode_set']
                 status = self.get_status()
                 temp = Sensor.get_conditions()['conditions']['temp_c']
-                set_temp = config['settings']['set_temperature']
+                set_temp = config['config']['set_temperature']
                 hysteresis = config['behavior']['hysteresis']
             except KeyError as e:
                 self.shutdown()
@@ -280,9 +279,9 @@ class Controller():
                 self.shutdown()
                 raise
 
-        if mode is Mode.Off:
+        if mode == Mode.Off.name:
             self.shutdown()
-        elif mode is Mode.Heat:
+        elif mode == Mode.Heat.name:
             if temp < set_temp:
                 self._enable_heating(status, temp, set_temp, hysteresis)
             else:
@@ -361,7 +360,7 @@ class Config():
                         'form_data': (FormTypes.checkbox.name, [ [ Mode.Heat.name, True ], [ Mode.Cool.name, False ] ]),
                         'label': 'Available modes',
                         'required': False,
-                        'default': [ Mode.Heat.name ]
+                        'default': [ [ Mode.Heat.name, True ], [ Mode.Cool.name, False ] ]
                         },
                     'set_temperature': {
                         'required': False,
@@ -370,6 +369,10 @@ class Config():
                     'modes': {
                         'required': False,
                         'default': [ Mode.Off.name, Mode.Heat.name ]
+                        },
+                    'mode_set': {
+                        'required': False,
+                        'default': Mode.Off.name
                         }
                     },
                 'daemon': {
@@ -436,9 +439,16 @@ class Config():
     @staticmethod
     def list_modes(modes_available):
         modes = [ Mode.Off.name ]
+        heat = False
+        cool = False
+
         for mode in modes_available:
             if mode[1] is True:
+                if mode[0] == Mode.Heat.name:
+                    heat = True
+                elif mode[0] == Mode.Cool.name:
+                    cool = True
                 modes.append(mode[0])
-        if len(modes) == 3:
+        if heat and cool:
             modes.append(Mode.Heat_Cool.name)
         return modes
