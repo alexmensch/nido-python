@@ -126,7 +126,7 @@ def set_config():
                 resp.data['config'] = cfg['config']
                 # Send signal to daemon, if running, to trigger update
                 try:
-                    Controller.signal_daemon(config.get_config()['daemon']['pid_file'])
+                    Controller().signal_daemon()
                 except ControllerError as e:
                     resp.data['error'] = 'Server error signaling daemon: {}'.format(e)
         else:
@@ -158,25 +158,32 @@ def render_ui():
 def get_state():
     # Initialize response object
     resp = JSONResponse()
+    resp.data['state'] = {}
+    resp.data['error'] = []
     
-    # TODO: Add daemon state
     try:
-        # Throws a ControllerError exception on error
         state = Controller().get_status()
-        # Returns a JSON dict with an 'error' key on error
-        sensor_data = Sensor().get_conditions()
-    except Exception as e:
-        resp.data['error'] = 'Exception getting current state: {} {}'.format(type(e), str(e))
+    except ControllerError as e:
+        err_msg = 'Exception getting current state from controller: {}'.format(str(e))
+        resp.data['error'].append(err_msg)
     else:
-        # Heating / Cooling / Off
-        resp.data['state'] = {
-                'status': Status(state).name,
-                }
-        if 'error' in sensor_data:
-            resp.data['error'] = sensor_data['error']
-        else:
-            resp.data['state'].update(sensor_data)
+        # state = Heating / Cooling / Off
+        nidoState = { 'status': Status(state).name }
+        resp.data['state'].update(nidoState)
+        
+    # Returns a JSON dict with an 'error' key on error
+    # On success, returns a JSON dict with a 'conditions' key
+    sensor_data = Sensor().get_conditions()
+    if 'error' in sensor_data:
+        resp.data['error'].append(sensor_data['error'])
+    else:
+        resp.data['state'].update(sensor_data)
 
+    daemonState = { 'daemon_running': Controller().daemon_running() }
+    resp.data['state'].update(daemonState)
+
+    if len(resp.data['error']) == 0:
+        del resp.data['error']
     return resp.get_flask_response()
 
 @app.route('/get_weather', methods=['POST'])
@@ -199,25 +206,19 @@ def login():
     cfg = config.get_config()
     
     if 'logged_in' in session:
-        try:
-            resp.data['message'] = 'User already logged in.'
-            resp.data['username'] = session['username']
-            resp.data['logged_in'] = True
-        except:
-            raise
+        resp.data['message'] = 'User already logged in.'
+        resp.data['username'] = session['username']
+        resp.data['logged_in'] = True
     else:
-        try:
-            if request.form['username'] != cfg['flask']['username'] or request.form['password'] != cfg['flask']['password']:
-                resp.data['error'] = 'Incorrect login credentials.'
-                resp.data['logged_in'] = False
-            else:
-                # Set (implicit create) session cookie (HTTP only) which all endpoints will check for
-                session['logged_in'] = True
-                session['username'] = request.form['username']
-                resp.data['logged_in'] = True
-                resp.data['message'] = 'User has been logged in.'
-        except:
-            raise
+        if request.form['username'] != cfg['flask']['username'] or request.form['password'] != cfg['flask']['password']:
+            resp.data['error'] = 'Incorrect login credentials.'
+            resp.data['logged_in'] = False
+        else:
+            # Set (implicit create) session cookie (HTTP only) which all endpoints will check for
+            session['logged_in'] = True
+            session['username'] = request.form['username']
+            resp.data['logged_in'] = True
+            resp.data['message'] = 'User has been logged in.'
 
     return resp.get_flask_response()
 
@@ -226,14 +227,11 @@ def logout():
     # Initialize response object
     resp = JSONResponse()
     if 'logged_in' in session:
-        try:
-            resp.data['message'] = 'User has been logged out.'
-            resp.data['username'] = session['username']
-            resp.data['logged_in'] = False
-            # Note that clear() removes every key from the session dict, which causes the cookie to be destroyed
-            session.clear()
-        except:
-            raise
+        resp.data['message'] = 'User has been logged out.'
+        resp.data['username'] = session['username']
+        resp.data['logged_in'] = False
+        # Note that clear() removes every key from the session dict, which causes the cookie to be destroyed
+        session.clear()
     else:
         resp.data['error'] = 'User not logged in.'
         resp.data['logged_in'] = False
