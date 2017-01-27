@@ -2,7 +2,7 @@ import json
 from numbers import Number
 from functools import wraps
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
-from lib.Nido import Sensor, LocalWeather, Config, Controller, Status
+from lib.Nido import Sensor, LocalWeather, Config, Controller, Status, ControllerError, ConfigError
 
 # Configuration
 config = Config()
@@ -42,19 +42,35 @@ def validate_json_req(req, valid):
     # Get the JSON from the request object
     req_data = req.get_json()
 
-    # Number of elements must match
-    if len(valid) != len(req_data.keys()):
-        return false
+    # Request data can't have more entries than the validation set
+    if len(valid.keys()) < len(req_data.keys()):
+        print 'Bad length'
+        return False
 
-    # Check that each element in the valid list exists and that the type matches
-    for element in valid:
-        if element[0] not in req_data:
-            return false
-        if not isinstance(req_data[element[0]], element[1]):
-            return false
+    # Check that each element in the request data is valid
+    for setting in req_data:
+        if setting not in valid:
+            print 'Setting name is not in valid dict'
+            return False
+        elif not isinstance(req_data[setting], valid[setting]):
+            print 'Setting value is not instance of valid type'
+            print 'setting: {}, type: {}'.format(req_data[setting], type(req_data[setting]))
+            print 'valid type: {}'.format(valid[setting])
+            return False
 
     # No tests failed
-    return true
+    return True
+
+# Helper function to update config settings
+def update_config(old_cfg, new_cfg):
+    cfg = old_cfg
+
+    for setting in new_cfg:
+        if setting == 'modes_available':
+            cfg['modes'] = config.list_modes(new_cfg[setting])
+        cfg[setting] = new_cfg[setting]
+
+    return cfg
 
 # Decorator for routes that require a session cookie
 #
@@ -77,36 +93,42 @@ def require_session(route):
 def set_config():
     # Initialize response object
     resp = JSONResponse()
+    new_cfg = request.get_json()
     # Make sure we received JSON
-    if request.get_json() == None:
-        resp.data['error'] = 'Did not receive a JSON request. Check MIME type and request body.'
+    if new_cfg == None:
+        resp.data['error'] = 'Empty request body.'
+        resp.status = 400
+    elif new_cfg == {}:
+        resp.data['error'] = 'Empty JSON request received.'
         resp.status = 400
     else:
-        # Expect to receive a json dict with following structure
+        # Expect to receive a json dict with one or more of the following pairs
         # TODO: Improve validation
         #       eg. location should be a list of only two numbers
-        #       eg. modes_available be a list of lists with two values
-        validation = [
-                ( 'location', list ),
-                ( 'celsius', bool ),
-                ( 'modes_available', list ),
-                ( 'set_temperature', Number )
-                ]
+        #       eg. modes_available be a list of lists, each with only two values
+        validation = {
+            'location': list,
+            'celsius': bool,
+            'modes_available': list,
+            'mode_set': basestring,
+            'set_temperature': Number
+            }
         # Update local configuration with user data
         if validate_json_req(request, validation):
             cfg = config.get_config()
-            new_config = request.get_json()
-            cfg['config'] = new_config
-            # Generate list of modes from available modes
-            cfg['config']['modes'] = config.list_modes(new_config['modes_available'])
+            cfg['config'] = update_config(cfg['config'], new_cfg)
             try:
                 config.set_config(cfg)
-            except Exception as e:
+            except ConfigError as e:
                 resp.data['error'] = 'Server error updating configuration: {}'.format(e)
             else:
                 resp.data['message'] = 'Configuration updated successfully.'
+                resp.data['config'] = cfg['config']
                 # Send signal to daemon, if running, to trigger update
-                Controller.signal_daemon(config.get_config()['daemon']['pid_file'])
+                try:
+                    Controller.signal_daemon(config.get_config()['daemon']['pid_file'])
+                except ControllerError as e:
+                    resp.data['error'] = 'Server error signaling daemon: {}'.format(e)
         else:
             resp.data['error'] = 'JSON in request was invalid.'
 
