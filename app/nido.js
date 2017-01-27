@@ -174,14 +174,14 @@ var Config = React.createClass({
 });
 
 var Dashboard = React.createClass({
-    // Props: setView (function), config (JSON), state (JSON), weather (JSON)
+    // Props: setView (function), config (JSON), state (JSON), weather (JSON), setConfig (function)
     render: function() {
         // Show Loading component unless we've received all props
         if ( this.props.config && this.props.state && this.props.weather ) {
             return(
                     <div id="dashboard">
                         <Toolbar setView={this.props.setView} />
-                        <NidoState state={this.props.state} config={this.props.config} />
+                        <NidoState state={this.props.state} config={this.props.config} setConfig={this.props.setConfig} />
                         <Weather weather={this.props.weather} config={this.props.config} />
                     </div>
                 );
@@ -227,7 +227,7 @@ var ToolbarButton = React.createClass({
 });
 
 var NidoState = React.createClass({
-    // Props: state (JSON), config (JSON)
+    // Props: state (JSON), config (JSON), setConfig (function)
     render: function() {
         let rh = this.props.state.conditions.relative_humidity;
         return(
@@ -238,7 +238,7 @@ var NidoState = React.createClass({
                 </div>
                 <div id="userControls">
                     <ChangeSetpoint config={this.props.config} />
-                    <ChangeMode config={this.props.config} />
+                    <ChangeMode config={this.props.config} setConfig={this.props.setConfig} />
                 </div>
             </div>
             );
@@ -257,7 +257,7 @@ var Temperature = React.createClass({
     },
 
     render: function() {
-        let display_temp = this.props.celsius ? this.props.temp : this.c_to_f(temp);
+        let display_temp = this.props.celsius ? this.props.temp : this.c_to_f(this.props.temp);
         display_temp = this.round(display_temp);
         return(
             <div className="temp">
@@ -285,15 +285,21 @@ var ChangeSetpoint = React.createClass({
 });
 
 var ChangeMode = React.createClass({
-    // Props: config (JSON)
-    getInitialState: function() {
-        return {
-            mode: this.props.config.mode_set
-        };
-    },
-
+    // Props: config (JSON), setConfig (function)
     setMode: function(e) {
-        console.log('Mode change was clicked');
+        let newMode = '';
+        // Find current mode in list of available modes and increment
+        for(let i = 0; i < this.props.config.modes.length; i++) {
+            if (this.props.config.mode_set == this.props.config.modes[i]) {
+                newMode = this.props.config.modes[((i+1) % this.props.config.modes.length)];
+            }
+        }
+
+        // Set new mode
+        this.props.setConfig({
+            mode_set: newMode
+        });
+
         return
     },
 
@@ -301,14 +307,14 @@ var ChangeMode = React.createClass({
         return (
             <div id="changeMode">
                 <Temperature temp={this.props.config.set_temperature} celsius={this.props.config.celsius} />
-                <ShowMode action={this.setMode} mode={this.state.mode} />
+                <ShowMode action={this.setMode} mode={this.props.config.mode_set} />
             </div>
             );
     }
 });
 
 var ShowMode = React.createClass({
-    // Props: mode (string)
+    // Props: mode (string), action (function)
     render: function() {
         switch(this.props.mode) {
             case 'Off':
@@ -405,7 +411,7 @@ var Login = React.createClass({
         .then(fetchResponseJSON)
         .then(function(json) {
             // TODO: Incorporate message/error text into user feedback.
-            if (json['logged_in'] == true) {
+            if (json.logged_in == true) {
                 that.props.setView('dashboard');
             }
         }).catch(fetchGenericError);
@@ -449,9 +455,31 @@ var Nido = React.createClass({
         });
     },
 
+    setConfig: function(newConfig) {
+        let that = this;
+        fetch('/set_config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(newConfig)
+        })
+        .then(fetchCheckStatus2xx)
+        .then(fetchResponseJSON)
+        .then(function(json) {
+            // TODO: Show 'message' and 'error' content to user as appropriate
+            if (json.config) {
+                let newState = {};
+                newState.config = json.config;
+                that.setState(newState);
+            }
+        }).catch(fetchGenericError);
+    },
+
     refreshServerState: function() {
-        var that = this;
-        var serverStates = ['config', 'state', 'weather'];
+        let that = this;
+        let serverStates = ['config', 'state', 'weather'];
 
         // Initiate async requests to the list of endpoints
         for (let i = 0; i < serverStates.length; i++) {
@@ -503,9 +531,10 @@ var Nido = React.createClass({
                 return <Login setView={this.setView} />;
                 break;
             case 'dashboard':
-                return <Dashboard setView={this.setView} config={this.state.config}
-                                                         state={this.state.state}
-                                                         weather={this.state.weather} />;
+                return <Dashboard setView={this.setView} setConfig={this.setConfig}
+                                  config={this.state.config}
+                                  state={this.state.state}
+                                  weather={this.state.weather} />;
                 break;
             case 'config':
                 return <Config setView={this.setView} config={this.state.config} />;
