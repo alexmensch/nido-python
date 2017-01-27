@@ -1,4 +1,4 @@
-import requests, json, time, yaml, os, signal
+import requests, json, time, yaml, os, signal, re
 from enum import Enum
 import RPi.GPIO as GPIO
 from Adafruit_BME280 import *
@@ -155,6 +155,8 @@ class LocalWeather():
             else:
                 # 'current_observation' data was available, parse conditions
                 try:
+                    rh = re.sub('[^0-9]', '', observation_data['relative_humidity'])
+                    rh = int(float(rh))
                     self.conditions = {
                             'location': {
                                 'full': observation_data['display_location']['full'],
@@ -168,7 +170,7 @@ class LocalWeather():
                                     },
                                 },
                             'temp_c': "{}".format(observation_data['temp_c']),
-                            'relative_humidity': observation_data['relative_humidity'],
+                            'relative_humidity': rh,
                             'pressure_mb': observation_data['pressure_mb'],
                             'condition': {
                                 'description': observation_data['weather'],
