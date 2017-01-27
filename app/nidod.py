@@ -29,6 +29,9 @@ class NidoDaemon(Daemon):
 
         # Set up signal handler to trigger updates
         signal.signal(signal.SIGUSR1, self.signal_handler)
+        # Log start time
+        sys.stdout.write('{} [Info] Nido daemon started\n'.format(datetime.utcnow()))
+        sys.stdout.flush()
 
         ###
         # Run loop
@@ -52,6 +55,10 @@ class NidoDaemon(Daemon):
             Controller().shutdown()
         except Exception as e:
             sys.stderr.write('{} [Error] *CRITICAL*: unable to shutdown GPIO pins: {}\n'.format(datetime.utcnow(), e))
+        else:
+            # Log stop time
+            sys.stdout.write('{} [Info] Nido daemon shutdown\n'.format(datetime.utcnow()))
+            sys.stdout.flush()
         return
 
 ###

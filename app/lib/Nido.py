@@ -261,7 +261,7 @@ class Controller():
         try:
             mode = config['config']['mode_set']
             status = self.get_status()
-            temp = Sensor.get_conditions()['conditions']['temp_c']
+            temp = Sensor().get_conditions()['conditions']['temp_c']
             set_temp = config['config']['set_temperature']
             hysteresis = config['behavior']['hysteresis']
         except KeyError as e:
