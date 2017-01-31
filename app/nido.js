@@ -495,7 +495,21 @@ var TempHighLow = React.createClass({
 var SunriseSunset = React.createClass({
     // Props: sunrise (int), sunset (int)
     render: function() {
-        return <div>Sunrise / Sunset</div>;
+        let now = new Date();
+        let nowHrMin = (now.getHours() * 100) + now.getMinutes();
+        let nextChange = 'Sun';
+
+        if (nowHrMin > this.props.sunrise && nowHrMin < this.props.sunset) {
+            let hour = this.props.sunset.toString().slice(-4,-2);
+            let min = this.props.sunset.toString().slice(-2);
+            nextChange += 'set: ' + hour + ":" + min;
+        } else {
+            let hour = this.props.sunrise.toString().slice(-4,-2);
+            let min = this.props.sunrise.toString().slice(-2);
+            nextChange += 'rise: ' + hour + ":" + min;
+        }
+
+        return <div className="sunriseSunset">{nextChange}</div>;
     }
 });
 
