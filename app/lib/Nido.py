@@ -90,22 +90,98 @@ class LocalWeather():
         self.conditions = None
         return
 
+    def _wunderground_req(self, request_url):
+        try:
+            r = requests.get(request_url)
+        except RequestException as e:
+            # Making the request failed
+            resp = {}
+            resp['error'] = 'Error retrieving local weather: {}'.format(e)
+            return resp
+        else:
+            return r
+
+    def _wunderground_parse_result(self, r):
+        resp = {}
+        r_json = r.json()
+        try:
+            current_observation = r_json['current_observation']
+            forecast = r_json['forecast']['simpleforecast']['forecastday']
+            sun_phase = r_json['sun_phase']
+        except KeyError:
+            try:
+                api_error = r_json['response']['error']
+            except KeyError:
+                resp['error'] = 'Unknown Wunderground API error. Response data: ' + str(r_json)
+            else:
+                if 'description' in api_error:
+                    resp['error'] = 'Wunderground API error ({}): {}'.format(api_error['type'], api_error['description'])
+                else:
+                    resp['error'] = 'Wunderground API error ({})'.format(api_error['type'])
+        else:
+            try:
+                # Remove '%' and format relatively humidity as a number
+                rh = re.sub('[^0-9]', '', current_observation['relative_humidity'])
+                rh = int(float(rh))
+                # Get shortest term high/low forecast
+                for period in forecast:
+                    if period['period'] == 1:
+                        fcast_high = period['high']['celsius']
+                        fcast_low = period['low']['celsius']
+                self.conditions = {
+                        'location': {
+                            'full': current_observation['display_location']['full'],
+                            'city': current_observation['display_location']['city'],
+                            'state': current_observation['display_location']['state'],
+                            'zipcode': current_observation['display_location']['zip'],
+                            'country': current_observation['display_location']['country'],
+                            'coordinates': {
+                                'latitude': current_observation['display_location']['latitude'],
+                                'longitude': current_observation['display_location']['longitude']
+                                },
+                            },
+                        'temp_c': "{}".format(current_observation['temp_c']),
+                        'relative_humidity': rh,
+                        'pressure_mb': current_observation['pressure_mb'],
+                        'condition': {
+                            'description': current_observation['weather'],
+                            'icon_url': current_observation['icon_url']
+                            },
+                        'forecast': {
+                            'high': fcast_high,
+                            'low': fcast_low
+                            },
+                        'solar': {
+                            'sunrise': int(sun_phase['sunrise']['hour'] + sun_phase['sunrise']['minute']),
+                            'sunset': int(sun_phase['sunset']['hour'] + sun_phase['sunset']['minute'])
+                            }
+                        }
+            except KeyError as e:
+                # Something changed in the response format, generate an error
+                resp['error'] = 'Error parsing Wunderground API data: {}'.format(str(e))
+            else:
+                # Reset retrieval time
+                self.last_req = int(time.time())
+                self._interval = 0
+        finally:
+            return resp
+
     def get_conditions(self):
         # Initialize response dict
         resp = {}
         # How long since last retrieval?
-        interval = int(time.time()) - self.last_req
+        self._interval = int(time.time()) - self.last_req
         # System clock must have changed. Make cache stale.
-        if interval < 0:
-            interval = self._CACHE_EXPIRY
+        if self._interval < 0:
+            self._interval = self._CACHE_EXPIRY
         # We've never made a request.
         if self.last_req == 0:
-            interval = -1
+            self._interval = -1
 
         # If we made a request within caching period and have a cached result, use that instead
-        if self.conditions and (interval < self._CACHE_EXPIRY) and (interval >= 0):
+        if self.conditions and (self._interval < self._CACHE_EXPIRY) and (self._interval >= 0):
             resp['weather'] = self.conditions
-            resp['retrieval_age'] = interval
+            resp['retrieval_age'] = self._interval
             return resp
 
         # Determine location query type
@@ -118,74 +194,18 @@ class LocalWeather():
         elif self.zipcode:
             query = self.zipcode
 
-        # Set up Wunderground API request
-        request_url = 'http://api.wunderground.com/api/{}/conditions/q/{}.json'.format(self.api_key, query)
-        try:
-            r = requests.get(request_url)
-        except Exception as e:
-            # Making the request failed
-            resp['error'] = 'Error retrieving local weather: {}'.format(e)
-            # If we have any cached conditions (regardless of age), return them
-            if self.conditions:
-                resp['weather'] = self.conditions
-                resp['retrieval_age'] = interval
+        # Get Wunderground weather conditions
+        request_url = 'http://api.wunderground.com/api/{}/{}/q/{}.json'.format(self.api_key, 'conditions/forecast/astronomy', query)
+        api_response = self._wunderground_req(request_url)
+
+        if isinstance(api_response, requests.Response):
+            resp.update(self._wunderground_parse_result(api_response))
         else:
-            # Request was successful, parse response JSON
-            r_json = r.json()
-            try:
-                observation_data = r_json['current_observation']
-            except KeyError:
-                # 'current_observation' data is missing, look for error description in response
-                try:
-                    api_error = r_json['response']['error']
-                except KeyError:
-                    # Error description was missing, return full response data instead
-                    resp['error'] = 'Unknown Wunderground API error. Response data: ' + str(r_json)
-                    # If we have any cached conditions (regardless of age), return them
-                    if self.conditions:
-                        resp['weather'] = self.conditions
-                        resp['retrieval_age'] = interval
-                else:
-                    # Return error type and description from Wunderground API
-                    resp['error'] = 'Wunderground API error (' + api_error['type'] + '): ' + api_error['description']
-                    # If we have any cached conditions (regardless of age), return them
-                    if self.conditions:
-                        resp['weather'] = self.conditions
-                        resp['retrieval_age'] = interval
-            else:
-                # 'current_observation' data was available, parse conditions
-                try:
-                    rh = re.sub('[^0-9]', '', observation_data['relative_humidity'])
-                    rh = int(float(rh))
-                    self.conditions = {
-                            'location': {
-                                'full': observation_data['display_location']['full'],
-                                'city': observation_data['display_location']['city'],
-                                'state': observation_data['display_location']['state'],
-                                'zipcode': observation_data['display_location']['zip'],
-                                'country': observation_data['display_location']['country'],
-                                'coordinates': {
-                                    'latitude': observation_data['display_location']['latitude'],
-                                    'longitude': observation_data['display_location']['longitude']
-                                    },
-                                },
-                            'temp_c': "{}".format(observation_data['temp_c']),
-                            'relative_humidity': rh,
-                            'pressure_mb': observation_data['pressure_mb'],
-                            'condition': {
-                                'description': observation_data['weather'],
-                                'icon_url': observation_data['icon_url']
-                                }
-                            }
-                except KeyError as e:
-                    # Something changed in the response format, generate an error
-                    resp['error'] = 'Error parsing Wunderground API data: {}' + str(e)
-                else:
-                    # Otherwise, if we successfully got here, everything actually worked!
-                    resp['weather'] = self.conditions
-                    # Reset retrieval time and update response
-                    self.last_req = int(time.time())
-                    resp['retrieval_age'] = 0
+            resp.update(api_response)
+
+        if self.conditions:
+            resp['weather'] = self.conditions
+            resp['retrieval_age'] = self._interval
         
         return resp
 
