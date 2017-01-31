@@ -381,8 +381,9 @@ var Weather = React.createClass({
                               temp={this.props.weather.temp_c}
                               rh={this.props.weather.relative_humidity}
                               setConfig={this.props.setConfig} />
-                <TempHighLow />
-                <SunriseSunset />
+                <TempHighLow high={this.props.weather.forecast.high} low={this.props.weather.forecast.low}
+                             celsius={this.props.config.celsius} setConfig={this.props.setConfig} />
+                <SunriseSunset sunrise={this.props.weather.solar.sunrise} sunset={this.props.weather.solar.sunset} />
             </div>
             );
     }
@@ -434,7 +435,7 @@ var TempRHToggle = React.createClass({
 });
 
 var Temperature = React.createClass({
-    // Props: temp (float), celsius (boolean), setConfig (function)
+    // Props: temp (float), celsius (boolean), setConfig (function), toggleAction (function)
     c_to_f: function(temp) {
         let new_temp = ( ( temp * 9 ) / 5 ) + 32;
         return new_temp
@@ -480,14 +481,19 @@ var RH = React.createClass({
 });
 
 var TempHighLow = React.createClass({
-    // Props: ?
+    // Props: high (string), low (string), celsius (boolean), setConfig (function)
     render: function() {
-        return <div>High / Low</div>;
+        return (
+            <div className="tempHighLow">
+                H: <Temperature temp={this.props.high} celsius={this.props.celsius} setConfig={this.props.setConfig} />
+                L: <Temperature temp={this.props.low} celsius={this.props.celsius} setConfig={this.props.setConfig} />
+            </div>
+            );
     }
 });
 
 var SunriseSunset = React.createClass({
-    // Props: ?
+    // Props: sunrise (int), sunset (int)
     render: function() {
         return <div>Sunrise / Sunset</div>;
     }
