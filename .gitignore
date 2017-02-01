@@ -21,5 +21,6 @@ run-nido.sh
 
 # Webpack'd JS
 app/static/js/nido.js
+app/static/js/nido.js.map
 
 nohup.out

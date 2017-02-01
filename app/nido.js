@@ -46,6 +46,58 @@ function fetchData(route) {
 }
 
 /* ********
+ * Temperature functions
+ * Source: https://facebook.github.io/react/docs/lifting-state-up.html
+ * ********
+ */
+
+// Note: returns a string!
+function roundDecimal(value, decimals) {
+    const result = Math.round(value * Math.pow(10, decimals)) / Math.pow(10, decimals);
+    return result.toFixed(decimals);
+}
+
+function roundStep(value, step) {
+    step || (step = 1.0);
+    var inv = 1.0 / step;
+    return Math.round(value * inv) / inv;
+}
+
+function toCelsius(fahrenheit) {
+   const result = (fahrenheit - 32) * 5 / 9;
+   return roundDecimal(result, 1);
+}
+
+function toFahrenheit(celsius) {
+   const result = (celsius * 9 / 5) + 32;
+   return roundDecimal(result, 0);
+}
+
+function tryConvert(value, convert) {
+   const input = parseFloat(value);
+   if (Number.isNaN(input)) {
+       return '';
+   }
+   return convert(input);
+}
+
+/* ********
+ * Misc helper functions
+ * ********
+ */
+
+function compareState(cur, prev) {
+    for (let property in cur) {
+        if (cur.hasOwnProperty(property)) {
+            if (cur[property] != prev[property]) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+/* ********
  * React components
  * ********
  */
@@ -178,14 +230,134 @@ var Config = React.createClass({
 
 var Dashboard = React.createClass({
     // Props: setView (function), config (JSON), state (JSON), weather (JSON), setConfig (function)
+
+    // We save this state and handle changes in this component so that we have a single
+    // point from which we coordinate updating the server via the /set_config endpoint
+    componentWillReceiveProps: function(nextProps) {
+        if (nextProps.config != undefined) {
+            // NOTE: temperature received from server is always in Celsius
+            this.setState({
+                celsius: nextProps.config.celsius,
+                set_temperature: nextProps.config.set_temperature,
+                mode_set: nextProps.config.mode_set
+            });
+        }
+    },
+
+    componentDidUpdate: function(prevProps, prevState) {
+        // To avoid a large number of API calls, we set a timeout that gets
+        // reset every time a state change occurs. Once the timeout expires,
+        // an update is sent to the server to make server state consistent
+        // with this component.
+        if (prevState != undefined && !compareState(this.state, prevState)) {
+            if (typeof this.timerID === 'number') {
+                clearTimeout(this.timerID);
+                this.timerID = undefined;
+            } else {
+                this.serverState = prevState;
+            }
+            this.timerID = setTimeout(
+                () => {
+                    if (!compareState(this.state, this.serverState)) {
+                        this.props.setConfig(this.state);
+                    }
+                    this.timerID = undefined;
+                    this.serverState = undefined;
+                },
+                2500
+            );
+        }
+    },
+
+    componentWillUnmount: function() {
+        clearTimeout(this.timerID);
+    },
+
+    handleTempUnitChange: function() {
+        const newScale = !this.state.celsius;
+        let newTemp = this.state.set_temperature;
+
+        if (newScale) {
+            newTemp = roundStep(newTemp, 0.5);
+        } else {
+            newTemp = tryConvert(newTemp, toFahrenheit);
+            newTemp = roundStep(newTemp, 1.0);
+            newTemp = tryConvert(newTemp, toCelsius);
+        }
+
+        this.setState({
+            celsius: newScale,
+            set_temperature: Number(newTemp)
+        })
+    },
+
+    handleSetpointChange: function(increment) {
+        const scale = this.state.celsius;
+        let newTemp = this.state.set_temperature;
+
+        if (scale) {
+            newTemp = roundStep(newTemp, 0.5);
+            newTemp += increment ? 0.5 : -0.5;
+        } else {
+            newTemp = tryConvert(newTemp, toFahrenheit);
+            newTemp = roundStep(newTemp, 1.0);
+            newTemp += increment ? 1 : -1;
+            newTemp = tryConvert(newTemp, toCelsius);
+        }
+        this.setState({
+            set_temperature: Number(newTemp)
+        });
+    },
+
+    handleModeChange: function() {
+        let newMode;
+        // Find current mode in list of available modes and increment
+        for(let i = 0; i < this.props.config.modes.length; i++) {
+            if (this.state.mode_set == this.props.config.modes[i]) {
+                newMode = this.props.config.modes[((i+1) % this.props.config.modes.length)];
+            }
+        }
+
+        this.setState({
+            mode_set: newMode
+        });
+    },
+
     render: function() {
         // Show Loading component unless we've received all props
         if ( this.props.config && this.props.state && this.props.weather ) {
+            const scale = this.state.celsius;
+            const unit = scale ? 'C' : 'F';
+            const settemp = roundDecimal(this.state.set_temperature, 1);
+            const sensortemp = roundDecimal(this.props.state.conditions.temp_c, 1);
+            const weathertemp = roundDecimal(this.props.weather.temp_c, 1);
+            const hightemp = roundDecimal(this.props.weather.forecast.high, 1);
+            const lowtemp = roundDecimal(this.props.weather.forecast.low, 1);
+
             return(
                     <div id="dashboard">
                         <Toolbar setView={this.props.setView} />
-                        <NidoState state={this.props.state} config={this.props.config} setConfig={this.props.setConfig} />
-                        <Weather weather={this.props.weather} config={this.props.config} setConfig={this.props.setConfig} />
+                        <NidoState>
+                            <TempRHToggle unit={unit}
+                                        temp={scale ? sensortemp : tryConvert(sensortemp, toFahrenheit)}
+                                        rh={this.props.state.conditions.relative_humidity}
+                                        toggleUnit={this.handleTempUnitChange} />
+                            <ControlSetpoint changeSetpoint={this.handleSetpointChange} />
+                            <ControlMode changeMode={this.handleModeChange} toggleUnit={this.handleTempUnitChange} 
+                                         mode={this.state.mode_set} temp={scale ? settemp : tryConvert(settemp, toFahrenheit)}
+                                         unit={unit} />
+                        </NidoState>
+                        <Weather>
+                            <WeatherIcon icon={this.props.weather.condition.icon_url} alt={this.props.weather.condition.description}/>
+                            <TempRHToggle unit={unit}
+                                          temp={scale ? weathertemp : tryConvert(weathertemp, toFahrenheit)}
+                                          rh={this.props.weather.relative_humidity}
+                                          toggleUnit={this.handleTempUnitChange} />
+                            <TempHighLow high={scale ? hightemp : tryConvert(hightemp, toFahrenheit)}
+                                         low={scale ? lowtemp : tryConvert(lowtemp, toFahrenheit)}
+                                         unit={unit} toggleUnit={this.handleTempUnitChange} />
+                            <SunriseSunset sunrise={this.props.weather.solar.sunrise} sunset={this.props.weather.solar.sunset} />
+                        </Weather>
                     </div>
                 );
         } else {
@@ -230,57 +402,28 @@ var ToolbarButton = React.createClass({
 });
 
 var NidoState = React.createClass({
-    // Props: state (JSON), config (JSON), setConfig (function)
+    // Props: none
     render: function() {
-        let rh = this.props.state.conditions.relative_humidity;
         return(
-            <div>
                 <div id="nidoState">
-                    <TempRHToggle celsius={this.props.config.celsius}
-                                  temp={this.props.state.conditions.temp_c}
-                                  rh={this.props.state.conditions.relative_humidity}
-                                  setConfig={this.props.setConfig} />
+                    {this.props.children}
                 </div>
-                <div id="userControls">
-                    <ChangeSetpoint config={this.props.config} setConfig={this.props.setConfig} />
-                    <ChangeMode config={this.props.config} setConfig={this.props.setConfig} />
-                </div>
-            </div>
             );
     }
 });
 
-var ChangeSetpoint = React.createClass({
-    // Props: config (JSON), setConfig (function)
-    f_to_c: function(temp) {
-        let new_temp = ( ( temp - 32 ) * 5 ) / 9;
-        return new_temp
-    },
-
-    changeSetpoint: function(increment) {
-        let newTemp = this.props.config.set_temperature;
-        if (this.props.config.celsius) {
-            newTemp += increment ? 0.5 : -0.5;
-        } else {
-            newTemp += increment ? 0.5555 : -0.5555;
-        }
-        this.props.setConfig({
-            set_temperature: newTemp
-        });
-
-        return
-    },
-
+var ControlSetpoint = React.createClass({
+    // Props: changeSetpoint (function)
     increment: function(e) {
         e.preventDefault();
-        this.changeSetpoint(true);
-        return
+        this.props.changeSetpoint(true);
+        return;
     },
 
     decrement: function(e) {
         e.preventDefault();
-        this.changeSetpoint(false);
-        return
+        this.props.changeSetpoint(false);
+        return;
     },
 
     render: function() {
@@ -297,32 +440,14 @@ var ChangeSetpoint = React.createClass({
     }
 });
 
-var ChangeMode = React.createClass({
-    // Props: config (JSON), setConfig (function)
-    setMode: function(e) {
-        e.preventDefault();
-        let newMode = '';
-        // Find current mode in list of available modes and increment
-        for(let i = 0; i < this.props.config.modes.length; i++) {
-            if (this.props.config.mode_set == this.props.config.modes[i]) {
-                newMode = this.props.config.modes[((i+1) % this.props.config.modes.length)];
-            }
-        }
-
-        // Set new mode
-        this.props.setConfig({
-            mode_set: newMode
-        });
-
-        return
-    },
-
+var ControlMode = React.createClass({
+    // Props: changeMode (function), mode (string), temp (float), unit (string), toggleUnit (function)
     render: function() {
         return (
             <div id="changeMode">
-                <Temperature temp={this.props.config.set_temperature} celsius={this.props.config.celsius}
-                             setConfig={this.props.setConfig} />
-                <ShowMode action={this.setMode} mode={this.props.config.mode_set} />
+                <Temperature temp={this.props.temp} unit={this.props.unit}
+                             toggleUnit={this.props.toggleUnit} />
+                <ShowMode action={this.props.changeMode} mode={this.props.mode} />
             </div>
             );
     }
@@ -330,32 +455,26 @@ var ChangeMode = React.createClass({
 
 var ShowMode = React.createClass({
     // Props: mode (string), action (function)
-    render: function() {
-        switch(this.props.mode) {
+    modeDisplay: function(mode) {
+        switch(mode) {
             case 'Off':
                 return (
-                    <div id="showMode" onClick={this.props.action}>
                         <span>OFF</span>
-                    </div>
                     );
                 break;
             case 'Heat':
                 return (
-                    <div id="showMode" onClick={this.props.action}>
                         <span className="glyphicon glyphicon-fire">&nbsp;</span>
-                    </div>
                     );
                 break;
             case 'Cool':
                 return (
-                    <div id="showMode" onClick={this.props.action}>
                         <span className="glyphicon glyphicon-asterisk">&nbsp;</span>
-                    </div>
                     );
                 break;
             case 'Heat_Cool':
                 return (
-                    <div id="showMode" onClick={this.props.action}>
+                    <div>
                         <span className="glyphicon glyphicon-fire">&nbsp;</span>
                         <span className="glyphicon glyphicon-asterisk">&nbsp;</span>
                     </div>
@@ -363,27 +482,26 @@ var ShowMode = React.createClass({
                 break;
             default:
                 return (
-                    <div id="showMode" onClick={this.props.action}>
                         <span className="glyphicon glyphicon-flash">&nbsp;</span>
-                    </div>
                     );
         }
+    },
+
+    render: function() {
+        return (
+            <div id="showMode" onClick={this.props.action}>
+                {this.modeDisplay(this.props.mode)}
+            </div>
+            );
     }
 });
 
 var Weather = React.createClass({
-    // Props: weather (JSON), config (JSON), setConfig (function)
+    // Props: none
     render: function() {
         return(
             <div id="weather">
-                <WeatherIcon icon={this.props.weather.condition.icon_url} alt={this.props.weather.condition.description}/>
-                <TempRHToggle celsius={this.props.config.celsius}
-                              temp={this.props.weather.temp_c}
-                              rh={this.props.weather.relative_humidity}
-                              setConfig={this.props.setConfig} />
-                <TempHighLow high={this.props.weather.forecast.high} low={this.props.weather.forecast.low}
-                             celsius={this.props.config.celsius} setConfig={this.props.setConfig} />
-                <SunriseSunset sunrise={this.props.weather.solar.sunrise} sunset={this.props.weather.solar.sunset} />
+                {this.props.children}
             </div>
             );
     }
@@ -401,7 +519,7 @@ var WeatherIcon = React.createClass({
 });
 
 var TempRHToggle = React.createClass({
-    // Props: temp (float), rh (float), celsius (boolean), setConfig (function)
+    // Props: temp (float), rh (float), unit (string), toggleUnit (function)
     getInitialState: function() {
         return {
             temp: true,
@@ -415,65 +533,47 @@ var TempRHToggle = React.createClass({
         });
     },
 
+    temperature: function() {
+        return (
+            <Temperature temp={this.props.temp} unit={this.props.unit}
+                         toggleUnit={this.props.toggleUnit}
+                         toggleAction={this.toggleDisplay} />
+            );
+    },
+
+    rh: function() {
+        return (
+            <RH rh={this.props.rh} toggleAction={this.toggleDisplay} />
+            );
+    },
+
     render: function() {
-        if (this.state.temp) {
-            return (
-                <div className="tempRHToggle">
-                    <Temperature temp={this.props.temp} celsius={this.props.celsius}
-                                 setConfig={this.props.setConfig}
-                                 toggleAction={this.toggleDisplay} />
-                </div>
-                );
-        } else {
-            return (
-                <div className="tempRHToggle" onClick={this.toggleDisplay}>
-                    <RH rh={this.props.rh} />
-                </div>
-                );
-        }
+        return (
+            <div className="tempRHToggle">
+                {this.state.temp ? this.temperature() : this.rh()}
+            </div>
+            );
     }
 });
 
 var Temperature = React.createClass({
-    // Props: temp (float), celsius (boolean), setConfig (function), toggleAction (function)
-    c_to_f: function(temp) {
-        let new_temp = ( ( temp * 9 ) / 5 ) + 32;
-        return new_temp
-    },
-
-    round: function(temp) {
-        let multiplier = this.props.celsius ? Math.pow(10, 1) : Math.pow(10, 0);
-        let result = Math.round(temp * multiplier) / multiplier;
-
-        return this.props.celsius ? result.toFixed(1) : result.toFixed(0);
-    },
-
-    toggleUnit: function(e) {
-        e.preventDefault();
-        this.props.setConfig({
-            celsius: !this.props.celsius
-        });
-        return
-    },
-
+    // Props: temp (float), unit (string), toggleAction (function), toggleUnit (function)
     render: function() {
-        let display_temp = this.props.celsius ? this.props.temp : this.c_to_f(this.props.temp);
-        display_temp = this.round(display_temp);
         return(
             <div className="temp">
-                <span className="tempVal" onClick={this.props.toggleAction}>{display_temp}</span>
-                <span className="tempUnit" onClick={this.toggleUnit}>&deg;{this.props.celsius ? 'C' : 'F'}</span>
+                <span className="tempVal" onClick={this.props.toggleAction}>{this.props.temp}</span>
+                <span className="tempUnit" onClick={this.props.toggleUnit}>&deg;{this.props.unit}</span>
             </div>
             );
     }
 });
 
 var RH = React.createClass({
-    // Props: rh (float)
+    // Props: rh (float), toggleAction (function)
     render: function() {
-        let rhDisplay = Math.round(this.props.rh);
+        let rhDisplay = roundDecimal(this.props.rh, 0);
         return (
-            <div className="rh">
+            <div className="rh" onClick={this.props.toggleAction}>
                 <span className="rhVal">{rhDisplay}%</span>
             </div>
             );
@@ -481,12 +581,12 @@ var RH = React.createClass({
 });
 
 var TempHighLow = React.createClass({
-    // Props: high (string), low (string), celsius (boolean), setConfig (function)
+    // Props: high (string), low (string), unit (string), toggleUnit (function)
     render: function() {
         return (
             <div className="tempHighLow">
-                H: <Temperature temp={this.props.high} celsius={this.props.celsius} setConfig={this.props.setConfig} />
-                L: <Temperature temp={this.props.low} celsius={this.props.celsius} setConfig={this.props.setConfig} />
+                H: <Temperature temp={this.props.high} unit={this.props.unit} toggleUnit={this.props.toggleUnit} />
+                L: <Temperature temp={this.props.low} unit={this.props.unit} toggleUnit={this.props.toggleUnit} />
             </div>
             );
     }
@@ -497,16 +597,16 @@ var SunriseSunset = React.createClass({
     render: function() {
         let now = new Date();
         let nowHrMin = (now.getHours() * 100) + now.getMinutes();
-        let nextChange = 'Sun';
+        let nextChange;
 
         if (nowHrMin > this.props.sunrise && nowHrMin < this.props.sunset) {
             let hour = this.props.sunset.toString().slice(-4,-2);
             let min = this.props.sunset.toString().slice(-2);
-            nextChange += 'set: ' + hour + ":" + min;
+            nextChange = 'Sunset: ' + hour + ":" + min;
         } else {
             let hour = this.props.sunrise.toString().slice(-4,-2);
             let min = this.props.sunrise.toString().slice(-2);
-            nextChange += 'rise: ' + hour + ":" + min;
+            nextChange = 'Sunrise: ' + hour + ":" + min;
         }
 
         return <div className="sunriseSunset">{nextChange}</div>;

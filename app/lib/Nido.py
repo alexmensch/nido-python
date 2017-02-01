@@ -126,8 +126,8 @@ class LocalWeather():
                 # Get shortest term high/low forecast
                 for period in forecast:
                     if period['period'] == 1:
-                        fcast_high = period['high']['celsius']
-                        fcast_low = period['low']['celsius']
+                        fcast_high = float(period['high']['celsius'])
+                        fcast_low = float(period['low']['celsius'])
                 self.conditions = {
                         'location': {
                             'full': current_observation['display_location']['full'],
@@ -140,7 +140,7 @@ class LocalWeather():
                                 'longitude': current_observation['display_location']['longitude']
                                 },
                             },
-                        'temp_c': "{}".format(current_observation['temp_c']),
+                        'temp_c': current_observation['temp_c'],
                         'relative_humidity': rh,
                         'pressure_mb': current_observation['pressure_mb'],
                         'condition': {
