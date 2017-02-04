@@ -1,3 +1,33 @@
+html, body {
+  height: 100%;
+}
+
+body {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-pack: distribute;
+  justify-content: space-around;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  background: #dddddd;
+}
+
+/* SVG icons */
+
+.icon {
+  width: 1em;
+  height: 1em;
+}
+
+/* SunriseSunset component */
+.sunriseSunset {
+  font-size: 16px;
+}
+
+/* Loading component */
+
 @-webkit-keyframes spin {
   0% {
     -webkit-transform: rotate(0deg);
@@ -17,21 +47,6 @@
     -webkit-transform: rotate(360deg);
             transform: rotate(360deg);
   }
-}
-html, body {
-  height: 100%;
-}
-
-body {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -ms-flex-pack: distribute;
-  justify-content: space-around;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-  background: #dddddd;
 }
 
 .loading {
