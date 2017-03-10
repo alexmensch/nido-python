@@ -8,6 +8,13 @@ Initial configuration:
 Generating a test build:
 - npm run build
 
+Optional (automate jsx -> js translation):
+- Install watchman as per instructions here: https://facebook.github.io/watchman/docs/install.html
+- Watch the React source:
+  watchman watch ./app
+- Run build process on file changes:
+  watchman -- trigger ./app build-jsx '*.js' -- npm run build
+
 Generating a production build
 - npm run build-prod
 
