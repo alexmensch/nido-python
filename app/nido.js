@@ -1,8 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import polyfill from "es6-promise";
-import "isomorphic-fetch";
 import * as Icon from "./lib/icons";
+import "isomorphic-fetch";
+import Geosuggest from 'react-geosuggest';
 
 /* ********
  * fetch() helper functions for Promise then-chain processing
@@ -25,7 +26,7 @@ function fetchCheckStatus2xx403(response) {
     }  
 }
 
-function fetchResponseJSON(response) {  
+function fetchResponseJSON(response) {
     return response.json()
 }
 
@@ -102,32 +103,6 @@ function compareState(cur, prev) {
  * React components (Content)
  * ********
  */
-
-class Config extends React.Component {
-    // Props: setView (function), config (JSON)
-    constructor(props) {
-        super(props);
-        this.handleConfigSubmit = this.handleConfigSubmit.bind(this);
-    }
-
-    handleConfigSubmit(e) {
-        e.preventDefault();
-        return
-    }
-
-    render() {
-        return (
-                <div id="config">
-                    <h2>Nido Configuration</h2>
-                    <form className="form-horizontal">
-                        <FormSubmitButton buttonText="Save" clickAction={this.handleConfigSubmit}
-                                    buttonClass="btn-primary" divClass="col-sm-offset-2 col-sm-2"
-                                    submit={true} />
-                    </form>
-                </div>
-               );
-    }
-}
 
 class Dashboard extends React.Component {
     // Props: setView (function), config (JSON), state (JSON), weather (JSON), setConfig (function)
@@ -570,84 +545,103 @@ class Login extends React.Component {
 
     render() {
         return (
-            <div className="login">
-                <h2>Login</h2>
-                <form className="form-horizontal" onSubmit={this.handleLoginSubmit}>
-                    <FormRow labelText="Username" labelClass="col-sm-2" inputId="input-Username"
-                             inputDivClass="col-sm-3" inputType="text" inputPlaceholder="Username" />
-                    <FormRow labelText="Password" labelClass="col-sm-2" inputId="input-Password"
-                             inputDivClass="col-sm-3" inputType="password" inputPlaceholder="Password" />
+            <ShowForm formId="login" title="Login" submitAction={this.handleLoginSubmit}>
+                    <FormRow labelText="Username" inputId="input-Username">
+                        <FormText inputId="input-Username" placeholder="Username" />
+                    </FormRow>
+                    <FormRow labelText="Password" inputId="input-Password">
+                        <FormText inputId="input-Password" placeholder="Password" />
+                    </FormRow>
                     <FormSubmitButton buttonText="Sign in" buttonClass="btn-primary" divClass="col-sm-offset-2 col-sm2" />
-                </form>
-            </div>
+            </ShowForm>
         );
     }
 }
 
-class FormRow extends React.Component {
-    // Props: labelClass, inputDivClass, inputType, inputPlaceholder (string or list), labelText, inputId
+class Config extends React.Component {
+    // Props: setView (function), config (JSON)
     constructor(props) {
         super(props);
+        this.state = {
+            location: undefined,
+
+        }
+
+        this.handleConfigSubmit = this.handleConfigSubmit.bind(this);
+        this.handleLocationSelect = this.handleLocationSelect.bind(this);
+    }
+
+    handleConfigSubmit(e) {
+        e.preventDefault();
+        return
+    }
+
+    handleLocationSelect(selection) {
+
     }
 
     render() {
-        var input_id = this.props.inputId ? this.props.inputId : 'input-' + this.props.labelText;
-        switch(this.props.inputType) {
-            case 'text':
-            case 'password':
-                return (
-                    <div className="form-group">
-                        <label htmlFor={input_id} className={'control-label ' + this.props.labelClass}>{this.props.labelText}</label>
-                        <div className={this.props.inputDivClass}>
-                            <input type={this.props.inputType} className="form-control" id={input_id}
-                                   placeholder={this.props.inputPlaceholder} />
-                        </div>
-                    </div>
-                    );
-            case 'checkbox':
-            case 'radio':
-                return (
-                    <div className="form-group">
-                        <label htmlFor={input_id} className={'control-label ' + this.props.labelClass}>{this.props.labelText}</label>
-                        <div id={input_id} className={this.props.inputDivClass} >
-                            {this.props.inputPlaceholder.map((item) =>
-                                <div className={this.props.inputType} key={item}>
-                                    <label>
-                                        <input type={this.props.inputType} name={this.props.inputType + '-' + this.props.labelText}
-                                            id={input_id + '-' + item} value={item} />
-                                        {item}
-                                    </label>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    );
-            case 'select':
-                return (
-                    <div className="form-group">
-                        <label htmlFor={input_id} className={'control-label ' + this.props.labelClass}>{this.props.labelText}</label>
-                        <select className="form-control" name={this.props.inputType + '-' + this.props.labelText}
-                                id={input_id} className={this.props.inputDivClass} >
-                            {this.props.inputPlaceholder.map((item) =>
-                               <option value={item} key={item}>{item}</option> 
-                            )}
-                        </select>
-                    </div>
-                       );
-            case 'textarea':
-                return (
-                    <div className="form-group">
-                        <label htmlFor={input_id} className={'control-label ' + this.props.labelClass}>{this.props.labelText}</label>
-                        <div className={this.props.inputDivClass}>
-                            <textarea className="form-control" id={input_id} rows="3">{this.props.inputPlaceholder}</textarea>
-                        </div>
-                    </div>
-                       );
-            default:
-                throw('Unexpected inputType property passed to FormRow component: ' + this.props.inputType);
-        }
+        const location_label = location_label in props.config ? props.config.location_label : false;
+        return (
+            <ShowForm formId="config" title="Configuration" submitAction={this.handleConfigSubmit}>
+                <FormRow inputId="location" labelText="Location">
+                    <Geosuggest placeholder={location_label ? location_label : 'Your location'} onSuggestSelect={this.handleLocationSelect} />
+                </FormRow>
+                <FormRow inputId="modes" LabelText="Available modes">
+                    {props.config.modes_available.map( (item) =>
+                        <FormCheckbox inputId={'modes-' + item[0]} label={item[0]} checked={item[1]} />
+                    )}
+                </FormRow>
+                <FormSubmitButton buttonText="Save"
+                                  buttonClass="btn-primary" divClass="col-sm-offset-2 col-sm-2" />
+            </ShowForm>
+        );
     }
 }
+
+function ShowForm(props) {
+    return (
+        <div className="form" id={props.formId}>
+            <h2>{props.title}</h2>
+            <form className="form-horizontal" onSubmit={props.submitAction}>
+                {props.children}
+            </form>
+        </div>
+    );
+}
+
+function FormRow(props) {
+    // Props: inputId, labelText
+    return (
+        <div className="form-group">
+            <label htmlFor={props.inputId} className="control-label">{props.labelText}</label>
+            <div className="inputDiv">
+                {props.children}
+            </div>
+        </div>
+    );
+}
+
+function FormCheckbox(props) {
+    // Props: inputId (string), data (list of tuples)
+    return (
+        <div className={props.inputId} key={item[0]}>
+            <label>
+                <input type="checkbox" id={props.inputId + '-' + item[0]} value={item[0]} defaultChecked={item[1]} />
+                {item[0]}
+            </label>
+        </div>
+    );
+}
+
+function FormText(props) {
+    // Props: inputId (string), placeholder (string), password (boolean, default false)
+    return (
+        <input type={props.password ? 'password' : 'text'} className="form-control" id={props.inputId} placeholder{props.placeholder} />
+    );
+}
+FormText.defaultProps = { password: false };
+FormText.propTypes = { password: React.PropTypes.bool };
 
 function FormSubmitButton(props) {
     // Props: buttonText, buttonClass, divClass

@@ -371,10 +371,16 @@ class Config():
                         'required': True
                         }
                     },
+                'google': {
+                    'api_key': {
+                        'required': True
+                        }
+                    },
                 'config': {
                     'location': {
-                        'form_data': (FormTypes.text.name, None),
-                        'label': 'Location',
+                        'required': False
+                        },
+                    'location_label': {
                         'required': False
                         },
                     'celsius': {
@@ -382,8 +388,6 @@ class Config():
                         'default': True
                         },
                     'modes_available': {
-                        'form_data': (FormTypes.checkbox.name, [ [ Mode.Heat.name, True ], [ Mode.Cool.name, False ] ]),
-                        'label': 'Available modes',
                         'required': False,
                         'default': [ [ Mode.Heat.name, True ], [ Mode.Cool.name, False ] ]
                         },

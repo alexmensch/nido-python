@@ -11,7 +11,11 @@ body {
   -webkit-box-align: center;
   -ms-flex-align: center;
   align-items: center;
-  background: #dddddd;
+  background: #333;
+  /* Font */
+  color: #dcdcdc;
+  font-size: 32px;
+  font-family: 'Source Sans Pro', sans-serif;
 }
 
 /* SVG icons */
@@ -19,11 +23,13 @@ body {
 .icon {
   width: 1em;
   height: 1em;
+  fill: #dcdcdc;
 }
 
 /* SunriseSunset component */
 .sunriseSunset {
-  font-size: 16px;
+  font-size: 1em;
+  line-height: 0;
 }
 
 /* Loading component */
@@ -51,9 +57,9 @@ body {
 
 .loading {
   border-radius: 50%;
-  width: 25px;
-  height: 25px;
-  border: 0.25rem solid rgba(85, 85, 85, 1);
+  width: 1em;
+  height: 1em;
+  border: 0.5rem solid rgba(85, 85, 85, 1);
   border-top-color: #dddddd;
   -webkit-animation: spin 1s infinite linear;
   animation: spin 1s infinite linear;

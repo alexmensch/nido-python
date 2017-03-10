@@ -1,7 +1,7 @@
 import React from "react";
 
 /* ********
- * React components (s)
+ * React components
  * ********
  */
 

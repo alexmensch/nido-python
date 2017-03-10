@@ -11,6 +11,7 @@ if config.validate() == False:
     exit('Error: incomplete configuration, please verify config.yaml settings.')
 DEBUG = config.get_config()['flask']['debug']
 SECRET_KEY = config.get_config()['flask']['secret_key']
+GOOGLE_API_KEY = config.get_config()['google']['api_key']
 
 # Initialize the application
 #
@@ -151,7 +152,7 @@ def get_config():
 
 @app.route('/')
 def render_ui():
-    return render_template('index.html')
+    return render_template('index.html', google_api_key=GOOGLE_API_KEY)
 
 @app.route('/get_state', methods=['POST'])
 @require_session
