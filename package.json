@@ -20,7 +20,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --progress --optimize-occurence-order --verbose",
+    "build": "webpack --progress",
     "build-prod": "webpack --progress --optimize-minimize --optimize-dedupe --optimize-occurence-order --config webpack-prod.config.js"
   },
   "repository": {

@@ -637,7 +637,7 @@ function FormCheckbox(props) {
 function FormText(props) {
     // Props: inputId (string), placeholder (string), password (boolean, default false)
     return (
-        <input type={props.password ? 'password' : 'text'} className="form-control" id={props.inputId} placeholder{props.placeholder} />
+        <input type={props.password ? 'password' : 'text'} className="form-control" id={props.inputId} placeholder={props.placeholder} />
     );
 }
 FormText.defaultProps = { password: false };
