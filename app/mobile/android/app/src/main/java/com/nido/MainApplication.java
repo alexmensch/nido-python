@@ -1,4 +1,4 @@
-package com.mobile;
+package com.nido;
 
 import android.app.Application;
 
