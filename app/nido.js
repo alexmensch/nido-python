@@ -550,7 +550,8 @@ class Login extends React.Component {
                         <FormText inputId="input-Username" placeholder="Username" />
                     </FormRow>
                     <FormRow labelText="Password" inputId="input-Password">
-                        <FormText inputId="input-Password" placeholder="Password" />
+                        <FormText password={true}
+                                  inputId="input-Password" placeholder="Password" />
                     </FormRow>
                     <FormSubmitButton buttonText="Sign in" buttonClass="btn-primary" divClass="col-sm-offset-2 col-sm2" />
             </ShowForm>
