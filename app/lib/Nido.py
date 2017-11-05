@@ -156,6 +156,8 @@ class LocalWeather():
                             'sunset': int(sun_phase['sunset']['hour'] + sun_phase['sunset']['minute'])
                             }
                         }
+                # Convert icon URL to HTTPS
+                self.conditions['condition']['icon_url'] = re.sub('(http)', 'https', current_observation['icon_url'], count=1)
             except KeyError as e:
                 # Something changed in the response format, generate an error
                 resp['error'] = 'Error parsing Wunderground API data: {}'.format(str(e))
@@ -195,7 +197,7 @@ class LocalWeather():
             query = self.zipcode
 
         # Get Wunderground weather conditions
-        request_url = 'http://api.wunderground.com/api/{}/{}/q/{}.json'.format(self.api_key, 'conditions/forecast/astronomy', query)
+        request_url = 'https://api.wunderground.com/api/{}/{}/q/{}.json'.format(self.api_key, 'conditions/forecast/astronomy', query)
         api_response = self._wunderground_req(request_url)
 
         if isinstance(api_response, requests.Response):

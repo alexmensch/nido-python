@@ -239,4 +239,5 @@ def logout():
     return resp.get_flask_response()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=config.get_config()['flask']['port'])
+    # context = ('cert.crt', 'key.key')
+    app.run(host='0.0.0.0', port=config.get_config()['flask']['port'], ssl_context='adhoc', threaded=True, debug=True)
