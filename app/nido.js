@@ -106,7 +106,13 @@ function compareState (cur, prev) {
  */
 
 class Dashboard extends React.Component {
-    // Props: setView (function), config (JSON), state (JSON), weather (JSON), setConfig (function)
+    /* Props:
+      setView (function),
+      config (JSON),
+      state (JSON),
+      weather (JSON),
+      setConfig (function)
+    */
   constructor (props) {
     super(props)
     this.handleTempUnitChange = this.handleTempUnitChange.bind(this)
@@ -114,11 +120,12 @@ class Dashboard extends React.Component {
     this.handleSetpointChange = this.handleSetpointChange.bind(this)
   }
 
-    // We save this state and handle changes in this component so that we have a single
-    // point from which we coordinate updating the server via the /set_config endpoint
+  /* We save this state and handle changes in this component so that we have a single
+    point from which we coordinate updating the server via the /set_config endpoint
+  */
   componentWillReceiveProps (nextProps) {
     if (nextProps.config !== undefined) {
-            // NOTE: temperature received from server is always in Celsius
+      // NOTE: temperature received from server is always in Celsius
       this.setState({
         celsius: nextProps.config.celsius,
         set_temperature: nextProps.config.set_temperature,
@@ -128,10 +135,10 @@ class Dashboard extends React.Component {
   }
 
   componentDidUpdate (prevProps, prevState) {
-        // To avoid a large number of API calls, we set a timeout that gets
-        // reset every time a state change occurs. Once the timeout expires,
-        // an update is sent to the server to make server state consistent
-        // with this component.
+    // To avoid a large number of API calls, we set a timeout that gets
+    // reset every time a state change occurs. Once the timeout expires,
+    // an update is sent to the server to make server state consistent
+    // with this component.
     if (prevState !== undefined && !compareState(this.state, prevState)) {
       if (typeof this.timerID === 'number') {
         clearTimeout(this.timerID)
@@ -212,7 +219,7 @@ class Dashboard extends React.Component {
   }
 
   render () {
-        // Show Loading component unless we've received all props
+    // Show Loading component unless we've received all props
     if (this.props.config && this.props.state && this.props.weather) {
       const scale = this.state.celsius
       const unit = scale ? 'C' : 'F'
@@ -770,10 +777,12 @@ class Nido extends React.Component {
       case 'login':
         return <Login setView={this.setView} />
       case 'dashboard':
-        return <Dashboard setView={this.setView} setConfig={this.setConfig}
-          config={this.state.config}
-          state={this.state.state}
-          weather={this.state.weather} />
+        return (
+          <Dashboard setView={this.setView} setConfig={this.setConfig}
+            config={this.state.config}
+            state={this.state.state}
+            weather={this.state.weather} />
+        )
       case 'config':
         return <Config setView={this.setView} config={this.state.config} />
     }

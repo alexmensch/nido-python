@@ -12,10 +12,6 @@ npm-debug.log
 # Contains private API keys
 config.yaml
 
-# Local convenience scripts
-push2prod.sh
-run-nido.sh
-
 # Webpack'd JS
 app/static/js/nido.js
 app/static/js/nido.js.map
@@ -24,3 +20,6 @@ app/static/js/nido.js.map
 *.sublime-*
 
 nohup.out
+
+# Local testing
+test.html
