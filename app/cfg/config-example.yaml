@@ -7,6 +7,7 @@ flask:
     port: 8080
     debug: True
     secret_key: your-secret-key
+    public_api_secret: your-secret-key
     username: your-username
     password: your-password
 wunderground:

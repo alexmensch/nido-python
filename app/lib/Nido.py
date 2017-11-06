@@ -428,6 +428,7 @@ class Config():
         with open(self._CONFIG, 'r') as f:
             return yaml.load(f)
 
+    # TODO: Should validate config being passed in before writing to disk
     def set_config(self, config):
         with open(self._CONFIG, 'w') as f:
             yaml.dump(config, f, default_flow_style=False, indent=4)
