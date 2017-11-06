@@ -22,3 +22,4 @@ Running the application:
 - sudo python app/nido.py        (Flask server)
 - sudo python app/nidod.py start (daemon)
   Note: sudo is required due to hardware access to GPIO pins
+  You may want to add these commands to your /etc/rc.local file so that Nido runs at startup.
