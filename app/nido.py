@@ -2,7 +2,7 @@ import json
 from numbers import Number
 from functools import wraps
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
-from lib.Nido import Sensor, LocalWeather, Config, Controller, Status, ControllerError, ConfigError
+from lib.Nido import Sensor, LocalWeather, Config, Controller, Status, ControllerError, ConfigError, Mode
 
 # Configuration
 config = Config()
@@ -40,12 +40,9 @@ class JSONResponse():
 # Where:
 #        'name' is the key we expect in the dict
 #        type is a type we can compare the corresponding value to using isinstance()
-def validate_json_req(req, valid):
-    # Get the JSON from the request object
-    req_data = req.get_json()
-    
+def validate_json_req(req_data, valid):
     # Make sure we have JSON in the body first
-    if (req_data == None || req_data == {}):
+    if (req_data == None) or (req_data == {}):
         return False
 
     # Request data can't have more entries than the validation set
@@ -130,7 +127,7 @@ def set_config():
         }
 
     # Update local configuration with user data
-    if validate_json_req(request, validation):
+    if validate_json_req(new_cfg, validation):
         cfg = config.get_config()
         cfg['config'] = update_config(cfg['config'], new_cfg)
         resp = set_config_helper(resp, cfg)
@@ -250,17 +247,17 @@ def render_ui():
 #   Good enough security for now!
 
 # Helper function to validate API secret and set specific mode
-def api_set_mode(req_body, mode):
+def api_set_mode(req_data, mode):
     # Initialize response object
     resp = JSONResponse()
     # Validate JSON. We're just looking for a secret key.
     validation = { 'secret': basestring }
 
-    if validate_json_request(req_body, validation):
-        if req_body['secret'] == PUBLIC_API_SECRET:
+    if validate_json_req(req_data, validation):
+        if req_data['secret'] == PUBLIC_API_SECRET:
             cfg = config.get_config()
-            cfg['mode_set'] = mode
-            resp = set_config_helper(cfg, resp)
+            cfg['config']['mode_set'] = mode
+            resp = set_config_helper(resp, cfg)
         else:
             resp.data['error'] = 'Invalid secret.'
             resp.status = 401
@@ -270,13 +267,13 @@ def api_set_mode(req_body, mode):
 
     return resp.get_flask_response()
 
-@app.route('/api/set_mode/off', methods=[POST])
+@app.route('/api/set_mode/off', methods=['POST'])
 def api_set_mode_off():
-    return api_set_mode(request.get_json(), Config.Mode.Off.name)
+    return api_set_mode(request.get_json(), Mode.Off.name)
 
-@app.route('/api/set_mode/heat', methods=[POST])
+@app.route('/api/set_mode/heat', methods=['POST'])
 def api_set_mode_heat():
-    return api_set_mode(request.get_json(), Config.Mode.Heat.name)
+    return api_set_mode(request.get_json(), Mode.Heat.name)
 
 if __name__ == '__main__':
     # We're using an adhoc SSL context, which is not considered secure by browsers

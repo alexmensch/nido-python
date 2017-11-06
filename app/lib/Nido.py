@@ -334,7 +334,7 @@ class ConfigError(Exception):
 class Config():
     def __init__(self):
         self._CONFIG = '/home/pi/nido/app/cfg/config.yaml'
-        self._SCHEMA_VERSION = '1.0'
+        self._SCHEMA_VERSION = '1.1'
         self._SCHEMA = {
                 'GPIO': {
                     'heat_pin': {
@@ -359,6 +359,9 @@ class Config():
                         'default': False
                         },
                     'secret_key': {
+                        'required': True
+                        },
+                    'public_api_secret': {
                         'required': True
                         },
                     'username': {
