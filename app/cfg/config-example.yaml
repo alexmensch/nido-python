@@ -4,12 +4,14 @@ GPIO:
 behavior:
     hysteresis: 0.6
 flask:
-    port: 8080
-    debug: True
+    port: 443
     secret_key: your-secret-key
+    public_api_secret: your-secret-key
     username: your-username
     password: your-password
 wunderground:
+    api_key: your-api-key
+google:
     api_key: your-api-key
 daemon:
     pid_file: /tmp/nido.pid

@@ -334,7 +334,7 @@ class ConfigError(Exception):
 class Config():
     def __init__(self):
         self._CONFIG = '/home/pi/nido/app/cfg/config.yaml'
-        self._SCHEMA_VERSION = '1.0'
+        self._SCHEMA_VERSION = '1.1'
         self._SCHEMA = {
                 'GPIO': {
                     'heat_pin': {
@@ -359,6 +359,9 @@ class Config():
                         'default': False
                         },
                     'secret_key': {
+                        'required': True
+                        },
+                    'public_api_secret': {
                         'required': True
                         },
                     'username': {
@@ -428,6 +431,7 @@ class Config():
         with open(self._CONFIG, 'r') as f:
             return yaml.load(f)
 
+    # TODO: Should validate config being passed in before writing to disk
     def set_config(self, config):
         with open(self._CONFIG, 'w') as f:
             yaml.dump(config, f, default_flow_style=False, indent=4)
