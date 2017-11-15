@@ -278,4 +278,4 @@ def api_set_mode_heat():
 if __name__ == '__main__':
     # We're using an adhoc SSL context, which is not considered secure by browsers
     # because it invokes a self-signed certificate.
-    app.run(host='0.0.0.0', port=config.get_config()['flask']['port'], ssl_context='adhoc', threaded=True)
+    app.run(host='0.0.0.0', port=config.get_config()['flask']['port'], ssl_context='adhoc', threaded=False)
