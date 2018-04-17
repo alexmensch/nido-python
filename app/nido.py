@@ -301,9 +301,29 @@ def api_set_mode_off():
 def api_set_mode_heat():
     return api_set_mode(request.get_json(), Mode.Heat.name)
 
-@app.route('/api/set_mode/<int:temp>/<string:scale>', methods=['POST'])
+@app.route('/api/set_temp/<float:temp>/<string:scale>', methods=['POST'])
+@require_secret
 def api_set_temp():
+    # Initialize response object
+    resp = JSONResponse()
+    cfg = config.get_config()
 
+    scale = scale.upper()
+    if scale == 'C':
+        cfg['config']['set_temperature'] = float("{0:.1f}".format(temp))
+        resp = set_config_helper(resp, cfg)
+    elif scale == 'F':
+        # The following conversion duplicates the logic in nido.js
+        celsius_temp = (temp - 32) * 5 / 9
+        celsius_temp = round(celsius_temp * 10) / 10
+        celsius_temp = float("{0:.1f}".format(celsius_temp))
+        cfg['config']['set_temperature'] = celsius_temp
+        resp = set_config_helper(resp, cfg)
+    else:
+        resp.data['error'] = 'Invalid temperature scale: {}'.format(scale)
+        resp.status = 400
+
+    return resp.get_flask_response()
 
 if __name__ == '__main__':
     # We're using an adhoc SSL context, which is not considered secure by browsers
