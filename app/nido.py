@@ -275,6 +275,10 @@ def api_set_mode_off():
 def api_set_mode_heat():
     return api_set_mode(request.get_json(), Mode.Heat.name)
 
+@app.route('/api/set_mode/<int:temp>/<string:scale>', methods=['POST'])
+def api_set_temp():
+
+
 if __name__ == '__main__':
     # We're using an adhoc SSL context, which is not considered secure by browsers
     # because it invokes a self-signed certificate.
