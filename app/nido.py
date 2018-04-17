@@ -103,6 +103,32 @@ def require_session(route):
 
     return check_session
 
+# Decorator for API routes to verify that client supplied a secret in the request body
+#
+def require_secret(route):
+    @wraps(route)
+    def check_secret(*args, **kwargs):
+        # Validate that the JSON in the body has a secret
+        validation = { 'secret': basestring }
+        # JSON request data
+        req_data = request.get_json()
+        # Prepare a JSONResponse in case we need it
+        resp = JSONResponse()
+
+        if validate_json_req(req_data, validation):
+            if req_data['secret'] == PUBLIC_API_SECRET:
+                return route(*args, **kwargs)
+            else:
+                resp.data['error'] = 'Invalid secret.'
+                resp.status = 401
+        else:
+            resp.data['error'] = 'JSON in request was invalid.'
+            resp.status = 400
+
+        return resp.get_flask_response()
+
+    return check_secret
+
 # Application routes
 #   All routes are POST-only and should only return JSON.
 #   The / route only serves to return the React-based UI
