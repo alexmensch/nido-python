@@ -2,6 +2,7 @@ import json
 from numbers import Number
 from functools import wraps
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
+from werkzeug.routing import BaseConverter
 from lib.Nido import Sensor, LocalWeather, Config, Controller, Status, ControllerError, ConfigError, Mode
 
 # Configuration
@@ -128,6 +129,16 @@ def require_secret(route):
         return resp.get_flask_response()
 
     return check_secret
+
+# Custom URL converter to allow use of regex
+# Source: https://stackoverflow.com/questions/5870188/does-flask-support-regular-expressions-in-its-url-routing
+#
+class RegexConverter(BaseConverter):
+    def __init__(self, url_map, *items):
+        super(RegexConverter, self).__init__(url_map)
+        self.regex = items[0]
+# Register the custom converter with Flask
+app.url_map.converters['regex'] = RegexConverter
 
 # Application routes
 #   All routes are POST-only and should only return JSON.
@@ -270,47 +281,47 @@ def render_ui():
 
 # Public API routes
 #   Secured by a pre-shared secret key in the request body
-#   Good enough security for now!
 
-# Helper function to validate API secret and set specific mode
-def api_set_mode(req_data, mode):
+# Endpoint to accept a new mode setting.
+# Only setting one of the valid configured modes is possible.
+#
+@app.route('/api/set_mode/<string:set_mode>', methods=['POST'])
+@require_secret
+def api_set_mode(set_mode):
     # Initialize response object
     resp = JSONResponse()
-    # Validate JSON. We're just looking for a secret key.
-    validation = { 'secret': basestring }
+    cfg = config.get_config()
+    # Get list of available modes
+    modes = config.list_modes(cfg['config']['modes_available'])
+    valid_mode = False
 
-    if validate_json_req(req_data, validation):
-        if req_data['secret'] == PUBLIC_API_SECRET:
-            cfg = config.get_config()
+    for mode in modes:
+        if mode.upper() == set_mode.upper():
             cfg['config']['mode_set'] = mode
             resp = set_config_helper(resp, cfg)
-        else:
-            resp.data['error'] = 'Invalid secret.'
-            resp.status = 401
-    else:
-        resp.data['error'] = 'JSON in request was invalid.'
+            valid_mode = True
+
+    if not valid_mode:
+        resp.data['error'] = 'Invalid mode.'
         resp.status = 400
 
     return resp.get_flask_response()
 
-@app.route('/api/set_mode/off', methods=['POST'])
-def api_set_mode_off():
-    return api_set_mode(request.get_json(), Mode.Off.name)
-
-@app.route('/api/set_mode/heat', methods=['POST'])
-def api_set_mode_heat():
-    return api_set_mode(request.get_json(), Mode.Heat.name)
-
-@app.route('/api/set_temp/<float:temp>/<string:scale>', methods=['POST'])
+# Endpoint to accept a new set temperature in either Celsius or Fahrenheit.
+# The first regex accepts either integer or floating point numbers.
+#
+@app.route('/api/set_temp/<regex("(([0-9]*)(\.([0-9]+))?)"):temp>/<regex("[cCfF]"):scale>', methods=['POST'])
 @require_secret
 def api_set_temp(temp, scale):
     # Initialize response object
     resp = JSONResponse()
     cfg = config.get_config()
+    # Convert temp to float
+    temp = float("{0:.1f}".format(float(temp)))
 
     scale = scale.upper()
     if scale == 'C':
-        cfg['config']['set_temperature'] = float("{0:.1f}".format(temp))
+        cfg['config']['set_temperature'] = temp
         resp = set_config_helper(resp, cfg)
     elif scale == 'F':
         # The following conversion duplicates the logic in nido.js
@@ -319,9 +330,6 @@ def api_set_temp(temp, scale):
         celsius_temp = float("{0:.1f}".format(celsius_temp))
         cfg['config']['set_temperature'] = celsius_temp
         resp = set_config_helper(resp, cfg)
-    else:
-        resp.data['error'] = 'Invalid temperature scale: {}'.format(scale)
-        resp.status = 400
 
     return resp.get_flask_response()
 
