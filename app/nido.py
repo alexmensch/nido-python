@@ -279,14 +279,17 @@ def api_set_mode(set_mode):
     cfg = config.get_config()
     # Get list of available modes
     modes = config.list_modes(cfg['config']['modes_available'])
+    valid_mode = False
 
     for mode in modes:
         if mode.upper() == set_mode.upper():
             cfg['config']['mode_set'] = mode
             resp = set_config_helper(resp, cfg)
-        else:
-            resp.data['error'] = 'Invalid mode'
-            resp.status = 400
+            valid_mode = True
+
+    if not valid_mode:
+        resp.data['error'] = 'Invalid mode.'
+        resp.status = 400
 
     return resp.get_flask_response()
 
