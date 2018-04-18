@@ -310,14 +310,14 @@ def api_set_mode(set_mode):
 # Endpoint to accept a new set temperature in either Celsius or Fahrenheit.
 # The first regex accepts either integer or floating point numbers.
 #
-@app.route('/api/set_temp/<regex("^(([0-9]*)(\.([0-9]+))?)$"):temp>/<regex("^[cCfF]$"):scale>', methods=['POST'])
+@app.route('/api/set_temp/<regex("(([0-9]*)(\.([0-9]+))?)"):temp>/<regex("[cCfF]"):scale>', methods=['POST'])
 @require_secret
 def api_set_temp(temp, scale):
     # Initialize response object
     resp = JSONResponse()
     cfg = config.get_config()
     # Convert temp to float
-    temp = float("{0:.1f}".format(temp))
+    temp = float("{0:.1f}".format(float(temp)))
 
     scale = scale.upper()
     if scale == 'C':
@@ -330,9 +330,6 @@ def api_set_temp(temp, scale):
         celsius_temp = float("{0:.1f}".format(celsius_temp))
         cfg['config']['set_temperature'] = celsius_temp
         resp = set_config_helper(resp, cfg)
-    else:
-        resp.data['error'] = 'Invalid temperature scale: {}'.format(scale)
-        resp.status = 400
 
     return resp.get_flask_response()
 
