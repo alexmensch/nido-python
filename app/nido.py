@@ -303,7 +303,7 @@ def api_set_mode_heat():
 
 @app.route('/api/set_temp/<float:temp>/<string:scale>', methods=['POST'])
 @require_secret
-def api_set_temp():
+def api_set_temp(temp, scale):
     # Initialize response object
     resp = JSONResponse()
     cfg = config.get_config()
