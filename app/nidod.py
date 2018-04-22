@@ -1,9 +1,10 @@
 #!/usr/bin/python
 
-import sys, time, signal
+import sys, time, signal, os
 from datetime import datetime
 from lib.Daemon import Daemon
 from lib.Nido import Config, Controller
+from apscheduler.schedulers.background import BackgroundScheduler
 
 class NidoDaemon(Daemon):
     def run(self):
@@ -34,23 +35,21 @@ class NidoDaemon(Daemon):
         sys.stdout.flush()
 
         ###
-        # Run loop
-        while True:
-            try:
-                self.controller.update()
-            except Exception as e:
-                sys.stderr.write('{} [Error] Controller update failed: {}\n'.format(datetime.utcnow(), e))
-            time.sleep(poll_interval)
-        #
-        ###
+        # Set up scheduler
+        self.scheduler = BackgroundScheduler({
+            'apscheduler.job_defaults.coalesce': 'true',
+            })
+        self.scheduler.add_job(self.controller.update(), id='poll', trigger='interval', seconds=poll_interval)
+        self.scheduler.start()
+        sys.stdout.write(self.scheduler.print_jobs())
+        sys.stdout.flush()
 
     def signal_handler(self, signum, stack):
-        # No action is necessary here. The signal interrupt breaks code execution out of the time.sleep()
-        # call in the run loop the vast majority of the time, triggering an immediate controller update
-        # and a reset of the poll interval.
-        pass
+        self.controller.update()
+        return
 
     def quit(self):
+        self.scheduler.shutdown(wait=False)
         try:
             Controller().shutdown()
         except Exception as e:
