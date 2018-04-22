@@ -4,7 +4,7 @@ import sys, time, signal, os
 from datetime import datetime
 from lib.Daemon import Daemon
 from lib.Nido import Config, Controller
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.blocking import BlockingScheduler
 
 class NidoDaemon(Daemon):
     def run(self):
@@ -36,15 +36,17 @@ class NidoDaemon(Daemon):
 
         ###
         # Set up scheduler
-        self.scheduler = BackgroundScheduler({
+        self.scheduler = BlockingScheduler({
             'apscheduler.job_defaults.coalesce': 'true',
             })
-        self.scheduler.add_job(self.controller.update(), id='poll', trigger='interval', seconds=poll_interval)
+        self.scheduler.add_job(self.controller.update, id='poll', trigger='interval', seconds=poll_interval)
         self.scheduler.start()
-        sys.stdout.write(self.scheduler.print_jobs())
-        sys.stdout.flush()
 
     def signal_handler(self, signum, stack):
+        # Debug only, remove later
+        self.scheduler.print_jobs()
+        sys.stdout.flush()
+        ##
         self.controller.update()
         return
 
