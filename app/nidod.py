@@ -17,7 +17,7 @@ class NidoDaemon(Daemon):
 
         # Get poll interval from config
         config = Config().get_config()
-        poll_interval = config['daemon']['poll_interval']
+        poll_interval = config['schedule']['poll_interval']
         # Add scheduled job on configured polling interval
         self.scheduler.add_job(self.controller.update, trigger='interval', seconds=poll_interval)
 
