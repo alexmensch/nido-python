@@ -334,7 +334,7 @@ class ConfigError(Exception):
 class Config():
     def __init__(self):
         self._CONFIG = '/home/pi/nido/app/cfg/config.yaml'
-        self._SCHEMA_VERSION = '1.1'
+        self._SCHEMA_VERSION = '1.2'
         self._SCHEMA = {
                 'GPIO': {
                     'heat_pin': {
@@ -418,10 +418,16 @@ class Config():
                         },
                     'work_dir': {
                         'required': True
-                        },
+                        }
+                    },
+                'schedule': {
                     'poll_interval': {
                         'required': False,
                         'default': 300
+                        },
+                    'jobs': {
+                        'required': False,
+                        'default': []
                         }
                     }
                 }
