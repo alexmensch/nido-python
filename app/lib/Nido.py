@@ -425,10 +425,6 @@ class Config():
                         'required': False,
                         'default': 300
                         },
-                    'jobs': {
-                        'required': False,
-                        'default': []
-                        },
                     'db': {
                         'required': True
                         }
