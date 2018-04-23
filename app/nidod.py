@@ -5,19 +5,27 @@ from datetime import datetime
 from lib.Daemon import Daemon
 from lib.Nido import Config, Controller
 from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 
 class NidoDaemon(Daemon):
     def run(self):
+        # Get config
+        config = Config().get_config()
+        poll_interval = config['schedule']['poll_interval']
+        db_path = config['schedule']['db']
         # Instantiate controller object
         self.controller = Controller()
         # Set up scheduler
-        self.scheduler = BlockingScheduler({
-            'apscheduler.job_defaults.coalesce': 'true',
-            })
+        self.scheduler = BlockingScheduler()
+        jobstores = {
+                'default': {'type': 'memory'},
+                'schedule': SQLAlchemyJobStore(url='sqlite:///{}'.format(db_path))
+                }
+        job_defaults = {
+                'coalesce': True
+                }
+        self.scheduler.configure(jobstores=jobstores, job_defaults=job_defaults)
 
-        # Get poll interval from config
-        config = Config().get_config()
-        poll_interval = config['schedule']['poll_interval']
         # Add scheduled job on configured polling interval
         self.scheduler.add_job(self.controller.update, trigger='interval', seconds=poll_interval)
 
@@ -34,7 +42,7 @@ class NidoDaemon(Daemon):
         self.scheduler.print_jobs()
         sys.stdout.flush()
         ##
-        self.controller.update()
+        self.scheduler.add_job(self.controller.update)
         return
 
     def quit(self):
