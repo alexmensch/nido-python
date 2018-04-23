@@ -18,7 +18,7 @@ class NidoDaemon(Daemon):
         # Instantiate controller object
         self.controller = Controller()
         # Set up scheduler
-        scheduler = BackgroundScheduler()
+        self.scheduler = BackgroundScheduler()
         jobstores = {
                 'default': {'type': 'memory'},
                 'schedule': SQLAlchemyJobStore(url='sqlite:///{}'.format(db_path))
@@ -26,10 +26,10 @@ class NidoDaemon(Daemon):
         job_defaults = {
                 'coalesce': True
                 }
-        scheduler.configure(jobstores=jobstores, job_defaults=job_defaults)
+        self.scheduler.configure(jobstores=jobstores, job_defaults=job_defaults)
 
         # Add scheduled job on configured polling interval
-        scheduler.add_job(self.controller.update, trigger='interval', seconds=poll_interval)
+        self.scheduler.add_job(self.controller.update, trigger='interval', seconds=poll_interval)
 
         # Log start time
         sys.stdout.write('{} [Info] Nido daemon started\n'.format(datetime.utcnow()))
