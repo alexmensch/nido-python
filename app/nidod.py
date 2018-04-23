@@ -4,8 +4,10 @@ import sys, time, signal, os
 from datetime import datetime
 from lib.Daemon import Daemon
 from lib.Nido import Config, Controller
-from apscheduler.schedulers.blocking import BlockingScheduler
+from apscheduler.schedulers.blocking import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+import rpyc
+from rpyc.utils.server import ThreadedServer
 
 class NidoDaemon(Daemon):
     def run(self):
@@ -16,7 +18,7 @@ class NidoDaemon(Daemon):
         # Instantiate controller object
         self.controller = Controller()
         # Set up scheduler
-        self.scheduler = BlockingScheduler()
+        scheduler = BackgroundScheduler()
         jobstores = {
                 'default': {'type': 'memory'},
                 'schedule': SQLAlchemyJobStore(url='sqlite:///{}'.format(db_path))
@@ -24,32 +26,53 @@ class NidoDaemon(Daemon):
         job_defaults = {
                 'coalesce': True
                 }
-        self.scheduler.configure(jobstores=jobstores, job_defaults=job_defaults)
+        scheduler.configure(jobstores=jobstores, job_defaults=job_defaults)
 
         # Add scheduled job on configured polling interval
-        self.scheduler.add_job(self.controller.update, trigger='interval', seconds=poll_interval)
+        scheduler.add_job(self.controller.update, trigger='interval', seconds=poll_interval)
 
-        # Set up signal handler to trigger updates
-        signal.signal(signal.SIGUSR1, self.signal_handler)
         # Log start time
         sys.stdout.write('{} [Info] Nido daemon started\n'.format(datetime.utcnow()))
         sys.stdout.flush()
-        # Start scheduler (blocking)
-        self.scheduler.start()
 
-    def signal_handler(self, signum, stack):
-        # Debug only, remove later
-        self.scheduler.print_jobs()
-        sys.stdout.flush()
-        ##
-        self.scheduler.add_job(self.controller.update)
-        return
+        # Start scheduler and RPyC service
+        self.scheduler.start()
+        protocol_config = {'allow_public_attrs': True}
+        server = ThreadedServer(SchedulerService, port=12345, protocol_config=protocol_config)
+        server.start()
 
     def quit(self):
-        self.scheduler.shutdown(wait=False)
+        self.scheduler.shutdown()
         Controller().shutdown()
         sys.stdout.write('{} [Info] Nido daemon shutdown\n'.format(datetime.utcnow()))
         return
+
+# From: https://github.com/agronholm/apscheduler/blob/master/examples/rpc/server.py
+#
+class SchedulerService(rpyc.Service):
+    def exposed_add_job(self, func, *args, **kwargs):
+        return scheduler.add_job(func, *args, **kwargs)
+
+    def exposed_modify_job(self, job_id, jobstore=None, **changes):
+        return scheduler.modify_job(job_id, jobstore, **changes)
+
+    def exposed_reschedule_job(self, job_id, jobstore=None, trigger=None, **trigger_args):
+        return scheduler.reschedule_job(job_id, jobstore, trigger, **trigger_args)
+
+    def exposed_pause_job(self, job_id, jobstore=None):
+        return scheduler.pause_job(job_id, jobstore)
+
+    def exposed_resume_job(self, job_id, jobstore=None):
+        return scheduler.resume_job(job_id, jobstore)
+
+    def exposed_remove_job(self, job_id, jobstore=None):
+        scheduler.remove_job(job_id, jobstore)
+
+    def exposed_get_job(self, job_id):
+        return scheduler.get_job(job_id)
+
+    def exposed_get_jobs(self, jobstore=None):
+        return scheduler.get_jobs(jobstore)
 
 ###
 # Start of execution
