@@ -19,4 +19,4 @@ daemon:
     log_file: /var/log/nidod.log
 schedule:
     poll_interval: 300
-    db: /absolute/path/to/nido.db
+    db: /absolute/path/to/app/db/nido.db
