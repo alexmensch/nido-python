@@ -4,7 +4,7 @@ import sys, time, signal, os
 from datetime import datetime
 from lib.Daemon import Daemon
 from lib.Nido import Config, Controller
-from apscheduler.schedulers.blocking import BackgroundScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 import rpyc
 from rpyc.utils.server import ThreadedServer
