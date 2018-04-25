@@ -37,8 +37,7 @@ class NidoDaemon(Daemon):
 
         # Start scheduler and RPyC service
         self.scheduler.start()
-        protocol_config = {'allow_public_attrs': True}
-        server = ThreadedServer(SchedulerService(self.scheduler), port=12345, protocol_config=protocol_config)
+        server = ThreadedServer(SchedulerService(self.scheduler), port=12345)
         server.start()
 
     def quit(self):
@@ -51,34 +50,34 @@ class NidoDaemon(Daemon):
 #
 class SchedulerService(rpyc.Service):
     def __init__(self, scheduler):
-        self.scheduler = scheduler
+        self._scheduler = scheduler
 
-    def __call__(self, scheduler):
-        return self.__class__(self.scheduler)
+    def __call__(self, conn):
+        return self.__class__(self._scheduler)
 
     def exposed_add_job(self, func, *args, **kwargs):
-        return self.scheduler.add_job(func, *args, **kwargs)
+        return self._scheduler.add_job(func, *args, **kwargs)
 
     def exposed_modify_job(self, job_id, jobstore=None, **changes):
-        return self.scheduler.modify_job(job_id, jobstore, **changes)
+        return self._scheduler.modify_job(job_id, jobstore, **changes)
 
     def exposed_reschedule_job(self, job_id, jobstore=None, trigger=None, **trigger_args):
-        return self.scheduler.reschedule_job(job_id, jobstore, trigger, **trigger_args)
+        return self._scheduler.reschedule_job(job_id, jobstore, trigger, **trigger_args)
 
     def exposed_pause_job(self, job_id, jobstore=None):
-        return self.scheduler.pause_job(job_id, jobstore)
+        return self._scheduler.pause_job(job_id, jobstore)
 
     def exposed_resume_job(self, job_id, jobstore=None):
-        return self.scheduler.resume_job(job_id, jobstore)
+        return self._scheduler.resume_job(job_id, jobstore)
 
     def exposed_remove_job(self, job_id, jobstore=None):
-        self.scheduler.remove_job(job_id, jobstore)
+        self._scheduler.remove_job(job_id, jobstore)
 
     def exposed_get_job(self, job_id):
-        return self.scheduler.get_job(job_id)
+        return self._scheduler.get_job(job_id)
 
     def exposed_get_jobs(self, jobstore=None):
-        return self.scheduler.get_jobs(jobstore)
+        return self._scheduler.get_jobs(jobstore)
 
 ###
 # Start of execution
