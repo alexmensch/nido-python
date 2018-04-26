@@ -1,3 +1,7 @@
+Prerequisites:
+- You will need Node.js installed, instructions can be found here:
+https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions
+
 Installation:
 - Run install.sh to install required Python modules and Node.js components.
 
