@@ -37,7 +37,7 @@ class NidoDaemon(Daemon):
 
         # Start scheduler and RPyC service
         self.scheduler.start()
-        server = ThreadedServer(SchedulerService(self.scheduler), port=12345)
+        server = ThreadedServer(SchedulerService(self.scheduler), port=49152, protocol_config={'allow_public_attrs': True})
         server.start()
 
     def quit(self):
