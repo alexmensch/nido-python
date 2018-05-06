@@ -1,5 +1,13 @@
 # Helper functions and classes for Nido Flask server in app/nido.py
 
+import json
+from flask import session, abort
+from werkzeug.routing import BaseConverter
+from functools import wraps
+from Nido import Config
+
+config = Config()
+
 # JSON response object
 #
 class JSONResponse():
@@ -10,7 +18,7 @@ class JSONResponse():
                 }
         return
 
-    def get_flask_response(self):
+    def get_flask_response(self, app):
         response = app.make_response(json.dumps(self.data))
         response.headers['Content-Type'] = 'application/json'
         response.status_code = self.status

@@ -1,13 +1,12 @@
 import json
 from numbers import Number
-from functools import wraps
 from flask import Flask, request, session, g, redirect, url_for, abort, render_template, flash
-from werkzeug.routing import BaseConverter
 from lib.Nido import Sensor, LocalWeather, Config, Controller, Status, ControllerError, ConfigError, Mode
-import lib.NidoServer
+import lib.NidoServer as ns
 
 config = Config()
-DEBUG = config.get_config()['flask']['debug']
+#DEBUG = config.get_config()['flask']['debug']
+DEBUG = True
 SECRET_KEY = config.get_config()['flask']['secret_key']
 PUBLIC_API_SECRET = config.get_config()['flask']['public_api_secret']
 GOOGLE_API_KEY = config.get_config()['google']['api_key']
@@ -15,7 +14,7 @@ GOOGLE_API_KEY = config.get_config()['google']['api_key']
 app = Flask(__name__)
 app.config.from_object(__name__)
 # Register custom converter with Flask
-app.url_map.converters['regex'] = RegexConverter
+app.url_map.converters['regex'] = ns.RegexConverter
 
 # Application routes
 #   All routes are POST-only and should only return JSON.
@@ -28,7 +27,7 @@ def render_ui():
 @app.route('/login', methods=['POST'])
 def login():
     # Intialize response object
-    resp = JSONResponse()
+    resp = ns.JSONResponse()
     # Get config
     cfg = config.get_config()
     
@@ -49,12 +48,12 @@ def login():
             resp.data['logged_in'] = True
             resp.data['message'] = 'User has been logged in.'
 
-    return resp.get_flask_response()
+    return resp.get_flask_response(app)
 
 @app.route('/logout', methods=['POST'])
 def logout():
     # Initialize response object
-    resp = JSONResponse()
+    resp = ns.JSONResponse()
     if 'logged_in' in session:
         resp.data['message'] = 'User has been logged out.'
         resp.data['username'] = session['username']
@@ -64,13 +63,13 @@ def logout():
     else:
         resp.data['error'] = 'User not logged in.'
         resp.data['logged_in'] = False
-    return resp.get_flask_response()
+    return resp.get_flask_response(app)
 
 @app.route('/get_state', methods=['POST'])
-@require_session
+@ns.require_session
 def get_state():
     # Initialize response object
-    resp = JSONResponse()
+    resp = ns.JSONResponse()
     resp.data['state'] = {}
     resp.data['error'] = []
     
@@ -97,11 +96,12 @@ def get_state():
 
     if len(resp.data['error']) == 0:
         del resp.data['error']
-    return resp.get_flask_response()
+    return resp.get_flask_response(app)
 
 @app.route('/get_weather', methods=['POST'])
+@ns.require_session
 def get_weather():
-    resp = JSONResponse()
+    resp = ns.JSONResponse()
 
     # Any errors will be passed through
     # The receiving application should note the retrieval_age value as necessary
@@ -109,13 +109,13 @@ def get_weather():
     #       Needs to be a serializable object (see Flask documentation)
     resp.data = LocalWeather().get_conditions()
 
-    return resp.get_flask_response()
+    return resp.get_flask_response(app)
 
 @app.route('/get_config', methods=['POST'])
-@require_session
+@ns.require_session
 def get_config():
     # Initialize response dict
-    resp = JSONResponse()
+    resp = ns.JSONResponse()
     # Get config
     cfg = config.get_config()
     # Check that settings config section exists
@@ -124,13 +124,13 @@ def get_config():
     else:
         resp.data['error'] = 'Unable to retrieve config schema.'
 
-    return resp.get_flask_response()
+    return resp.get_flask_response(app)
 
 @app.route('/set_config', methods=['POST'])
-@require_session
+@ns.require_session
 def set_config():
     # Initialize response object
-    resp = JSONResponse()
+    resp = ns.JSONResponse()
     new_cfg = request.get_json()
         
     # Expect to receive a json dict with one or more of the following pairs
@@ -146,13 +146,13 @@ def set_config():
         }
 
     # Update local configuration with user data
-    if validate_json_req(new_cfg, validation):
-        resp = set_config_helper(resp, new_cfg)
+    if ns.validate_json_req(new_cfg, validation):
+        resp = ns.set_config_helper(resp, new_cfg)
     else:
         resp.data['error'] = 'JSON in request was invalid.'
         resp.status = 400
 
-    return resp.get_flask_response()
+    return resp.get_flask_response(app)
 
 # Public API routes
 #   Secured by a pre-shared secret key in the request body
@@ -161,10 +161,10 @@ def set_config():
 # Only setting one of the valid configured modes is possible.
 #
 @app.route('/api/set_mode/<string:set_mode>', methods=['POST'])
-@require_secret
+@ns.require_secret
 def api_set_mode(set_mode):
     # Initialize response object
-    resp = JSONResponse()
+    resp = ns.JSONResponse()
     cfg = config.get_config()
     # Get list of available modes
     modes = config.list_modes(cfg['config']['modes_available'])
@@ -173,23 +173,23 @@ def api_set_mode(set_mode):
     for mode in modes:
         if mode.upper() == set_mode.upper():
             cfg['config']['mode_set'] = mode
-            resp = set_config_helper(resp, cfg)
+            resp = ns.set_config_helper(resp, cfg)
             valid_mode = True
 
     if not valid_mode:
         resp.data['error'] = 'Invalid mode.'
         resp.status = 400
 
-    return resp.get_flask_response()
+    return resp.get_flask_response(app)
 
 # Endpoint to accept a new set temperature in either Celsius or Fahrenheit.
 # The first regex accepts either integer or floating point numbers.
 #
 @app.route('/api/set_temp/<regex("(([0-9]*)(\.([0-9]+))?)"):temp>/<regex("[cCfF]"):scale>', methods=['POST'])
-@require_secret
+@ns.require_secret
 def api_set_temp(temp, scale):
     # Initialize response object
-    resp = JSONResponse()
+    resp = ns.JSONResponse()
     cfg = config.get_config()
     # Convert temp to float
     temp = float("{0:.1f}".format(float(temp)))
@@ -197,16 +197,16 @@ def api_set_temp(temp, scale):
     scale = scale.upper()
     if scale == 'C':
         cfg['config']['set_temperature'] = temp
-        resp = set_config_helper(resp, cfg)
+        resp = ns.set_config_helper(resp, cfg)
     elif scale == 'F':
         # The following conversion duplicates the logic in nido.js
         celsius_temp = (temp - 32) * 5 / 9
         celsius_temp = round(celsius_temp * 10) / 10
         celsius_temp = float("{0:.1f}".format(celsius_temp))
         cfg['config']['set_temperature'] = celsius_temp
-        resp = set_config_helper(resp, cfg)
+        resp = ns.set_config_helper(resp, cfg)
 
-    return resp.get_flask_response()
+    return resp.get_flask_response(app)
 
 if __name__ == '__main__':
     # We're using an adhoc SSL context, which is not considered secure by browsers
