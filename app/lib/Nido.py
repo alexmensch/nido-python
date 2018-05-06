@@ -430,17 +430,14 @@ class Config():
                         }
                     }
                 }
-        return
-    
+        if self.is_valid():
+            return
+        else:
+            raise ConfigError('Error: incomplete configuration, please verify config.yaml settings.')
+
     def get_config(self):
         with open(self._CONFIG, 'r') as f:
             return yaml.load(f)
-
-    # TODO: Should validate config being passed in before writing to disk
-    def set_config(self, config):
-        with open(self._CONFIG, 'w') as f:
-            yaml.dump(config, f, default_flow_style=False, indent=4)
-        return
 
     def get_schema(self, section):
         return self._SCHEMA[section]
@@ -448,8 +445,24 @@ class Config():
     def get_version(self):
         return self._SCHEMA_VERSION
 
-    def validate(self):
-        config = self.get_config()
+    def update_config(self, cfg=None, new_cfg):
+        if cfg is None:
+            cfg = self.get_config()
+        for setting in new_cfg:
+            if setting == 'modes_available':
+                cfg['modes'] = self.list_modes(new_cfg[setting])
+            cfg[setting] = new_cfg[setting]
+
+        return self._is_valid(config=cfg)
+
+    def _set_config(self, config):
+        with open(self._CONFIG, 'w') as f:
+            yaml.dump(config, f, default_flow_style=False, indent=4)
+        return
+
+    def _is_valid(self, config=None, set_defaults=True):
+        if config is None:
+            config = self.get_config()
 
         # Iterate through schema and check required flag against loaded config
         for section in self._SCHEMA:
@@ -461,7 +474,7 @@ class Config():
                         return False
                 # If setting is not required, check if a default value exists
                 #   and set it if not set in the config
-                elif 'default' in self._SCHEMA[section][setting]:
+                elif set_defaults and 'default' in self._SCHEMA[section][setting]:
                     if section not in config:
                         default_setting = {
                                 section: {
@@ -473,7 +486,8 @@ class Config():
                         config[section][setting] = self._SCHEMA[section][setting]['default']
 
         # Write any changes to config back to disk and return True since we found all required settings
-        self.set_config(config)
+        if set_defaults:
+            self._set_config(config)
         return True
 
     @staticmethod

@@ -5,11 +5,8 @@ from flask import Flask, request, session, g, redirect, url_for, abort, render_t
 from werkzeug.routing import BaseConverter
 from lib.Nido import Sensor, LocalWeather, Config, Controller, Status, ControllerError, ConfigError, Mode
 
-# Configuration
+# Configuration. Will throw an exception if configuration is invalid.
 config = Config()
-# Validate configuration file before we continue
-if config.validate() == False:
-    exit('Error: incomplete configuration, please verify config.yaml settings.')
 DEBUG = config.get_config()['flask']['debug']
 SECRET_KEY = config.get_config()['flask']['secret_key']
 PUBLIC_API_SECRET = config.get_config()['flask']['public_api_secret']
@@ -65,24 +62,9 @@ def validate_json_req(req_data, valid):
     # No tests failed
     return True
 
-# Helper function to update config settings
-def update_config(old_cfg, new_cfg):
-    cfg = old_cfg
-
-    for setting in new_cfg:
-        if setting == 'modes_available':
-            cfg['modes'] = config.list_modes(new_cfg[setting])
-        cfg[setting] = new_cfg[setting]
-
-    return cfg
-
 # Helper function to set config
 def set_config_helper(resp, cfg):
-    try:
-        config.set_config(cfg)
-    except ConfigError as e:
-        resp.data['error'] = 'Server error updating configuration: {}'.format(e)
-    else:
+    if config.update_config(cfg):
         resp.data['message'] = 'Configuration updated successfully.'
         resp.data['config'] = cfg['config']
         # Send signal to daemon, if running, to trigger update
@@ -90,6 +72,9 @@ def set_config_helper(resp, cfg):
             Controller().signal_daemon()
         except ControllerError as e:
             resp.data['error'] = 'Server error signalling daemon: {}'.format(e)
+    else:
+        resp.data['error'] = 'Invalid configuration setting(s).'
+        resp.data['config'] = cfg['config']
     return resp
 
 # Decorator for routes that require a session cookie
@@ -165,9 +150,7 @@ def set_config():
 
     # Update local configuration with user data
     if validate_json_req(new_cfg, validation):
-        cfg = config.get_config()
-        cfg['config'] = update_config(cfg['config'], new_cfg)
-        resp = set_config_helper(resp, cfg)
+        resp = set_config_helper(resp, new_cfg)
     else:
         resp.data['error'] = 'JSON in request was invalid.'
         resp.status = 400
