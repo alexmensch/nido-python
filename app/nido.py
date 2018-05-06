@@ -5,8 +5,7 @@ from lib.Nido import Sensor, LocalWeather, Config, Controller, Status, Controlle
 import lib.NidoServer as ns
 
 config = Config()
-#DEBUG = config.get_config()['flask']['debug']
-DEBUG = True
+DEBUG = config.get_config()['flask']['debug']
 SECRET_KEY = config.get_config()['flask']['secret_key']
 PUBLIC_API_SECRET = config.get_config()['flask']['public_api_secret']
 GOOGLE_API_KEY = config.get_config()['google']['api_key']
