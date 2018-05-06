@@ -430,7 +430,7 @@ class Config():
                         }
                     }
                 }
-        if self.is_valid():
+        if self._is_valid():
             return
         else:
             raise ConfigError('Error: incomplete configuration, please verify config.yaml settings.')
@@ -445,7 +445,7 @@ class Config():
     def get_version(self):
         return self._SCHEMA_VERSION
 
-    def update_config(self, cfg=None, new_cfg):
+    def update_config(self, new_cfg, cfg=None):
         if cfg is None:
             cfg = self.get_config()
         for setting in new_cfg:
