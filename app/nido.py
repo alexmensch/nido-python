@@ -5,18 +5,6 @@ from flask import Flask, request, session, g, redirect, url_for, abort, render_t
 from werkzeug.routing import BaseConverter
 from lib.Nido import Sensor, LocalWeather, Config, Controller, Status, ControllerError, ConfigError, Mode
 
-# Configuration. Will throw an exception if configuration is invalid.
-config = Config()
-DEBUG = config.get_config()['flask']['debug']
-SECRET_KEY = config.get_config()['flask']['secret_key']
-PUBLIC_API_SECRET = config.get_config()['flask']['public_api_secret']
-GOOGLE_API_KEY = config.get_config()['google']['api_key']
-
-# Initialize the application
-#
-app = Flask(__name__)
-app.config.from_object(__name__)
-
 # JSON response object
 #
 class JSONResponse():
@@ -122,8 +110,6 @@ class RegexConverter(BaseConverter):
     def __init__(self, url_map, *items):
         super(RegexConverter, self).__init__(url_map)
         self.regex = items[0]
-# Register the custom converter with Flask
-app.url_map.converters['regex'] = RegexConverter
 
 # Application routes
 #   All routes are POST-only and should only return JSON.
@@ -317,6 +303,16 @@ def api_set_temp(temp, scale):
     return resp.get_flask_response()
 
 if __name__ == '__main__':
+    config = Config()
+    DEBUG = config.get_config()['flask']['debug']
+    SECRET_KEY = config.get_config()['flask']['secret_key']
+    PUBLIC_API_SECRET = config.get_config()['flask']['public_api_secret']
+    GOOGLE_API_KEY = config.get_config()['google']['api_key']
+
+    app = Flask(__name__)
+    app.config.from_object(__name__)
+    # Register custom converter with Flask
+    app.url_map.converters['regex'] = RegexConverter
     # We're using an adhoc SSL context, which is not considered secure by browsers
     # because it invokes a self-signed certificate.
     app.run(host='0.0.0.0', port=config.get_config()['flask']['port'], ssl_context='adhoc', threaded=False)
