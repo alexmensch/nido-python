@@ -450,8 +450,8 @@ class Config():
             cfg = self.get_config()
         for setting in new_cfg:
             if setting == 'modes_available':
-                cfg['modes'] = self.list_modes(new_cfg[setting])
-            cfg[setting] = new_cfg[setting]
+                cfg['config']['modes'] = self.list_modes(new_cfg[setting])
+            cfg['config'][setting] = new_cfg[setting]
 
         return self._is_valid(config=cfg)
 
