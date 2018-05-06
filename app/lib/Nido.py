@@ -450,8 +450,8 @@ class Config():
             cfg = self.get_config()
         for setting in new_cfg:
             if setting == 'modes_available':
-                cfg['modes'] = self.list_modes(new_cfg[setting])
-            cfg[setting] = new_cfg[setting]
+                cfg['config']['modes'] = self.list_modes(new_cfg[setting])
+            cfg['config'][setting] = new_cfg[setting]
 
         return self._is_valid(config=cfg)
 
@@ -460,7 +460,7 @@ class Config():
             yaml.dump(config, f, default_flow_style=False, indent=4)
         return
 
-    def _is_valid(self, config=None, set_defaults=True):
+    def _is_valid(self, config=None, set_defaults=True, update=True):
         if config is None:
             config = self.get_config()
 
@@ -485,8 +485,7 @@ class Config():
                     elif setting not in config[section]:
                         config[section][setting] = self._SCHEMA[section][setting]['default']
 
-        # Write any changes to config back to disk and return True since we found all required settings
-        if set_defaults:
+        if update:
             self._set_config(config)
         return True
 
