@@ -68,7 +68,7 @@ def set_config_helper(resp, cfg):
         try:
             Controller().signal_daemon()
         except Exception as e:
-            resp.data['error'] = 'Server error signalling daemon: {}'.format(e)
+            resp.data['warning'] = 'Server error signalling daemon: {}'.format(e)
     else:
         resp.data['error'] = 'Invalid configuration setting(s).'
         resp.data['config'] = cfg['config']
