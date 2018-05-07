@@ -487,17 +487,6 @@ class Config():
 
         return False
 
-    def is_valid_mode(self, mode):
-        cfg = self.get_config()
-        modes = self.list_modes(cfg['config']['modes_available'])
-        valid_mode = False
-
-        for m in modes:
-            if m.upper() == mode.upper():
-                valid_mode = True
-        
-        return valid_mode
-
     def _set_config(self, config):
         with open(self._CONFIG, 'w') as f:
             yaml.dump(config, f, default_flow_style=False, indent=4)
