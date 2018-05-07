@@ -1,12 +1,13 @@
 # Helper functions and classes for Nido Flask server in app/nido.py
 
 import json
-from flask import session, abort
+from flask import session, abort, request
 from werkzeug.routing import BaseConverter
 from functools import wraps
-from Nido import Config, ConfigError
+from Nido import Config, ConfigError, Controller
 
 config = Config()
+PUBLIC_API_SECRET = config.get_config()['flask']['public_api_secret']
 
 # JSON response object
 #
@@ -54,7 +55,7 @@ def validate_json_req(req_data, valid):
     return True
 
 # Helper function to set config
-def set_config_helper(resp, config=None, mode=None, temp_scale=None):
+def set_config_helper(resp, cfg=None, mode=None, temp_scale=None):
     if mode:
         if config.set_mode(mode):
             resp.data['message'] = 'Mode updated successfully.'
@@ -70,13 +71,13 @@ def set_config_helper(resp, config=None, mode=None, temp_scale=None):
             resp.status = 400
         resp.data['temp'] = temp_scale[0]
         resp.data['scale'] = temp_scale[1]
-    elif config:
-        if config.update_config(config):
+    elif cfg:
+        if config.update_config(cfg):
             resp.data['message'] = 'Configuration updated successfully.'
         else:
             resp.data['error'] = 'Invalid configuration setting(s).'
             resp.status = 400
-        resp.data['config'] = config
+        resp.data['config'] = cfg
     else:
         raise ConfigError('No configuration setting specified.')
 

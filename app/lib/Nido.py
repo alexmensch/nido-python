@@ -456,7 +456,7 @@ class Config():
         return self._is_valid(config=cfg)
 
     def set_temp(self, temp, scale, cfg=None):
-        if cfg = None:
+        if cfg is None:
             cfg = self.get_config()
 
         new_cfg = cfg['config']
@@ -493,7 +493,7 @@ class Config():
         valid_mode = False
 
         for m in modes:
-            if m.upper() = mode.upper():
+            if m.upper() == mode.upper():
                 valid_mode = True
         
         return valid_mode
