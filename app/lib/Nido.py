@@ -478,9 +478,14 @@ class Config():
             cfg = self.get_config()
 
         new_cfg = cfg['config']
-        new_cfg['mode_set'] = mode
+        modes = self.list_modes(cfg['config']['modes_available'])
 
-        return self.update_config(new_cfg, cfg=cfg)
+        for m in modes:
+            if m.upper() == mode.upper():
+                new_cfg['mode_set'] = m
+                return self.update_config(new_cfg, cfg=cfg)
+
+        return False
 
     def is_valid_mode(self, mode):
         cfg = self.get_config()

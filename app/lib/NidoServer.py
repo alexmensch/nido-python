@@ -56,9 +56,8 @@ def validate_json_req(req_data, valid):
 # Helper function to set config
 def set_config_helper(resp, config=None, mode=None, temp_scale=None):
     if mode:
-        if config.is_valid_mode(mode):
-            if config.set_mode(mode):
-                resp.data['message'] = 'Mode updated successfully.'
+        if config.set_mode(mode):
+            resp.data['message'] = 'Mode updated successfully.'
         else:
             resp.data['error'] = 'Invalid mode.'
             resp.status = 400
