@@ -30,6 +30,10 @@ class JSONResponse():
 # Where:
 #        'name' is the key we expect in the dict
 #        type is a type we can compare the corresponding value to using isinstance()
+###
+# TODO: Improve validation
+#       eg. location should be a list of only two numbers
+#       eg. modes_available be a list of lists, each with only two values
 def validate_json_req(req_data, valid):
     # Make sure we have JSON in the body first
     if (req_data == None) or (req_data == {}):

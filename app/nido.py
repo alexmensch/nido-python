@@ -100,7 +100,6 @@ def get_state():
 @ns.require_session
 def get_weather():
     resp = ns.JSONResponse()
-
     # Any errors will be passed through
     # The receiving application should note the retrieval_age value as necessary
     # TODO: Support caching built into the LocalWeather() object by storing the object in the session
@@ -114,14 +113,8 @@ def get_weather():
 def get_config():
     # Initialize response dict
     resp = ns.JSONResponse()
-    # Get config
     cfg = config.get_config()
-    # Check that settings config section exists
-    if 'config' in cfg:
-        resp.data['config'] = cfg['config']
-    else:
-        resp.data['error'] = 'Unable to retrieve config schema.'
-
+    resp.data['config'] = cfg['config']
     return resp.get_flask_response(app)
 
 @app.route('/set_config', methods=['POST'])
@@ -132,9 +125,6 @@ def set_config():
     new_cfg = request.get_json()
         
     # Expect to receive a json dict with one or more of the following pairs
-    # TODO: Improve validation
-    #       eg. location should be a list of only two numbers
-    #       eg. modes_available be a list of lists, each with only two values
     validation = {
         'location': list,
         'celsius': bool,
