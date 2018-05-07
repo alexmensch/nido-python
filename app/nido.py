@@ -146,7 +146,7 @@ def set_config():
 
     # Update local configuration with user data
     if ns.validate_json_req(new_cfg, validation):
-        resp = ns.set_config_helper(resp, new_cfg)
+        resp = ns.set_config_helper(resp, config=new_cfg)
     else:
         resp.data['error'] = 'JSON in request was invalid.'
         resp.status = 400
@@ -162,23 +162,8 @@ def set_config():
 @app.route('/api/set_mode/<string:set_mode>', methods=['POST'])
 @ns.require_secret
 def api_set_mode(set_mode):
-    # Initialize response object
     resp = ns.JSONResponse()
-    cfg = config.get_config()
-    # Get list of available modes
-    modes = config.list_modes(cfg['config']['modes_available'])
-    valid_mode = False
-
-    for mode in modes:
-        if mode.upper() == set_mode.upper():
-            cfg['config']['mode_set'] = mode
-            resp = ns.set_config_helper(resp, cfg)
-            valid_mode = True
-
-    if not valid_mode:
-        resp.data['error'] = 'Invalid mode.'
-        resp.status = 400
-
+    resp = ns.set_config_helper(resp, mode=set_mode)
     return resp.get_flask_response(app)
 
 # Endpoint to accept a new set temperature in either Celsius or Fahrenheit.
@@ -189,22 +174,8 @@ def api_set_mode(set_mode):
 def api_set_temp(temp, scale):
     # Initialize response object
     resp = ns.JSONResponse()
-    cfg = config.get_config()
-    # Convert temp to float
     temp = float("{0:.1f}".format(float(temp)))
-
-    scale = scale.upper()
-    if scale == 'C':
-        cfg['config']['set_temperature'] = temp
-        resp = ns.set_config_helper(resp, cfg)
-    elif scale == 'F':
-        # The following conversion duplicates the logic in nido.js
-        celsius_temp = (temp - 32) * 5 / 9
-        celsius_temp = round(celsius_temp * 10) / 10
-        celsius_temp = float("{0:.1f}".format(celsius_temp))
-        cfg['config']['set_temperature'] = celsius_temp
-        resp = ns.set_config_helper(resp, cfg)
-
+    resp = ns.set_config_helper(resp, temp_scale=[temp, scale])
     return resp.get_flask_response(app)
 
 if __name__ == '__main__':

@@ -4,7 +4,7 @@ import json
 from flask import session, abort
 from werkzeug.routing import BaseConverter
 from functools import wraps
-from Nido import Config
+from Nido import Config, ConfigError
 
 config = Config()
 
@@ -54,18 +54,38 @@ def validate_json_req(req_data, valid):
     return True
 
 # Helper function to set config
-def set_config_helper(resp, cfg):
-    if config.update_config(cfg):
-        resp.data['message'] = 'Configuration updated successfully.'
-        resp.data['config'] = cfg
-        # Send signal to daemon, if running, to trigger update
-        try:
-            Controller().signal_daemon()
-        except Exception as e:
-            resp.data['warning'] = 'Server error signalling daemon: {}'.format(e)
+def set_config_helper(resp, config=None, mode=None, temp_scale=None):
+    if mode:
+        if config.is_valid_mode(mode):
+            if config.set_mode(mode):
+                resp.data['message'] = 'Mode updated successfully.'
+        else:
+            resp.data['error'] = 'Invalid mode.'
+            resp.status = 400
+        resp.data['mode'] = mode
+    elif temp_scale:
+        if config.set_temp(temp_scale[0], temp_scale[1]):
+            resp.data['message'] = 'Temperature updated successfully.'
+        else:
+            resp.data['error'] = 'Invalid temperature.'
+            resp.status = 400
+        resp.data['temp'] = temp_scale[0]
+        resp.data['scale'] = temp_scale[1]
+    elif config:
+        if config.update_config(config):
+            resp.data['message'] = 'Configuration updated successfully.'
+        else:
+            resp.data['error'] = 'Invalid configuration setting(s).'
+            resp.status = 400
+        resp.data['config'] = config
     else:
-        resp.data['error'] = 'Invalid configuration setting(s).'
-        resp.data['config'] = cfg['config']
+        raise ConfigError('No configuration setting specified.')
+
+    # Send signal to daemon, if running, to trigger update
+    try:
+        Controller().signal_daemon()
+    except Exception as e:
+        resp.data['warning'] = 'Server error signalling daemon: {}'.format(e)
     return resp
 
 # Decorator for routes that require a session cookie

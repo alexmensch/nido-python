@@ -455,6 +455,44 @@ class Config():
 
         return self._is_valid(config=cfg)
 
+    def set_temp(self, temp, scale, cfg=None):
+        if cfg = None:
+            cfg = self.get_config()
+
+        new_cfg = cfg['config']
+        scale = scale.upper()
+
+        if scale == 'C':
+            new_cfg['set_temperature'] = temp
+        elif scale == 'F':
+            # The following conversion duplicates the logic in nido.js
+            celsius_temp = (temp - 32) * 5 / 9
+            celsius_temp = round(celsius_temp * 10) / 10
+            celsius_temp = float("{0:.1f}".format(celsius_temp))
+            new_cfg['set_temperature'] = celsius_temp
+
+        return self.update_config(new_cfg, cfg=cfg)
+
+    def set_mode(self, mode, cfg=None):
+        if cfg is None:
+            cfg = self.get_config()
+
+        new_cfg = cfg['config']
+        new_cfg['mode_set'] = mode
+
+        return self.update_config(new_cfg, cfg=cfg)
+
+    def is_valid_mode(self, mode):
+        cfg = self.get_config()
+        modes = self.list_modes(cfg['config']['modes_available'])
+        valid_mode = False
+
+        for m in modes:
+            if m.upper() = mode.upper():
+                valid_mode = True
+        
+        return valid_mode
+
     def _set_config(self, config):
         with open(self._CONFIG, 'w') as f:
             yaml.dump(config, f, default_flow_style=False, indent=4)
