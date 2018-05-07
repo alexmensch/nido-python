@@ -7,7 +7,6 @@ import lib.NidoServer as ns
 config = Config()
 DEBUG = config.get_config()['flask']['debug']
 SECRET_KEY = config.get_config()['flask']['secret_key']
-PUBLIC_API_SECRET = config.get_config()['flask']['public_api_secret']
 GOOGLE_API_KEY = config.get_config()['google']['api_key']
 
 app = Flask(__name__)
@@ -146,7 +145,7 @@ def set_config():
 
     # Update local configuration with user data
     if ns.validate_json_req(new_cfg, validation):
-        resp = ns.set_config_helper(resp, config=new_cfg)
+        resp = ns.set_config_helper(resp, cfg=new_cfg)
     else:
         resp.data['error'] = 'JSON in request was invalid.'
         resp.status = 400
