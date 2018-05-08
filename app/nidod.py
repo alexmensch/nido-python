@@ -42,8 +42,9 @@ class NidoDaemon(Daemon):
 
     def quit(self):
         self.scheduler.shutdown()
-        Controller().shutdown()
+        self.controller.shutdown()
         sys.stdout.write('{} [Info] Nido daemon shutdown\n'.format(datetime.utcnow()))
+        sys.stdout.flush()
         return
 
 # Adapted from: https://github.com/agronholm/apscheduler/blob/master/examples/rpc/server.py
