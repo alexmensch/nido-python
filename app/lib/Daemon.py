@@ -92,7 +92,7 @@ class Daemon:
                         pid = None
        
                 if pid:
-                        message = "pidfile %s already exist. Daemon already running?\n"
+                        message = "pidfile %s already exists. Daemon already running?\n"
                         sys.stderr.write(message % self.pidfile)
                         sys.exit(1)
                

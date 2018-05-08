@@ -80,19 +80,17 @@ class SchedulerService(rpyc.Service):
     def exposed_get_jobs(self, jobstore=None):
         return self._scheduler.get_jobs(jobstore)
 
-###
-# Start of execution
-###
 
-config = Config().get_config()
-pid_file = config['daemon']['pid_file']
-work_dir = config['daemon']['work_dir']
-log_file = config['daemon']['log_file']
-daemon = NidoDaemon(pid_file, work_dir, stderr=log_file, stdout=log_file)
+if __name__ == '__main__':
+    config = Config().get_config()
+    pid_file = config['daemon']['pid_file']
+    work_dir = config['daemon']['work_dir']
+    log_file = config['daemon']['log_file']
+    daemon = NidoDaemon(pid_file, work_dir, stderr=log_file, stdout=log_file)
 
-if 'start' == sys.argv[1]:
-    daemon.start()
-elif 'stop' == sys.argv[1]:
-    daemon.stop()
-elif 'restart' == sys.argv[1]:
-    daemon.restart()
+    if 'start' == sys.argv[1]:
+        daemon.start()
+    elif 'stop' == sys.argv[1]:
+        daemon.stop()
+    elif 'restart' == sys.argv[1]:
+        daemon.restart()
