@@ -1,5 +1,6 @@
 import rpyc
 from Nido import Config, Controller
+from functools import wraps
 
 # Adapted from: https://github.com/agronholm/apscheduler/blob/master/examples/rpc/server.py
 #
@@ -46,3 +47,33 @@ class NidoSchedulerService(rpyc.Service):
     def wakeup():
         Controller().update()
         return
+
+class NidoDaemonService:
+    def __init__(self):
+        self._config = Config().get_config()
+        self.connect()
+        self.rpc = self._connection.root
+        return
+
+    def connect(self):
+        self._connection = rpyc.connect(self._config['schedule']['rpc_host'], self._config['schedule']['rpc_port'])
+        return
+
+    @keepalive
+    def wakeup(self):
+        return self.rpc.add_job('nidod:nss.wakeup')
+
+    def _is_connected(self):
+        return not self._connection.closed
+
+# Decorator to ensure that RPC connection is kept active
+#
+def keepalive(func):
+    @wraps(func)
+    def check_connection(self, *args, **kwargs):
+        if not self._is_connected():
+            self.connect()
+        else:
+            return func(self, *args, **kwargs)
+
+    return check_connection

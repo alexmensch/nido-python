@@ -15,6 +15,7 @@ from Adafruit_BME280 import *
 #   ControllerError
 #   Controller
 # Configuration:
+#   ConfigError
 #   Config
 
 class Mode(Enum):
@@ -334,7 +335,7 @@ class ConfigError(Exception):
 class Config():
     def __init__(self):
         self._CONFIG = '/home/pi/nido/app/cfg/config.yaml'
-        self._SCHEMA_VERSION = '1.2'
+        self._SCHEMA_VERSION = '1.3'
         self._SCHEMA = {
                 'GPIO': {
                     'heat_pin': {
@@ -427,6 +428,14 @@ class Config():
                         },
                     'db': {
                         'required': True
+                        },
+                    'rpc_host': {
+                        'required': False,
+                        'default': 'localhost'
+                        },
+                    'rpc_port': {
+                        'required': False,
+                        'default': 49152
                         }
                     }
                 }
