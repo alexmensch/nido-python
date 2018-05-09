@@ -51,20 +51,18 @@ class NidoSchedulerService(rpyc.Service):
 class NidoDaemonService:
     def __init__(self):
         self._config = Config().get_config()
-        self.connect()
-        self.rpc = self._connection.root
-        return
-
-    def connect(self):
-        self._connection = rpyc.connect(self._config['schedule']['rpc_host'], self._config['schedule']['rpc_port'])
+        self._connection = self._connect()
         return
 
     @keepalive
     def wakeup(self):
-        return self.rpc.add_job('nidod:nss.wakeup')
+        return self._connection.root.add_job('nidod:nss.wakeup')
 
     def _is_connected(self):
         return not self._connection.closed
+
+    def _connect(self):
+        return rpyc.connect(self._config['schedule']['rpc_host'], self._config['schedule']['rpc_port'])
 
 # Decorator to ensure that RPC connection is kept active
 #
@@ -72,7 +70,7 @@ def keepalive(func):
     @wraps(func)
     def check_connection(self, *args, **kwargs):
         if not self._is_connected():
-            self.connect()
+            self._connection = self._connect()
         else:
             return func(self, *args, **kwargs)
 
