@@ -67,24 +67,22 @@ def set_config_helper(resp, cfg=None, mode=None, temp_scale=None):
         else:
             resp.data['error'] = 'Invalid mode.'
             resp.status = 400
-        resp.data['mode'] = mode
     elif temp_scale:
         if config.set_temp(temp_scale[0], temp_scale[1]):
             resp.data['message'] = 'Temperature updated successfully.'
         else:
             resp.data['error'] = 'Invalid temperature.'
             resp.status = 400
-        resp.data['temp'] = temp_scale[0]
-        resp.data['scale'] = temp_scale[1]
     elif cfg:
         if config.update_config(cfg):
             resp.data['message'] = 'Configuration updated successfully.'
         else:
             resp.data['error'] = 'Invalid configuration setting(s).'
             resp.status = 400
-        resp.data['config'] = cfg
     else:
         raise ConfigError('No configuration setting specified.')
+
+    resp.data['config'] = config.get_config()['config']
 
     # Send signal to daemon, if running, to trigger update
     try:
