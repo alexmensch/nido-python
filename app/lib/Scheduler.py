@@ -1,4 +1,5 @@
-import rypc
+import rpyc
+from Nido import Config, Controller
 
 # Adapted from: https://github.com/agronholm/apscheduler/blob/master/examples/rpc/server.py
 #
@@ -31,4 +32,17 @@ class NidoSchedulerService(rpyc.Service):
         return self._scheduler.get_job(job_id)
 
     def exposed_get_jobs(self, jobstore=None):
-        return self._scheduler.get_jobs(jobstore)
+        return self._scheduler.get_jobs(jobstore)\
+
+    @staticmethod
+    def set_temp(temp, scale):
+        return Config().set_temp(temp, scale)
+
+    @staticmethod
+    def set_mode(mode):
+        return Config().set_mode(mode)
+
+    @staticmethod
+    def wakeup():
+        Controller().update()
+        return
