@@ -54,16 +54,15 @@ def keepalive(func):
     @wraps(func)
     def check_connection(self, *args, **kwargs):
         if not self._is_connected():
-            self._connection = self._connect()
-        else:
-            return func(self, *args, **kwargs)
+            self._connect()
+        return func(self, *args, **kwargs)
 
     return check_connection
 
 class NidoDaemonService:
     def __init__(self):
         self._config = Config().get_config()
-        self._connection = self._connect()
+        self._connect()
         return
 
     @keepalive
@@ -74,4 +73,4 @@ class NidoDaemonService:
         return not self._connection.closed
 
     def _connect(self):
-        return rpyc.connect(self._config['schedule']['rpc_host'], self._config['schedule']['rpc_port'])
+        self._connection = rpyc.connect(self._config['schedule']['rpc_host'], self._config['schedule']['rpc_port'])
