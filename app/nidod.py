@@ -1,79 +1,62 @@
 #!/usr/bin/python
 
-import sys, time, signal
+import sys
 from datetime import datetime
 from lib.Daemon import Daemon
 from lib.Nido import Config, Controller
+from lib.Scheduler import NidoSchedulerService as nss
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+from rpyc.utils.server import ThreadedServer
 
 class NidoDaemon(Daemon):
     def run(self):
-        # Get poll interval from config
-        try:
-            config = Config().get_config()
-        except Exception as e:
-            sys.stderr.write('{} [Error] Unable to read configuration file: {}\n'.format(datetime.utcnow(), e))
-            self.stop()
-        else:
-            try:
-                poll_interval = config['daemon']['poll_interval']
-            except Exception as e:
-                sys.stderr.write('{} [Error] Unable to read daemon poll_interval from config file: {}\n'.format(datetime.utcnow(), e))
-                self.stop()
-
+        # Get config
+        config = Config().get_config()
+        poll_interval = config['schedule']['poll_interval']
+        db_path = config['schedule']['db']
         # Instantiate controller object
-        try:
-            self.controller = Controller()
-        except Exception as e:
-            sys.stderr.write('{} [Error] Unable to instantiate Controller: {}\n'.format(datetime.utcnow(), e))
-            self.stop()
+        self.controller = Controller()
+        # Set up scheduler
+        self.scheduler = BackgroundScheduler()
+        jobstores = {
+                'default': {'type': 'memory'},
+                'schedule': SQLAlchemyJobStore(url='sqlite:///{}'.format(db_path))
+                }
+        job_defaults = {
+                'coalesce': True
+                }
+        self.scheduler.configure(jobstores=jobstores, job_defaults=job_defaults)
 
-        # Set up signal handler to trigger updates
-        signal.signal(signal.SIGUSR1, self.signal_handler)
+        # Add scheduled job on configured polling interval
+        self.scheduler.add_job(self.controller.update, trigger='interval', seconds=poll_interval)
+
         # Log start time
         sys.stdout.write('{} [Info] Nido daemon started\n'.format(datetime.utcnow()))
         sys.stdout.flush()
 
-        ###
-        # Run loop
-        while True:
-            try:
-                self.controller.update()
-            except Exception as e:
-                sys.stderr.write('{} [Error] Controller update failed: {}\n'.format(datetime.utcnow(), e))
-            time.sleep(poll_interval)
-        #
-        ###
-
-    def signal_handler(self, signum, stack):
-        # No action is necessary here. The signal interrupt breaks code execution out of the time.sleep()
-        # call in the run loop the vast majority of the time, triggering an immediate controller update
-        # and a reset of the poll interval.
-        pass
+        # Start scheduler and RPyC service
+        self.scheduler.start()
+        server = ThreadedServer(nss(self.scheduler), port=49152, protocol_config={'allow_public_attrs': True})
+        server.start()
 
     def quit(self):
-        try:
-            Controller().shutdown()
-        except Exception as e:
-            sys.stderr.write('{} [Error] *CRITICAL*: unable to shutdown GPIO pins: {}\n'.format(datetime.utcnow(), e))
-        else:
-            # Log stop time
-            sys.stdout.write('{} [Info] Nido daemon shutdown\n'.format(datetime.utcnow()))
-            sys.stdout.flush()
+        self.scheduler.shutdown()
+        self.controller.shutdown()
+        sys.stdout.write('{} [Info] Nido daemon shutdown\n'.format(datetime.utcnow()))
+        sys.stdout.flush()
         return
 
-###
-# Start of execution
-###
+if __name__ == '__main__':
+    config = Config().get_config()
+    pid_file = config['daemon']['pid_file']
+    work_dir = config['daemon']['work_dir']
+    log_file = config['daemon']['log_file']
+    daemon = NidoDaemon(pid_file, work_dir, stderr=log_file, stdout=log_file)
 
-config = Config().get_config()
-pid_file = config['daemon']['pid_file']
-work_dir = config['daemon']['work_dir']
-log_file = config['daemon']['log_file']
-daemon = NidoDaemon(pid_file, work_dir, stderr=log_file, stdout=log_file)
-
-if 'start' == sys.argv[1]:
-    daemon.start()
-elif 'stop' == sys.argv[1]:
-    daemon.stop()
-elif 'restart' == sys.argv[1]:
-    daemon.restart()
+    if 'start' == sys.argv[1]:
+        daemon.start()
+    elif 'stop' == sys.argv[1]:
+        daemon.stop()
+    elif 'restart' == sys.argv[1]:
+        daemon.restart()

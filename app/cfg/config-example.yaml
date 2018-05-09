@@ -17,4 +17,6 @@ daemon:
     pid_file: /tmp/nido.pid
     work_dir: /tmp
     log_file: /var/log/nidod.log
+schedule:
     poll_interval: 300
+    db: /absolute/path/to/app/db/nido.db

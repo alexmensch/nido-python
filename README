@@ -7,7 +7,7 @@ Installation:
 
 Initial configuration:
 - Rename app/cfg/config-example.yaml to app/cfg/config.yaml with your own settings.
-- Set absolute path to config.yaml in app/lib/NidoConfig.py.
+- Set absolute path to config.yaml in app/lib/Nido.py.
 
 Generating a test build:
 - npm run build

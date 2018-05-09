@@ -12,6 +12,9 @@ npm-debug.log
 # Contains private API keys
 config.yaml
 
+# Database
+app/db/nido.db
+
 # Webpack'd JS
 app/static/js/nido.js
 app/static/js/nido.js.map
