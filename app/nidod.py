@@ -4,7 +4,7 @@ import sys
 from datetime import datetime
 from lib.Daemon import Daemon
 from lib.Nido import Config, Controller
-from lib.Scheduler import NidoSchedulerService
+from lib.Scheduler import NidoSchedulerService as nss
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from rpyc.utils.server import ThreadedServer
@@ -37,7 +37,7 @@ class NidoDaemon(Daemon):
 
         # Start scheduler and RPyC service
         self.scheduler.start()
-        server = ThreadedServer(NidoSchedulerService(self.scheduler), port=49152, protocol_config={'allow_public_attrs': True})
+        server = ThreadedServer(nss(self.scheduler), port=49152, protocol_config={'allow_public_attrs': True})
         server.start()
 
     def quit(self):
