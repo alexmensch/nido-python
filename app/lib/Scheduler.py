@@ -1,4 +1,4 @@
-import rypc
+import rpyc
 
 # Adapted from: https://github.com/agronholm/apscheduler/blob/master/examples/rpc/server.py
 #
