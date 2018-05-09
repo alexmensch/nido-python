@@ -33,7 +33,7 @@ class NidoSchedulerService(rpyc.Service):
         return self._scheduler.get_job(job_id)
 
     def exposed_get_jobs(self, jobstore=None):
-        return self._scheduler.get_jobs(jobstore)\
+        return self._scheduler.get_jobs(jobstore)
 
     @staticmethod
     def set_temp(temp, scale):
@@ -47,6 +47,18 @@ class NidoSchedulerService(rpyc.Service):
     def wakeup():
         Controller().update()
         return
+
+# Decorator to ensure that RPC connection is kept active
+#
+def keepalive(func):
+    @wraps(func)
+    def check_connection(self, *args, **kwargs):
+        if not self._is_connected():
+            self._connection = self._connect()
+        else:
+            return func(self, *args, **kwargs)
+
+    return check_connection
 
 class NidoDaemonService:
     def __init__(self):
@@ -63,15 +75,3 @@ class NidoDaemonService:
 
     def _connect(self):
         return rpyc.connect(self._config['schedule']['rpc_host'], self._config['schedule']['rpc_port'])
-
-# Decorator to ensure that RPC connection is kept active
-#
-def keepalive(func):
-    @wraps(func)
-    def check_connection(self, *args, **kwargs):
-        if not self._is_connected():
-            self._connection = self._connect()
-        else:
-            return func(self, *args, **kwargs)
-
-    return check_connection
