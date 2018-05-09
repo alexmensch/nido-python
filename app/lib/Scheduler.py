@@ -32,7 +32,7 @@ class NidoSchedulerService(rpyc.Service):
         return self._scheduler.get_job(job_id)
 
     def exposed_get_jobs(self, jobstore=None):
-        return self._scheduler.get_jobs(jobstore)\
+        return self._scheduler.get_jobs(jobstore)
 
     @staticmethod
     def set_temp(temp, scale):
