@@ -4,20 +4,18 @@ import sys
 from datetime import datetime
 from lib.Daemon import Daemon
 from lib.Nido import Config, Controller
-from lib.Scheduler import NidoSchedulerService as nss
+from lib.Scheduler import NidoSchedulerService
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from rpyc.utils.server import ThreadedServer
 
 class NidoDaemon(Daemon):
     def run(self):
-        # Get config
+        self.controller = Controller()
         config = Config().get_config()
         poll_interval = config['schedule']['poll_interval']
         db_path = config['schedule']['db']
-        # Instantiate controller object
-        self.controller = Controller()
-        # Set up scheduler
+
         self.scheduler = BackgroundScheduler()
         jobstores = {
                 'default': {'type': 'memory'},
@@ -27,18 +25,15 @@ class NidoDaemon(Daemon):
                 'coalesce': True
                 }
         self.scheduler.configure(jobstores=jobstores, job_defaults=job_defaults)
-
-        # Add scheduled job on configured polling interval
         self.scheduler.add_job(self.controller.update, trigger='interval', seconds=poll_interval)
+        self.scheduler.start()
+        
+        RPCserver = ThreadedServer(NidoSchedulerService(self.scheduler), port=49152, protocol_config={'allow_public_attrs': True})
 
-        # Log start time
         sys.stdout.write('{} [Info] Nido daemon started\n'.format(datetime.utcnow()))
         sys.stdout.flush()
 
-        # Start scheduler and RPyC service
-        self.scheduler.start()
-        server = ThreadedServer(nss(self.scheduler), port=49152, protocol_config={'allow_public_attrs': True})
-        server.start()
+        RPCserver.start()
 
     def quit(self):
         self.scheduler.shutdown()
