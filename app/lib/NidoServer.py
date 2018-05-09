@@ -5,6 +5,7 @@ from flask import session, abort, request
 from werkzeug.routing import BaseConverter
 from functools import wraps
 from Nido import Config, ConfigError, Controller
+from Scheduler import NidoDaemonService
 
 config = Config()
 PUBLIC_API_SECRET = config.get_config()['flask']['public_api_secret']
@@ -87,7 +88,7 @@ def set_config_helper(resp, cfg=None, mode=None, temp_scale=None):
 
     # Send signal to daemon, if running, to trigger update
     try:
-        Controller().signal_daemon()
+        NidoDaemonService().wakeup()
     except Exception as e:
         resp.data['warning'] = 'Server error signalling daemon: {}'.format(e)
     return resp
