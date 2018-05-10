@@ -1,5 +1,6 @@
 import rpyc
 from functools import wraps
+from apscheduler.triggers.cron import CronTrigger
 from Nido import Config, Controller
 
 class NidoSchedulerService(rpyc.Service):
@@ -94,10 +95,11 @@ class NidoDaemonService:
         if type != 'mode' and type != 'temp':
             raise NidoDaemonServiceError('Invalid job type specified: {}'.format(type))
         
+        trigger = CronTrigger(day_of_week=day_of_week, hour=hour, minute=minute)
         if type == 'mode':
-            return self._connection.root.add_job('nidod:NidoSchedulerService.set_mode', args=[mode], name='Mode', jobstore='schedule', id=job_id, trigger='cron', day_of_week=day_of_week, hour=hour, minute=minute)
+            return self._connection.root.add_job('nidod:NidoSchedulerService.set_mode', args=[mode], name='Mode', jobstore='schedule', id=job_id, trigger=trigger)
         elif type == 'temp':
-            return self._connection.root.add_job('nidod:NidoSchedulerService.set_temp', args=[temp, scale], name='Temp', jobstore='schedule', id=job_id, trigger='cron', day_of_week=day_of_week, hour=hour, minute=minute)
+            return self._connection.root.add_job('nidod:NidoSchedulerService.set_temp', args=[temp, scale], name='Temp', jobstore='schedule', id=job_id, trigger=trigger)
 
     @keepalive
     def modify_scheduled_job(self, job_id, type, mode=None, temp=None, scale=None):
