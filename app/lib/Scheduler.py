@@ -59,9 +59,11 @@ def keepalive(func):
 
     @wraps(func)
     def check_connection(self, *args, **kwargs):
-        if not self._is_connected():
+        try:
+            return func(self, *args, **kwargs)
+        except EOFError:
             self._connect()
-        return func(self, *args, **kwargs)
+            return func(self, *args, **kwargs)
 
     return check_connection
 
@@ -125,8 +127,8 @@ class NidoDaemonService:
         return self._connection.root.remove_job(job_id)
 
     @keepalive
-    def get_scheduled_jobs(self):
-        return self._connection.root.get_jobs()
+    def get_scheduled_jobs(self, jobstore=None):
+        return self._connection.root.get_jobs(jobstore=jobstore)
 
     @keepalive
     def get_scheduled_job(self, job_id):
@@ -136,4 +138,4 @@ class NidoDaemonService:
         return not self._connection.closed
 
     def _connect(self):
-        self._connection = rpyc.connect(self._config['schedule']['rpc_host'], self._config['schedule']['rpc_port'])
+        self._connection = rpyc.connect(self._config['schedule']['rpc_host'], self._config['schedule']['rpc_port'], config={'allow_public_attrs': True})
