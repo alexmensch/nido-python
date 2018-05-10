@@ -25,7 +25,7 @@ class NidoDaemon(Daemon):
                 'coalesce': True
                 }
         self.scheduler.configure(jobstores=jobstores, job_defaults=job_defaults)
-        self.scheduler.add_job(self.controller.update, trigger='interval', seconds=poll_interval)
+        self.scheduler.add_job(self.controller.update, trigger='interval', seconds=poll_interval, name='Poll')
         self.scheduler.start()
         
         RPCserver = ThreadedServer(NidoSchedulerService(self.scheduler), port=49152, protocol_config={'allow_public_attrs': True})
