@@ -12,7 +12,7 @@ PUBLIC_API_SECRET = config.get_config()['flask']['public_api_secret']
 
 # JSON response object
 #
-class JSONResponse():
+class JSONResponse:
     def __init__(self):
         self.status = 200
         self.data = {

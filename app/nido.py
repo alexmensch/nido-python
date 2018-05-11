@@ -171,11 +171,35 @@ def api_set_temp(temp, scale):
 @app.route('/api/schedule/get/all', methods=['POST'])
 @ns.require_secret
 def api_schedule_get_all:
-    pass
+    """Endpoint that returns all jobs in the scheduler."""
+
+    resp = ns.JSONResponse()
+    # Call function that returns all jobs in JSON format
+    return resp.get_flask_response(app)
 
 @app.route('/api/schedule/get/<string:id>', methods=['POST'])
 @ns.require_secret
 def api_schedule_get_jobid:
+    pass
+
+@app.route('/api/schedule/add/<string:type>', methods=['POST'])
+@ns.require_secret
+def api_schedule_get_jobid:
+    pass
+
+@app.route('/api/schedule/modify/<string:id>', methods=['POST'])
+@ns.require_secret
+def api_schedule_get_jobid:
+    pass
+
+@app.route('/api/schedule/reschedule/<string:id>', methods=['POST'])
+@ns.require_secret
+def api_schedule_get_jobid:
+    pass
+
+@app.route('/api/schedule/pause/<string:id>', methods=['POST'])
+@ns.require_secret
+def api_schedule_pause_jobid:
     pass
 
 @app.route('/api/schedule/resume/<string:id>', methods=['POST'])
@@ -187,12 +211,6 @@ def api_schedule_resume_jobid:
 @ns.require_secret
 def api_schedule_remove_jobid:
     pass
-
-@app.route('/api/schedule/pause/<string:id>', methods=['POST'])
-@ns.require_secret
-def api_schedule_pause_jobid:
-    pass
-
 
 if __name__ == '__main__':
     # We're using an adhoc SSL context, which is not considered secure by browsers
