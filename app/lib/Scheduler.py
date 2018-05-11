@@ -57,7 +57,11 @@ class NidoSchedulerService(rpyc.Service):
         return
 
 def keepalive(func):
-    """Decorator to ensure that RPC connection is active when calls are made."""
+    """Decorator to ensure that RPC connection is active when calls are made.
+
+    The output is converted to JSON if the instance variable self._json is True.
+    The base methods return either a Job object or a list of Job objects from
+    the APScheduler package."""
 
     @wraps(func)
     def check_connection(self, *args, **kwargs):
@@ -68,7 +72,10 @@ def keepalive(func):
             result = func(self, *args, **kwargs)
 
         if self._json:
-            return json.dumps(result)
+            if isinstance(result, list):
+                return self._jsonify(*result)
+            else:
+                return self._jsonify(result)
         else:
             return result
 
@@ -148,3 +155,27 @@ class NidoDaemonService:
 
     def _connect(self):
         self._connection = rpyc.connect(self._config['schedule']['rpc_host'], self._config['schedule']['rpc_port'], config={'allow_public_attrs': True})
+
+    @staticmethod
+    def _jsonify(*args):
+        response = {}
+        for j in args:
+            trigger_end_date = j.trigger.end_date ? j.trigger.end_date.strftime('%m/%d/%Y %H:%M:%S') : 'None'
+            trigger_interval = j.trigger.interval ? str(j.trigger.interval) : 'None'
+            trigger = {
+                'start_date': j.trigger.start_date.strftime('%m/%d/%Y %H:%M:%S'),
+                'end_date': trigger_end_date,
+                'interval': trigger_interval,
+                'timezone': str(j.trigger.timezone)
+            }
+            job = {
+                'name': j.name,
+                'args': j.args,
+                'next_run_time': j.next_run_time.strftime('%m/%d/%Y %H:%M:%S'),
+                trigger
+            }
+            if j.executor in response:
+                response[j.executor].update({j.id: job})
+            else:
+                response[j.executor] = {j.id: job}
+        return response
