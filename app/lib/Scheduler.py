@@ -1,4 +1,5 @@
 import rpyc
+import json
 from functools import wraps
 from apscheduler.triggers.cron import CronTrigger
 from Nido import Config, Controller
@@ -61,10 +62,15 @@ def keepalive(func):
     @wraps(func)
     def check_connection(self, *args, **kwargs):
         try:
-            return func(self, *args, **kwargs)
+            result = func(self, *args, **kwargs)
         except EOFError:
             self._connect()
-            return func(self, *args, **kwargs)
+            result = func(self, *args, **kwargs)
+
+        if self._json:
+            return json.dumps(result)
+        else:
+            return result
 
     return check_connection
 
@@ -81,7 +87,8 @@ class NidoDaemonServiceError(Exception):
 class NidoDaemonService:
     """Wrapper service to view/add/modify/delete daemon scheduler jobs via RPC."""
 
-    def __init__(self):
+    def __init__(self, json=False):
+        self._json = json
         self._config = Config().get_config()
         self._connect()
         return
