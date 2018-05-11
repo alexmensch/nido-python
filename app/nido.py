@@ -148,7 +148,7 @@ def set_config():
 # Endpoint to accept a new mode setting.
 # Only setting one of the valid configured modes is possible.
 #
-@app.route('/api/set_mode/<string:set_mode>', methods=['POST'])
+@app.route('/api/set/mode/<string:set_mode>', methods=['POST'])
 @ns.require_secret
 def api_set_mode(set_mode):
     resp = ns.JSONResponse()
@@ -158,7 +158,7 @@ def api_set_mode(set_mode):
 # Endpoint to accept a new set temperature in either Celsius or Fahrenheit.
 # The first regex accepts either integer or floating point numbers.
 #
-@app.route('/api/set_temp/<regex("(([0-9]*)(\.([0-9]+))?)"):temp>/<regex("[cCfF]"):scale>', methods=['POST'])
+@app.route('/api/set/temp/<regex("(([0-9]*)(\.([0-9]+))?)"):temp>/<regex("[cCfF]"):scale>', methods=['POST'])
 @ns.require_secret
 def api_set_temp(temp, scale):
     # Initialize response object
