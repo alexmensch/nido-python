@@ -145,27 +145,54 @@ def set_config():
 # Public API routes
 #   Secured by a pre-shared secret key in the request body
 
-# Endpoint to accept a new mode setting.
-# Only setting one of the valid configured modes is possible.
-#
-@app.route('/api/set_mode/<string:set_mode>', methods=['POST'])
+@app.route('/api/set/mode/<string:set_mode>', methods=['POST'])
 @ns.require_secret
 def api_set_mode(set_mode):
+    """Endpoint to accept a new mode setting.
+
+    Only setting one of the valid configured modes is possible."""
+
     resp = ns.JSONResponse()
     resp = ns.set_config_helper(resp, mode=set_mode)
     return resp.get_flask_response(app)
 
-# Endpoint to accept a new set temperature in either Celsius or Fahrenheit.
-# The first regex accepts either integer or floating point numbers.
-#
-@app.route('/api/set_temp/<regex("(([0-9]*)(\.([0-9]+))?)"):temp>/<regex("[cCfF]"):scale>', methods=['POST'])
+@app.route('/api/set/temp/<regex("(([0-9]*)(\.([0-9]+))?)"):temp>/<regex("[cCfF]"):scale>', methods=['POST'])
 @ns.require_secret
 def api_set_temp(temp, scale):
-    # Initialize response object
+    """Endpoint to accept a new set temperature in either Celsius or Fahrenheit.
+
+    The first regex accepts either integer or floating point numbers."""
+
     resp = ns.JSONResponse()
     temp = float("{0:.1f}".format(float(temp)))
     resp = ns.set_config_helper(resp, temp_scale=[temp, scale])
     return resp.get_flask_response(app)
+
+@app.route('/api/schedule/get/all', methods=['POST'])
+@ns.require_secret
+def api_schedule_get_all:
+    pass
+
+@app.route('/api/schedule/get/<string:id>', methods=['POST'])
+@ns.require_secret
+def api_schedule_get_jobid:
+    pass
+
+@app.route('/api/schedule/resume/<string:id>', methods=['POST'])
+@ns.require_secret
+def api_schedule_resume_jobid:
+    pass
+
+@app.route('/api/schedule/remove/<string:id>', methods=['POST'])
+@ns.require_secret
+def api_schedule_remove_jobid:
+    pass
+
+@app.route('/api/schedule/pause/<string:id>', methods=['POST'])
+@ns.require_secret
+def api_schedule_pause_jobid:
+    pass
+
 
 if __name__ == '__main__':
     # We're using an adhoc SSL context, which is not considered secure by browsers
