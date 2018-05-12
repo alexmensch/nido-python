@@ -2,6 +2,8 @@ import rpyc
 import json
 from functools import wraps
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.date import DateTrigger
 from Nido import Config, Controller
 
 class NidoSchedulerService(rpyc.Service):
@@ -109,11 +111,10 @@ class NidoDaemonService:
         if type != 'mode' and type != 'temp':
             raise NidoDaemonServiceError('Invalid job type specified: {}'.format(type))
         
-        trigger = CronTrigger(day_of_week=day_of_week, hour=hour, minute=minute)
         if type == 'mode':
-            return self._connection.root.add_job('nidod:NidoSchedulerService.set_mode', args=[mode], name='Mode', jobstore='schedule', id=job_id, trigger=trigger)
+            return self._connection.root.add_job('nidod:NidoSchedulerService.set_mode', args=[mode], name='Mode', jobstore='schedule', id=job_id, trigger='cron', day_of_week=day_of_week, hour=hour, minute=minute)
         elif type == 'temp':
-            return self._connection.root.add_job('nidod:NidoSchedulerService.set_temp', args=[temp, scale], name='Temp', jobstore='schedule', id=job_id, trigger=trigger)
+            return self._connection.root.add_job('nidod:NidoSchedulerService.set_temp', args=[temp, scale], name='Temp', jobstore='schedule', id=job_id, trigger='cron', day_of_week=day_of_week, hour=hour, minute=minute)
 
     @keepalive
     def modify_scheduled_job(self, job_id, type, mode=None, temp=None, scale=None):
@@ -160,22 +161,37 @@ class NidoDaemonService:
     def _jsonify(*args):
         response = {}
         for j in args:
-            trigger_end_date = j.trigger.end_date ? j.trigger.end_date.strftime('%m/%d/%Y %H:%M:%S') : 'None'
-            trigger_interval = j.trigger.interval ? str(j.trigger.interval) : 'None'
-            trigger = {
-                'start_date': j.trigger.start_date.strftime('%m/%d/%Y %H:%M:%S'),
-                'end_date': trigger_end_date,
-                'interval': trigger_interval,
-                'timezone': str(j.trigger.timezone)
-            }
+            if isinstance(j.trigger, DateTrigger):
+                trigger = {
+                    'timezone': str(j.trigger.run_date.tzinfo)
+                }
+            else:
+                trigger_start_date = j.trigger.start_date.strftime('%m/%d/%Y %H:%M:%S') if j.trigger.start_date else None
+                trigger_end_date = j.trigger.end_date.strftime('%m/%d/%Y %H:%M:%S') if j.trigger.end_date else None
+                trigger = {
+                    'start_date': trigger_start_date,
+                    'end_date': trigger_end_date,
+                    'timezone': str(j.trigger.timezone)
+                }
+
+            if isinstance(j.trigger, CronTrigger):
+                trigger['cron'] = {}
+                for f in j.trigger.fields:
+                    trigger['cron'][f.name] = str(f)
+            elif isinstance(j.trigger, IntervalTrigger):
+                trigger_interval = str(j.trigger.interval) if j.trigger.interval else None
+                trigger['interval'] = trigger_interval
+            elif isinstance(j.trigger, DateTrigger):
+                trigger['run_date'] = j.trigger.run_date.strftime('%m/%d/%Y %H:%M:%S')
+            else:
+                raise NidoDaemonServiceError('Unknown trigger type: {}'.format(type(j.trigger)))
+
             job = {
                 'name': j.name,
                 'args': j.args,
                 'next_run_time': j.next_run_time.strftime('%m/%d/%Y %H:%M:%S'),
-                trigger
+                'trigger': trigger
             }
-            if j.executor in response:
-                response[j.executor].update({j.id: job})
-            else:
-                response[j.executor] = {j.id: job}
+            
+            response[j.id] = job
         return response
