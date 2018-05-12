@@ -3,6 +3,7 @@ from numbers import Number
 from flask import Flask, request, session, g, render_template, flash
 from lib.Nido import Sensor, LocalWeather, Config, Controller, Status, ControllerError
 import lib.NidoServer as ns
+from lib.Scheduler import NidoDaemonService
 
 config = Config()
 DEBUG = config.get_config()['flask']['debug']
@@ -174,7 +175,8 @@ def api_schedule_get_all:
     """Endpoint that returns all jobs in the scheduler."""
 
     resp = ns.JSONResponse()
-    # Call function that returns all jobs in JSON format
+    nds = NidoDaemonService(json=True)
+    resp['jobs'] = nds.get_scheduled_jobs()
     return resp.get_flask_response(app)
 
 @app.route('/api/schedule/get/<string:id>', methods=['POST'])

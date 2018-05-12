@@ -128,8 +128,7 @@ class NidoDaemonService:
 
     @keepalive
     def reschedule_job(self, job_id, day_of_week=None, hour=None, minute=None):
-        trigger = CronTrigger(day_of_week=day_of_week, hour=hour, minute=minute)
-        return self._connection.root.reschedule_job(job_id, trigger=trigger)
+        return self._connection.root.reschedule_job(job_id, trigger='cron', day_of_week=day_of_week, hour=hour, minute=minute)
 
     @keepalive
     def pause_scheduled_job(self, job_id):
@@ -161,6 +160,8 @@ class NidoDaemonService:
     def _jsonify(*args):
         response = {}
         for j in args:
+            if j is None:
+                pass
             if isinstance(j.trigger, DateTrigger):
                 trigger = {
                     'timezone': str(j.trigger.run_date.tzinfo)
@@ -194,4 +195,6 @@ class NidoDaemonService:
             }
             
             response[j.id] = job
+        if len(response.keys()) == 0:
+            response['warning'] = 'Either no jobs are scheduled, or the job ID supplied does not exist.'
         return response
