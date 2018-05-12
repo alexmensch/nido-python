@@ -23,7 +23,7 @@ import lib.NidoServer as ns
 from lib.Scheduler import NidoDaemonService
 
 config = Config()
-DEBUG = config.get_config()['flask']['debug']
+DEBUG = True # config.get_config()['flask']['debug']
 SECRET_KEY = config.get_config()['flask']['secret_key']
 GOOGLE_API_KEY = config.get_config()['google']['api_key']
 
@@ -188,48 +188,60 @@ def api_set_temp(temp, scale):
 
 @app.route('/api/schedule/get/all', methods=['POST'])
 @ns.require_secret
-def api_schedule_get_all:
+def api_schedule_get_all():
     """Endpoint that returns all jobs in the scheduler."""
 
     resp = ns.JSONResponse()
     nds = NidoDaemonService(json=True)
-    resp['jobs'] = nds.get_scheduled_jobs()
+    resp.data['jobs'] = nds.get_scheduled_jobs()
     return resp.get_flask_response(app)
 
 @app.route('/api/schedule/get/<string:id>', methods=['POST'])
 @ns.require_secret
-def api_schedule_get_jobid:
-    pass
+def api_schedule_get_jobid(id):
+    resp = ns.JSONResponse()
+    nds = NidoDaemonService(json=True)
+    resp.data['job'] = nds.get_scheduled_job(id)
+    return resp.get_flask_response(app)
 
 @app.route('/api/schedule/add/<string:type>', methods=['POST'])
 @ns.require_secret
-def api_schedule_get_jobid:
+def api_schedule_add_job(type):
     pass
 
 @app.route('/api/schedule/modify/<string:id>', methods=['POST'])
 @ns.require_secret
-def api_schedule_get_jobid:
+def api_schedule_modify_jobid(id):
     pass
 
 @app.route('/api/schedule/reschedule/<string:id>', methods=['POST'])
 @ns.require_secret
-def api_schedule_get_jobid:
+def api_schedule_reschedule_jobid(id):
     pass
 
 @app.route('/api/schedule/pause/<string:id>', methods=['POST'])
 @ns.require_secret
-def api_schedule_pause_jobid:
-    pass
+def api_schedule_pause_jobid(id):
+    resp = ns.JSONResponse()
+    nds = NidoDaemonService(json=True)
+    resp.data['job'] = nds.pause_scheduled_job(id)
+    return resp.get_flask_response(app)
 
 @app.route('/api/schedule/resume/<string:id>', methods=['POST'])
 @ns.require_secret
-def api_schedule_resume_jobid:
-    pass
+def api_schedule_resume_jobid(id):
+    resp = ns.JSONResponse()
+    nds = NidoDaemonService(json=True)
+    resp.data['job'] = nds.resume_scheduled_job(id)
+    return resp.get_flask_response(app)
 
 @app.route('/api/schedule/remove/<string:id>', methods=['POST'])
 @ns.require_secret
-def api_schedule_remove_jobid:
-    pass
+def api_schedule_remove_jobid(id):
+    resp = ns.JSONResponse()
+    nds = NidoDaemonService(json=True)
+    resp.data['job'] = nds.remove_scheduled_job(id)
+    return resp.get_flask_response(app)
 
 if __name__ == '__main__':
     # We're using an adhoc SSL context, which is not considered secure by browsers
