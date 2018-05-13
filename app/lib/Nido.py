@@ -15,10 +15,17 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import requests, json, time, yaml, os, signal, re
+import requests, json, time, yaml, os, signal, re, imp
 from enum import Enum
-import RPi.GPIO as GPIO
-from Adafruit_BME280 import *
+try:
+    imp.find_module('RPi.GPIO')
+    import RPi.GPIO as GPIO
+except ImportError:
+    from Testing import FakeGPIO
+    GPIO = FakeGPIO()
+from Adafruit_BME280 import BME280, BME280_OSAMPLE_8
+
+NIDO_BASE = os.environ['NIDO_BASE']
 
 # Enums:
 #   Mode
@@ -56,7 +63,11 @@ class FormTypes(Enum):
 
 class Sensor():
     def __init__(self, mode=BME280_OSAMPLE_8):
-        self.sensor = BME280(mode)
+        try:
+            self.sensor = BME280(mode)
+        except ImportError:
+            from Testing import FakeSensor
+            self.sensor = FakeSensor()
 
     def get_conditions(self):
         # Initialize response dict
@@ -244,7 +255,6 @@ class Controller():
     should be enabled based on the thermostat set point."""
 
     def __init__(self):
-        # Get Nido configuration
         try:
             self.cfg = Config()
             config = self.cfg.get_config()
@@ -351,7 +361,7 @@ class ConfigError(Exception):
 
 class Config():
     def __init__(self):
-        self._CONFIG = '/home/pi/nido/app/cfg/config.yaml'
+        self._CONFIG = '{}/app/cfg/config.yaml'.format(NIDO_BASE)
         self._SCHEMA_VERSION = '1.3'
         self._SCHEMA = {
                 'GPIO': {
