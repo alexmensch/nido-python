@@ -32,6 +32,7 @@ class NidoDaemon(Daemon):
         config = Config().get_config()
         poll_interval = config['schedule']['poll_interval']
         db_path = config['schedule']['db']
+        rpc_port = config['schedule']['rpc_port']
 
         self.scheduler = BackgroundScheduler()
         jobstores = {
@@ -45,7 +46,7 @@ class NidoDaemon(Daemon):
         self.scheduler.add_job(self.controller.update, trigger='interval', seconds=poll_interval, name='Poll')
         self.scheduler.start()
         
-        RPCserver = ThreadedServer(NidoSchedulerService(self.scheduler), port=49152, protocol_config={'allow_public_attrs': True})
+        RPCserver = ThreadedServer(NidoSchedulerService(self.scheduler), port=rpc_port, protocol_config={'allow_public_attrs': True})
 
         sys.stdout.write('{} [Info] Nido daemon started\n'.format(datetime.utcnow()))
         sys.stdout.flush()

@@ -17,13 +17,14 @@
 
 import requests, json, time, yaml, os, signal, re, imp
 from enum import Enum
-try:
-    imp.find_module('RPi.GPIO')
-    import RPi.GPIO as GPIO
-except ImportError:
-    from Testing import FakeGPIO
+
+if 'NIDO_TESTING' in os.environ:
+    from Testing import FakeGPIO, FakeSensor as BME280
     GPIO = FakeGPIO()
-from Adafruit_BME280 import BME280, BME280_OSAMPLE_8
+    BME280_OSAMPLE_8 = None
+else:
+    import RPi.GPIO as GPIO
+    from Adafruit_BME280 import BME280, BME280_OSAMPLE_8
 
 NIDO_BASE = os.environ['NIDO_BASE']
 
@@ -63,11 +64,7 @@ class FormTypes(Enum):
 
 class Sensor():
     def __init__(self, mode=BME280_OSAMPLE_8):
-        try:
-            self.sensor = BME280(mode)
-        except ImportError:
-            from Testing import FakeSensor
-            self.sensor = FakeSensor()
+        self.sensor = BME280(mode)
 
     def get_conditions(self):
         # Initialize response dict

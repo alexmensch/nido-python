@@ -2,9 +2,10 @@
 
 sil=""
 debug=""
-usage() { echo "Usage: $0 -b <base path> [-s] [-d]" 1>&2; exit 1; }
+testing=""
+usage() { echo "Usage: $0 -b <base path> [-s] [-d] [-t]" 1>&2; exit 1; }
 
-while getopts ":b:sd" opt; do
+while getopts ":b:sdt" opt; do
     case "${opt}" in
         b)
             base=${OPTARG}
@@ -14,6 +15,9 @@ while getopts ":b:sd" opt; do
             ;;
         d)
             debug=true
+            ;;
+        t)
+            testing=true
             ;;
         *)
             usage
@@ -28,6 +32,10 @@ fi
 
 if [ "${debug}" = true ]; then
     export NIDO_DEBUG=""
+fi
+
+if [ "${testing}" = true ]; then
+    export NIDO_TESTING=""
 fi
 
 export NIDO_BASE=${base}

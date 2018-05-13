@@ -23,7 +23,7 @@ class FakeGPIO():
         return
 
 class FakeSensor():
-    def __init__(self):
+    def __init__(self, mode):
         self._temp = 21.12
         self._pressure = 1013.3101
         self._humidity = 50.05

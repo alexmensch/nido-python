@@ -28,6 +28,10 @@ if 'NIDO_DEBUG' in os.environ:
     DEBUG = True
 else:
     DEBUG = config.get_config()['flask']['debug']
+if 'NIDO_TESTING' in os.environ:
+    SSL_MODE = None
+else:
+    SSL_MODE = 'adhoc'
 SECRET_KEY = config.get_config()['flask']['secret_key']
 GOOGLE_API_KEY = config.get_config()['google']['api_key']
 
@@ -250,4 +254,4 @@ def api_schedule_remove_jobid(id):
 if __name__ == '__main__':
     # We're using an adhoc SSL context, which is not considered secure by browsers
     # because it invokes a self-signed certificate.
-    app.run(host='0.0.0.0', port=config.get_config()['flask']['port'], ssl_context='adhoc', threaded=False)
+    app.run(host='0.0.0.0', port=config.get_config()['flask']['port'], ssl_context=SSL_MODE, threaded=False)
