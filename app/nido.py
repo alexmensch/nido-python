@@ -16,6 +16,7 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+import os
 from numbers import Number
 from flask import Flask, request, session, g, render_template, flash
 from lib.Nido import Sensor, LocalWeather, Config, Controller, Status, ControllerError
@@ -23,7 +24,10 @@ import lib.NidoServer as ns
 from lib.Scheduler import NidoDaemonService
 
 config = Config()
-DEBUG = config.get_config()['flask']['debug']
+if 'NIDO_DEBUG' in os.environ:
+    DEBUG = True
+else:
+    DEBUG = config.get_config()['flask']['debug']
 SECRET_KEY = config.get_config()['flask']['secret_key']
 GOOGLE_API_KEY = config.get_config()['google']['api_key']
 
