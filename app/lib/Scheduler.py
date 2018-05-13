@@ -125,23 +125,21 @@ class NidoDaemonService:
 
     @keepalive
     def add_scheduled_job(self, type, day_of_week=None, hour=None, minute=None, job_id=None, mode=None, temp=None, scale=None):
-        if type != 'mode' and type != 'temp':
-            raise NidoDaemonServiceError('Invalid job type specified: {}'.format(type))
-        
         if type == 'mode':
             return self._connection.root.add_job('nidod:NidoSchedulerService.set_mode', args=[mode], name='Mode', jobstore='schedule', id=job_id, trigger='cron', day_of_week=day_of_week, hour=hour, minute=minute)
         elif type == 'temp':
             return self._connection.root.add_job('nidod:NidoSchedulerService.set_temp', args=[temp, scale], name='Temp', jobstore='schedule', id=job_id, trigger='cron', day_of_week=day_of_week, hour=hour, minute=minute)
+        else:
+            raise NidoDaemonServiceError('Invalid job type specified: {}'.format(type))
 
     @keepalive
     def modify_scheduled_job(self, job_id, type, mode=None, temp=None, scale=None):
-        if type != 'mode' and type != 'temp':
-            raise NidoDaemonServiceError('Invalid job type specified: {}'.format(type))
-
         if type == 'mode':
             return self._connection.root.modify_job(job_id, args=[mode])
         elif type == 'temp':
             return self._connection.root.modify_job(job_id, args=[temp, scale])
+        else:
+            raise NidoDaemonServiceError('Invalid job type specified: {}'.format(type))
 
     @keepalive
     def reschedule_job(self, job_id, day_of_week=None, hour=None, minute=None):

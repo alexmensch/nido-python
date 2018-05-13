@@ -23,7 +23,7 @@ import lib.NidoServer as ns
 from lib.Scheduler import NidoDaemonService
 
 config = Config()
-DEBUG = True # config.get_config()['flask']['debug']
+DEBUG = config.get_config()['flask']['debug']
 SECRET_KEY = config.get_config()['flask']['secret_key']
 GOOGLE_API_KEY = config.get_config()['google']['api_key']
 
