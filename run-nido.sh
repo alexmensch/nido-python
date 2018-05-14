@@ -36,6 +36,7 @@ fi
 
 if [ "${testing}" = true ]; then
     export NIDO_TESTING=""
+    export NIDO_TESTING_GPIO="/tmp/gpio_pins.yaml"
 fi
 
 export NIDO_BASE=${base}

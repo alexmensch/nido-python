@@ -15,12 +15,12 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import requests, json, time, yaml, os, signal, re, imp
+import requests, json, time, yaml, os, signal, re
 from enum import Enum
 
 if 'NIDO_TESTING' in os.environ:
     from Testing import FakeGPIO, FakeSensor as BME280
-    GPIO = FakeGPIO()
+    GPIO = FakeGPIO(os.environ['NIDO_TESTING_GPIO'])
     BME280_OSAMPLE_8 = None
 else:
     import RPi.GPIO as GPIO

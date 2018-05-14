@@ -6,7 +6,6 @@ Run `install.sh` to install required Python modules and Node.js components.
 
 ## Initial configuration
 1. Rename `app/cfg/config-example.yaml` to `app/cfg/config.yaml` with your own settings.
-2. Set absolute path to `config.yaml` in `app/lib/Nido.py`.
 
 ## Generating a test build
 `npm run build`
@@ -20,8 +19,8 @@ Run `install.sh` to install required Python modules and Node.js components.
 `npm run build-prod`
 
 ## Running the application
-1. `run-nido.sh -b <base path>` (Runs both Flask HTTP server and daemon)
-> Note: `sudo` is required due to hardware access to GPIO pins
+1. `run-nido.sh -b <base path>` This runs both the Flask HTTP server and the controller/scheduler daemon.
+> Note: `sudo` access is required due to hardware access to GPIO pins
 2. (Optional) You may want to add this line to your `/etc/rc.local` file so that Nido runs automatically at startup. Output from the Flask server will be output to `nohup.out` in your base path.
 ```
 su <pi user> && cd <base path> && nohup ./run-nido.sh -b <base path> &
