@@ -38,28 +38,28 @@ class NidoSchedulerService(rpyc.Service):
     def __call__(self, conn):
         return self.__class__(self._scheduler)
 
-    def exposed_add_job(self, func, *args, **kwargs):
+    def add_job(self, func, *args, **kwargs):
         return self._scheduler.add_job(func, *args, **kwargs)
 
-    def exposed_modify_job(self, job_id, jobstore=None, **changes):
+    def modify_job(self, job_id, jobstore=None, **changes):
         return self._scheduler.modify_job(job_id, jobstore, **changes)
 
-    def exposed_reschedule_job(self, job_id, jobstore=None, trigger=None, **trigger_args):
+    def reschedule_job(self, job_id, jobstore=None, trigger=None, **trigger_args):
         return self._scheduler.reschedule_job(job_id, jobstore, trigger, **trigger_args)
 
-    def exposed_pause_job(self, job_id, jobstore=None):
+    def pause_job(self, job_id, jobstore=None):
         return self._scheduler.pause_job(job_id, jobstore)
 
-    def exposed_resume_job(self, job_id, jobstore=None):
+    def resume_job(self, job_id, jobstore=None):
         return self._scheduler.resume_job(job_id, jobstore)
 
-    def exposed_remove_job(self, job_id, jobstore=None):
+    def remove_job(self, job_id, jobstore=None):
         self._scheduler.remove_job(job_id, jobstore)
 
-    def exposed_get_job(self, job_id):
+    def get_job(self, job_id):
         return self._scheduler.get_job(job_id)
 
-    def exposed_get_jobs(self, jobstore=None):
+    def get_jobs(self, jobstore=None):
         return self._scheduler.get_jobs(jobstore)
 
     @staticmethod
@@ -72,8 +72,7 @@ class NidoSchedulerService(rpyc.Service):
 
     @staticmethod
     def wakeup():
-        Controller().update()
-        return
+        return Controller().update()
 
 def keepalive(func):
     """Decorator to ensure that RPC connection is active when calls are made.
@@ -85,18 +84,10 @@ def keepalive(func):
     @wraps(func)
     def check_connection(self, *args, **kwargs):
         try:
-            result = func(self, *args, **kwargs)
+            return func(self, *args, **kwargs)
         except EOFError:
             self._connect()
-            result = func(self, *args, **kwargs)
-
-        if self._json:
-            if isinstance(result, list):
-                return self._jsonify(*result)
-            else:
-                return self._jsonify(result)
-        else:
-            return result
+            return func(self, *args, **kwargs)
 
     return check_connection
 
@@ -121,16 +112,52 @@ class NidoDaemonService:
 
     @keepalive
     def wakeup(self):
-        return self._connection.root.add_job('nidod:NidoSchedulerService.wakeup')
+        job = self._connection.root.add_job('nidod:NidoSchedulerService.wakeup')
+        if self._json:
+            return self._jsonify_job(job)
+        return job
+
+    @keepalive
+    def get_scheduled_jobs(self, jobstore=None):
+        jobs = self._connection.root.get_jobs(jobstore=jobstore)
+        if self._json:
+            return self._jsonify_jobs(jobs)
+        return jobs
+
+    @keepalive
+    def get_scheduled_job(self, job_id):
+        job = self._connection.root.get_job(job_id)
+        if self._json:
+            return self._jsonify_job(job)
+        return job
 
     @keepalive
     def add_scheduled_job(self, type, day_of_week=None, hour=None, minute=None, job_id=None, mode=None, temp=None, scale=None):
         if type == 'mode':
-            return self._connection.root.add_job('nidod:NidoSchedulerService.set_mode', args=[mode], name='Mode', jobstore='schedule', id=job_id, trigger='cron', day_of_week=day_of_week, hour=hour, minute=minute)
+            if mode is None:
+                raise NidoDaemonServiceError('No mode specified.')
+            else:
+                func = 'set_mode'
+                args = [mode]
+                name = 'Mode: {}'.format(mode.lower())
         elif type == 'temp':
-            return self._connection.root.add_job('nidod:NidoSchedulerService.set_temp', args=[temp, scale], name='Temp', jobstore='schedule', id=job_id, trigger='cron', day_of_week=day_of_week, hour=hour, minute=minute)
+            if temp is None or scale is None:
+                raise NidoDaemonServiceError('Both temperature value and scale are required.')
+            else:
+                func = 'set_temp'
+                args = [temp, scale]
+                name = 'Temp: {:.1f}{}'.format(float(temp), scale.upper())
         else:
             raise NidoDaemonServiceError('Invalid job type specified: {}'.format(type))
+
+        if day_of_week is None and hour is None and minute is None:
+            raise NidoDaemonServiceError('No timing specified for job.')
+
+        job = self._connection.root.add_job('nidod:NidoSchedulerService.{}'.format(func), args=args, name=name, jobstore='schedule', id=job_id, trigger='cron', day_of_week=day_of_week, hour=hour, minute=minute)
+
+        if self._json:
+            return self._jsonify_job(job)
+        return job
 
     @keepalive
     def modify_scheduled_job(self, job_id, type, mode=None, temp=None, scale=None):
@@ -157,59 +184,52 @@ class NidoDaemonService:
     def remove_scheduled_job(self, job_id):
         return self._connection.root.remove_job(job_id)
 
-    @keepalive
-    def get_scheduled_jobs(self, jobstore=None):
-        return self._connection.root.get_jobs(jobstore=jobstore)
-
-    @keepalive
-    def get_scheduled_job(self, job_id):
-        return self._connection.root.get_job(job_id)
-
     def _is_connected(self):
         return not self._connection.closed
 
     def _connect(self):
         self._connection = rpyc.connect(self._config['schedule']['rpc_host'], self._config['schedule']['rpc_port'], config={'allow_public_attrs': True})
 
-    @staticmethod
-    def _jsonify(*args):
-        response = {}
-        for j in args:
-            if j is None:
-                pass
-            if isinstance(j.trigger, DateTrigger):
-                trigger = {
-                    'timezone': str(j.trigger.run_date.tzinfo)
-                }
-            else:
-                trigger_start_date = j.trigger.start_date.strftime('%m/%d/%Y %H:%M:%S') if j.trigger.start_date else None
-                trigger_end_date = j.trigger.end_date.strftime('%m/%d/%Y %H:%M:%S') if j.trigger.end_date else None
-                trigger = {
-                    'start_date': trigger_start_date,
-                    'end_date': trigger_end_date,
-                    'timezone': str(j.trigger.timezone)
-                }
-
-            if isinstance(j.trigger, CronTrigger):
-                trigger['cron'] = {}
-                for f in j.trigger.fields:
-                    trigger['cron'][f.name] = str(f)
-            elif isinstance(j.trigger, IntervalTrigger):
-                trigger_interval = str(j.trigger.interval) if j.trigger.interval else None
-                trigger['interval'] = trigger_interval
-            elif isinstance(j.trigger, DateTrigger):
-                trigger['run_date'] = j.trigger.run_date.strftime('%m/%d/%Y %H:%M:%S')
-            else:
-                raise NidoDaemonServiceError('Unknown trigger type: {}'.format(type(j.trigger)))
-
-            job = {
-                'name': j.name,
-                'args': j.args,
-                'next_run_time': j.next_run_time.strftime('%m/%d/%Y %H:%M:%S'),
-                'trigger': trigger
+    def _jsonify_job(self, j):
+        if isinstance(j.trigger, DateTrigger):
+            trigger = {
+                'timezone': str(j.trigger.run_date.tzinfo)
             }
-            
-            response[j.id] = job
-        if len(response.keys()) == 0:
-            response['warning'] = 'Either no jobs are scheduled, or the job ID supplied does not exist.'
-        return response
+        else:
+            trigger_start_date = j.trigger.start_date.strftime('%m/%d/%Y %H:%M:%S') if j.trigger.start_date else None
+            trigger_end_date = j.trigger.end_date.strftime('%m/%d/%Y %H:%M:%S') if j.trigger.end_date else None
+            trigger = {
+                'start_date': trigger_start_date,
+                'end_date': trigger_end_date,
+                'timezone': str(j.trigger.timezone)
+            }
+
+        if isinstance(j.trigger, CronTrigger):
+            trigger['cron'] = {}
+            for f in j.trigger.fields:
+                trigger['cron'][f.name] = str(f)
+        elif isinstance(j.trigger, IntervalTrigger):
+            trigger_interval = str(j.trigger.interval) if j.trigger.interval else None
+            trigger['interval'] = trigger_interval
+        elif isinstance(j.trigger, DateTrigger):
+            trigger['run_date'] = j.trigger.run_date.strftime('%m/%d/%Y %H:%M:%S')
+        else:
+            raise NidoDaemonServiceError('Unknown trigger type: {}'.format(type(j.trigger)))
+
+        job = {
+            'id': j.id,
+            'name': j.name,
+            'args': j.args,
+            'next_run_time': j.next_run_time.strftime('%m/%d/%Y %H:%M:%S'),
+            'trigger': trigger
+        }
+
+        return job
+
+    def _jsonify_jobs(self, jobs):
+        job_list = []
+        for j in jobs:
+            if j is None:
+                continue
+            job_list.append(self._jsonify_job(j))
+        return job_list

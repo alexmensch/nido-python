@@ -123,14 +123,11 @@ def require_session(route):
 def require_secret(route):
     @wraps(route)
     def check_secret(*args, **kwargs):
-        # Validate that the JSON in the body has a secret
-        validation = { 'secret': basestring }
-        # JSON request data
         req_data = request.get_json()
         # Prepare a JSONResponse in case we need it
         resp = JSONResponse()
 
-        if validate_json_req(req_data, validation):
+        if 'secret' in req_data.keys():
             if req_data['secret'] == PUBLIC_API_SECRET:
                 return route(*args, **kwargs)
             else:

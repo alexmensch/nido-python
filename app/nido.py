@@ -21,7 +21,7 @@ from numbers import Number
 from flask import Flask, request, session, g, render_template, flash
 from lib.Nido import Sensor, LocalWeather, Config, Controller, Status, ControllerError
 import lib.NidoServer as ns
-from lib.Scheduler import NidoDaemonService
+from lib.Scheduler import NidoDaemonService, NidoDaemonServiceError
 
 config = Config()
 if 'NIDO_DEBUG' in os.environ:
@@ -137,7 +137,6 @@ def get_weather():
 @app.route('/get_config', methods=['POST'])
 @ns.require_session
 def get_config():
-    # Initialize response dict
     resp = ns.JSONResponse()
     cfg = config.get_config()
     resp.data['config'] = cfg['config']
@@ -146,7 +145,6 @@ def get_config():
 @app.route('/set_config', methods=['POST'])
 @ns.require_session
 def set_config():
-    # Initialize response object
     resp = ns.JSONResponse()
     new_cfg = request.get_json()
         
@@ -207,6 +205,8 @@ def api_schedule_get_all():
 @app.route('/api/schedule/get/<string:id>', methods=['POST'])
 @ns.require_secret
 def api_schedule_get_jobid(id):
+    """Endpoint that returns a scheduled job with a specific id."""
+
     resp = ns.JSONResponse()
     nds = NidoDaemonService(json=True)
     resp.data['job'] = nds.get_scheduled_job(id)
@@ -215,7 +215,37 @@ def api_schedule_get_jobid(id):
 @app.route('/api/schedule/add/<string:type>', methods=['POST'])
 @ns.require_secret
 def api_schedule_add_job(type):
-    pass
+    """Endpoint to add a new, persistent scheduled job.
+
+    The 'type' value in the URL must be either "temp" or "mode".
+    The body must consist of a JSON object with the following valid keys:
+        Job type-specific:
+            mode -> What mode should be triggered (off, heat, cool)
+            temp -> What temperature should be triggered (float value)
+            scale -> What temperature scale the temp is in ("C" or "F")
+        Combination of cron-style timing options:
+            day_of_week -> Specify the day(s) of the week that the job should be triggered
+            hour -> Specify the hour(s) that the job should be triggered
+            minute -> Specify the minute(s) that the job should be triggered
+        Optional:
+            job_id -> Specify a job ID for the job"""
+
+    resp = ns.JSONResponse()
+    nds = NidoDaemonService(json=True)
+
+    job_kwargs = request.get_json()
+    del job_kwargs['secret']
+        
+    if type.lower() == 'mode' or type.lower() == 'temp':
+        try:
+            resp.data['job'] = nds.add_scheduled_job(type, **job_kwargs)
+        except NidoDaemonServiceError as e:
+            resp.data['error'] = 'Error adding job: {}'.format(e)
+    else:
+        resp.data['error'] = 'Invalid mode specified.'
+        resp.status = 400
+
+    return resp.get_flask_response(app)
 
 @app.route('/api/schedule/modify/<string:id>', methods=['POST'])
 @ns.require_secret
