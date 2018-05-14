@@ -188,7 +188,7 @@ def api_set_temp(temp, scale):
     The first regex accepts either integer or floating point numbers."""
 
     resp = ns.JSONResponse()
-    temp = float("{0:.1f}".format(float(temp)))
+    temp = float("{:.1f}".format(float(temp)))
     resp = ns.set_config_helper(resp, temp_scale=[temp, scale])
     return resp.get_flask_response(app)
 
@@ -209,7 +209,10 @@ def api_schedule_get_jobid(id):
 
     resp = ns.JSONResponse()
     nds = NidoDaemonService(json=True)
-    resp.data['job'] = nds.get_scheduled_job(id)
+    try:
+        resp.data['job'] = nds.get_scheduled_job(id)
+    except NidoDaemonServiceError as e:
+        resp.data['error'] = 'Error getting job: {}'.format(e)
     return resp.get_flask_response(app)
 
 @app.route('/api/schedule/add/<string:type>', methods=['POST'])
@@ -262,7 +265,10 @@ def api_schedule_reschedule_jobid(id):
 def api_schedule_pause_jobid(id):
     resp = ns.JSONResponse()
     nds = NidoDaemonService(json=True)
-    resp.data['job'] = nds.pause_scheduled_job(id)
+    try:
+        resp.data['job'] = nds.pause_scheduled_job(id)
+    except NidoDaemonServiceError as e:
+        resp.data['error'] = 'Error pausing job: {}'.format(e)
     return resp.get_flask_response(app)
 
 @app.route('/api/schedule/resume/<string:id>', methods=['POST'])
@@ -270,7 +276,10 @@ def api_schedule_pause_jobid(id):
 def api_schedule_resume_jobid(id):
     resp = ns.JSONResponse()
     nds = NidoDaemonService(json=True)
-    resp.data['job'] = nds.resume_scheduled_job(id)
+    try:
+        resp.data['job'] = nds.resume_scheduled_job(id)
+    except NidoDaemonServiceError as e:
+        resp.data['error'] = 'Error resuming job: {}'.format(e)
     return resp.get_flask_response(app)
 
 @app.route('/api/schedule/remove/<string:id>', methods=['POST'])
@@ -278,7 +287,10 @@ def api_schedule_resume_jobid(id):
 def api_schedule_remove_jobid(id):
     resp = ns.JSONResponse()
     nds = NidoDaemonService(json=True)
-    resp.data['job'] = nds.remove_scheduled_job(id)
+    try:
+        resp.data['job'] = nds.remove_scheduled_job(id)
+    except NidoDaemonServiceError as e:
+        resp.data['error'] = 'Error removing job: {}'.format(e)
     return resp.get_flask_response(app)
 
 if __name__ == '__main__':
