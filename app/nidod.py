@@ -20,9 +20,9 @@
 
 import sys
 from datetime import datetime
-from lib.Daemon import Daemon
-from lib.Nido import Config, Controller
-from lib.Scheduler import NidoSchedulerService
+from lib.daemon import Daemon
+from lib.nido import Config, Controller
+from lib.scheduler import NidoSchedulerService
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from rpyc.utils.server import ThreadedServer

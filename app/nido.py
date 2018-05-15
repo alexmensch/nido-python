@@ -20,10 +20,10 @@ import json
 import os
 from numbers import Number
 from flask import Flask, request, session, g, render_template, flash
-from lib.Nido import (Sensor, LocalWeather, Config, Controller, Status,
+from lib.nido import (Sensor, LocalWeather, Config, Controller, Status,
                       ControllerError)
-import lib.NidoServer as ns
-from lib.Scheduler import NidoDaemonService, NidoDaemonServiceError
+import lib.nidoserver as ns
+from lib.scheduler import NidoDaemonService, NidoDaemonServiceError
 
 config = Config()
 if 'NIDO_DEBUG' in os.environ:

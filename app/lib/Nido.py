@@ -26,7 +26,7 @@ import re
 from enum import Enum
 
 if 'NIDO_TESTING' in os.environ:
-    from Testing import FakeGPIO, FakeSensor as BME280
+    from testing import FakeGPIO, FakeSensor as BME280
     GPIO = FakeGPIO(os.environ['NIDO_TESTING_GPIO'])
     BME280_OSAMPLE_8 = None
 else:

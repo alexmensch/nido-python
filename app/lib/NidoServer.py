@@ -20,8 +20,8 @@ import json
 from functools import wraps
 from flask import session, abort, request
 from werkzeug.routing import BaseConverter
-from Nido import Config, ConfigError, Controller
-from Scheduler import NidoDaemonService
+from nido import Config, ConfigError, Controller
+from scheduler import NidoDaemonService
 
 _CONFIG = Config()
 _PUBLIC_API_SECRET = _CONFIG.get_config()['flask']['public_api_secret']

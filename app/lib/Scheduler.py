@@ -23,7 +23,7 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.jobstores.base import JobLookupError, ConflictingIdError
-from Nido import Config, Controller
+from nido import Config, Controller
 
 
 class NidoSchedulerService(rpyc.Service):
