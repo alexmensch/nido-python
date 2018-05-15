@@ -31,9 +31,13 @@
 # 
 # Alex Marshall, 2016/12/03
  
-import sys, os, time, atexit
+import sys
+import os
+import time
+import atexit
 from signal import signal, SIGTERM
- 
+
+
 class Daemon:
     """
     A generic daemon class.

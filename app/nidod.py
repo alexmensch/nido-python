@@ -27,6 +27,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from rpyc.utils.server import ThreadedServer
 
+
 class NidoDaemon(Daemon):
     def run(self):
         self.controller = Controller()
@@ -69,6 +70,7 @@ class NidoDaemon(Daemon):
                          .format(datetime.utcnow()))
         sys.stdout.flush()
         return
+
 
 if __name__ == '__main__':
     config = Config().get_config()

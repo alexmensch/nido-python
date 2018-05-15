@@ -183,7 +183,8 @@ def set_config():
 def api_set_mode(set_mode):
     """Endpoint to accept a new mode setting.
 
-    Only setting one of the valid configured modes is possible."""
+    Only setting one of the valid configured modes is possible.
+    """
 
     resp = ns.JSONResponse()
     resp = ns.set_config_helper(resp, mode=set_mode)
@@ -196,7 +197,8 @@ def api_set_temp(temp, scale):
     """Endpoint to accept a new set temperature in either
     Celsius or Fahrenheit.
 
-    The first regex accepts either integer or floating point numbers."""
+    The first regex accepts either integer or floating point numbers.
+    """
 
     resp = ns.JSONResponse()
     temp = float("{:.1f}".format(float(temp)))
@@ -245,7 +247,8 @@ def api_schedule_add_job(type):
             minute -> Specify the minute(s) that the job
                       should be triggered
         Optional:
-            job_id -> Specify a job ID for the job"""
+            job_id -> Specify a job ID for the job
+    """
 
     resp = ns.JSONResponse()
     nds = NidoDaemonService(json=True)
@@ -306,6 +309,7 @@ def api_schedule_remove_jobid(id):
     except NidoDaemonServiceError as e:
         resp.data['error'] = 'Error removing job: {}'.format(e)
     return resp.get_flask_response(app)
+
 
 if __name__ == '__main__':
     # We're using an adhoc SSL context, which is not considered secure

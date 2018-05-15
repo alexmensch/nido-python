@@ -17,22 +17,21 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 
 import json
+from functools import wraps
 from flask import session, abort, request
 from werkzeug.routing import BaseConverter
-from functools import wraps
 from Nido import Config, ConfigError, Controller
 from Scheduler import NidoDaemonService
 
-config = Config()
-PUBLIC_API_SECRET = config.get_config()['flask']['public_api_secret']
+_CONFIG = Config()
+_PUBLIC_API_SECRET = _CONFIG.get_config()['flask']['public_api_secret']
 
-# JSON response object
-#
+
 class JSONResponse:
     def __init__(self):
         self.status = 200
         self.data = {
-                'version': config.get_version()
+                'version': _CONFIG.get_version()
                 }
         return
 
@@ -41,6 +40,7 @@ class JSONResponse:
         response.headers['Content-Type'] = 'application/json'
         response.status_code = self.status
         return response
+
 
 # Helper function to validate JSON in requests
 # A list of tuples is passed in of the form ( 'name', type )
@@ -78,22 +78,22 @@ def validate_json_req(req_data, valid):
     # No tests failed
     return True
 
-# Helper function to set config
+
 def set_config_helper(resp, cfg=None, mode=None, temp_scale=None):
     if mode:
-        if config.set_mode(mode):
+        if _CONFIG.set_mode(mode):
             resp.data['message'] = 'Mode updated successfully.'
         else:
             resp.data['error'] = 'Invalid mode.'
             resp.status = 400
     elif temp_scale:
-        if config.set_temp(temp_scale[0], temp_scale[1]):
+        if _CONFIG.set_temp(temp_scale[0], temp_scale[1]):
             resp.data['message'] = 'Temperature updated successfully.'
         else:
             resp.data['error'] = 'Invalid temperature.'
             resp.status = 400
     elif cfg:
-        if config.update_config(cfg):
+        if _CONFIG.update_config(cfg):
             resp.data['message'] = 'Configuration updated successfully.'
         else:
             resp.data['error'] = 'Invalid configuration setting(s).'
@@ -101,7 +101,7 @@ def set_config_helper(resp, cfg=None, mode=None, temp_scale=None):
     else:
         raise ConfigError('No configuration setting specified.')
 
-    resp.data['config'] = config.get_config()['config']
+    resp.data['config'] = _CONFIG.get_config()['config']
 
     # Send signal to daemon, if running, to trigger update
     try:
@@ -109,6 +109,7 @@ def set_config_helper(resp, cfg=None, mode=None, temp_scale=None):
     except Exception as e:
         resp.data['warning'] = 'Server error signalling daemon: {}'.format(e)
     return resp
+
 
 # Decorator for routes that require a session cookie
 #
@@ -122,6 +123,7 @@ def require_session(route):
 
     return check_session
 
+
 # Decorator for API routes to verify that client supplied a secret
 # in the request body
 #
@@ -133,7 +135,7 @@ def require_secret(route):
         resp = JSONResponse()
 
         if 'secret' in req_data.keys():
-            if req_data['secret'] == PUBLIC_API_SECRET:
+            if req_data['secret'] == _PUBLIC_API_SECRET:
                 return route(*args, **kwargs)
             else:
                 resp.data['error'] = 'Invalid secret.'
@@ -145,6 +147,7 @@ def require_secret(route):
         return resp.get_flask_response()
 
     return check_secret
+
 
 # Custom URL converter to allow use of regex
 # Source: https://stackoverflow.com/questions/5870188 \
