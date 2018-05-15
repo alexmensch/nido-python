@@ -1,5 +1,6 @@
 import yaml
 
+
 class FakeGPIO():
     def __init__(self, state_file):
         self._pins = {}
@@ -42,6 +43,7 @@ class FakeGPIO():
     def _write(self):
         with open(self._state, 'w') as f:
             yaml.dump(self._pins, f, default_flow_style=False, indent=4)
+
 
 class FakeSensor():
     def __init__(self, mode):

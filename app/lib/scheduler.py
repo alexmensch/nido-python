@@ -232,7 +232,7 @@ class NidoDaemonService:
         if self._json:
             return {'message': 'Job removed successfully.', 'id': '{}' \
                                                             .format(job_id)}
-        return
+        return None
 
     def _return_job(self, job):
         if self._json:
