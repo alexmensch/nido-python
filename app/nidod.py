@@ -15,7 +15,8 @@
 #   GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#   along with this program.
+#   If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 from datetime import datetime
@@ -37,18 +38,26 @@ class NidoDaemon(Daemon):
         self.scheduler = BackgroundScheduler()
         jobstores = {
                 'default': {'type': 'memory'},
-                'schedule': SQLAlchemyJobStore(url='sqlite:///{}'.format(db_path))
+                'schedule': SQLAlchemyJobStore(url='sqlite:///{}' \
+                                               .format(db_path))
                 }
         job_defaults = {
                 'coalesce': True
                 }
-        self.scheduler.configure(jobstores=jobstores, job_defaults=job_defaults)
-        self.scheduler.add_job(NidoSchedulerService.wakeup, trigger='interval', seconds=poll_interval, name='Poll')
+        self.scheduler.configure(jobstores=jobstores,
+                                 job_defaults=job_defaults)
+        self.scheduler.add_job(NidoSchedulerService.wakeup,
+                               trigger='interval', seconds=poll_interval,
+                               name='Poll')
         self.scheduler.start()
         
-        RPCserver = ThreadedServer(NidoSchedulerService(self.scheduler), port=rpc_port, protocol_config={'allow_public_attrs': True})
+        RPCserver = ThreadedServer(NidoSchedulerService(self.scheduler),
+                                   port=rpc_port,
+                                   protocol_config= \
+                                   {'allow_public_attrs': True})
 
-        sys.stdout.write('{} [Info] Nido daemon started\n'.format(datetime.utcnow()))
+        sys.stdout.write('{} [Info] Nido daemon started\n' \
+                         .format(datetime.utcnow()))
         sys.stdout.flush()
 
         RPCserver.start()
@@ -56,7 +65,8 @@ class NidoDaemon(Daemon):
     def quit(self):
         self.scheduler.shutdown()
         self.controller.shutdown()
-        sys.stdout.write('{} [Info] Nido daemon shutdown\n'.format(datetime.utcnow()))
+        sys.stdout.write('{} [Info] Nido daemon shutdown\n' \
+                         .format(datetime.utcnow()))
         sys.stdout.flush()
         return
 

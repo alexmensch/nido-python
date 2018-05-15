@@ -13,13 +13,15 @@
 #   GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#   along with this program.
+#   If not, see <http://www.gnu.org/licenses/>.
 
 import json
 import os
 from numbers import Number
 from flask import Flask, request, session, g, render_template, flash
-from lib.Nido import Sensor, LocalWeather, Config, Controller, Status, ControllerError
+from lib.Nido import (Sensor, LocalWeather, Config, Controller, Status,
+                      ControllerError)
 import lib.NidoServer as ns
 from lib.Scheduler import NidoDaemonService, NidoDaemonServiceError
 
@@ -60,11 +62,13 @@ def login():
         resp.data['username'] = session['username']
         resp.data['logged_in'] = True
     else:
-        if request.form['username'] != cfg['flask']['username'] or request.form['password'] != cfg['flask']['password']:
+        if (request.form['username'] != cfg['flask']['username']
+            or request.form['password'] != cfg['flask']['password']):
             resp.data['error'] = 'Incorrect login credentials.'
             resp.data['logged_in'] = False
         else:
-            # Set (implicit create) session cookie (HTTP only) which all endpoints will check for
+            # Set (implicit create) session cookie (HTTP only) which all
+            # endpoints will check for
             session['logged_in'] = True
             session['username'] = request.form['username']
             # Default session lifetime is 31 days
@@ -82,7 +86,8 @@ def logout():
         resp.data['message'] = 'User has been logged out.'
         resp.data['username'] = session['username']
         resp.data['logged_in'] = False
-        # Note that clear() removes every key from the session dict, which causes the cookie to be destroyed
+        # Note that clear() removes every key from the session dict,
+        # which causes the cookie to be destroyed
         session.clear()
     else:
         resp.data['error'] = 'User not logged in.'
@@ -100,7 +105,8 @@ def get_state():
     try:
         state = Controller().get_status()
     except ControllerError as e:
-        err_msg = 'Exception getting current state from controller: {}'.format(str(e))
+        err_msg = 'Exception getting current state from controller: {}' \
+                  .format(str(e))
         resp.data['error'].append(err_msg)
     else:
         # state = Heating / Cooling / Off
@@ -127,9 +133,11 @@ def get_state():
 def get_weather():
     resp = ns.JSONResponse()
     # Any errors will be passed through
-    # The receiving application should note the retrieval_age value as necessary
-    # TODO: Support caching built into the LocalWeather() object by storing the object in the session
-    #       Needs to be a serializable object (see Flask documentation)
+    # The receiving application should note the retrieval_age value
+    # as necessary.
+    # TODO: Support caching built into the LocalWeather() object by
+    #       storing the object in the session.
+    #       Needs to be a serializable object (see Flask documentation).
     resp.data = LocalWeather().get_conditions()
 
     return resp.get_flask_response(app)
@@ -148,7 +156,8 @@ def set_config():
     resp = ns.JSONResponse()
     new_cfg = request.get_json()
         
-    # Expect to receive a json dict with one or more of the following pairs
+    # Expect to receive a json dict with
+    # one or more of the following pairs
     validation = {
         'location': list,
         'celsius': bool,
@@ -180,10 +189,12 @@ def api_set_mode(set_mode):
     resp = ns.set_config_helper(resp, mode=set_mode)
     return resp.get_flask_response(app)
 
-@app.route('/api/set/temp/<regex("(([0-9]*)(\.([0-9]+))?)"):temp>/<regex("[cCfF]"):scale>', methods=['POST'])
+@app.route('/api/set/temp/<regex("(([0-9]*)(\.([0-9]+))?)"):temp> \
+            /<regex("[cCfF]"):scale>', methods=['POST'])
 @ns.require_secret
 def api_set_temp(temp, scale):
-    """Endpoint to accept a new set temperature in either Celsius or Fahrenheit.
+    """Endpoint to accept a new set temperature in either
+    Celsius or Fahrenheit.
 
     The first regex accepts either integer or floating point numbers."""
 
@@ -221,15 +232,18 @@ def api_schedule_add_job(type):
     """Endpoint to add a new, persistent scheduled job.
 
     The 'type' value in the URL must be either "temp" or "mode".
-    The body must consist of a JSON object with the following valid keys:
+    The body must consist of a JSON object with the following
+    valid keys:
         Job type-specific:
             mode -> What mode should be triggered (off, heat, cool)
             temp -> What temperature should be triggered (float value)
             scale -> What temperature scale the temp is in ("C" or "F")
         Combination of cron-style timing options:
-            day_of_week -> Specify the day(s) of the week that the job should be triggered
+            day_of_week -> Specify the day(s) of the week that the job
+                           should be triggered
             hour -> Specify the hour(s) that the job should be triggered
-            minute -> Specify the minute(s) that the job should be triggered
+            minute -> Specify the minute(s) that the job
+                      should be triggered
         Optional:
             job_id -> Specify a job ID for the job"""
 
@@ -294,6 +308,7 @@ def api_schedule_remove_jobid(id):
     return resp.get_flask_response(app)
 
 if __name__ == '__main__':
-    # We're using an adhoc SSL context, which is not considered secure by browsers
-    # because it invokes a self-signed certificate.
-    app.run(host='0.0.0.0', port=config.get_config()['flask']['port'], ssl_context=SSL_MODE, threaded=False)
+    # We're using an adhoc SSL context, which is not considered secure
+    # by browsers because it invokes a self-signed certificate.
+    app.run(host='0.0.0.0', port=config.get_config()['flask']['port'],
+            ssl_context=SSL_MODE, threaded=False)

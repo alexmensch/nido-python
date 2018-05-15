@@ -13,7 +13,8 @@
 #   GNU General Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License
-#   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#   along with this program.
+#   If not, see <http://www.gnu.org/licenses/>.
 
 import requests, json, time, yaml, os, signal, re
 from enum import Enum
@@ -78,7 +79,8 @@ class Sensor():
                 'relative_humidity': self.sensor.read_humidity()
                 }
         except Exception as e:
-            resp['error'] = 'Exception getting sensor data: {} {}'.format(type(e), str(e))
+            resp['error'] = 'Exception getting sensor data: {} {}' \
+                            .format(type(e), str(e))
         else:
             resp['conditions'] = conditions
         
@@ -138,16 +140,21 @@ class LocalWeather():
             try:
                 api_error = r_json['response']['error']
             except KeyError:
-                resp['error'] = 'Unknown Wunderground API error. Response data: ' + str(r_json)
+                resp['error'] = 'Unknown Wunderground API error. Response \
+                                 data: ' + str(r_json)
             else:
                 if 'description' in api_error:
-                    resp['error'] = 'Wunderground API error ({}): {}'.format(api_error['type'], api_error['description'])
+                    resp['error'] = 'Wunderground API error ({}): {}' \
+                                    .format(api_error['type'],
+                                            api_error['description'])
                 else:
-                    resp['error'] = 'Wunderground API error ({})'.format(api_error['type'])
+                    resp['error'] = 'Wunderground API error ({})' \
+                                    .format(api_error['type'])
         else:
             try:
                 # Remove '%' and format relatively humidity as a number
-                rh = re.sub('[^0-9]', '', current_observation['relative_humidity'])
+                rh = re.sub('[^0-9]', '',
+                            current_observation['relative_humidity'])
                 rh = int(float(rh))
                 # Get shortest term high/low forecast
                 for period in forecast:
@@ -156,14 +163,21 @@ class LocalWeather():
                         fcast_low = float(period['low']['celsius'])
                 self.conditions = {
                         'location': {
-                            'full': current_observation['display_location']['full'],
-                            'city': current_observation['display_location']['city'],
-                            'state': current_observation['display_location']['state'],
-                            'zipcode': current_observation['display_location']['zip'],
-                            'country': current_observation['display_location']['country'],
+                            'full': current_observation['display_location'] \
+                                                       ['full'],
+                            'city': current_observation['display_location'] \
+                                                       ['city'],
+                            'state': current_observation['display_location'] \
+                                                        ['state'],
+                            'zipcode': current_observation['display_location'] \
+                                                          ['zip'],
+                            'country': current_observation['display_location'] \
+                                                          ['country'],
                             'coordinates': {
-                                'latitude': current_observation['display_location']['latitude'],
-                                'longitude': current_observation['display_location']['longitude']
+                                'latitude': current_observation \
+                                            ['display_location']['latitude'],
+                                'longitude': current_observation \
+                                             ['display_location']['longitude']
                                 },
                             },
                         'temp_c': current_observation['temp_c'],
@@ -178,15 +192,20 @@ class LocalWeather():
                             'low': fcast_low
                             },
                         'solar': {
-                            'sunrise': int(sun_phase['sunrise']['hour'] + sun_phase['sunrise']['minute']),
-                            'sunset': int(sun_phase['sunset']['hour'] + sun_phase['sunset']['minute'])
+                            'sunrise': int(sun_phase['sunrise']['hour']
+                                       + sun_phase['sunrise']['minute']),
+                            'sunset': int(sun_phase['sunset']['hour']
+                                      + sun_phase['sunset']['minute'])
                             }
                         }
                 # Convert icon URL to HTTPS
-                self.conditions['condition']['icon_url'] = re.sub('(http)', 'https', current_observation['icon_url'], count=1)
+                icon_url = re.sub('(http)', 'https',
+                                  current_observation['icon_url'], count=1)
+                self.conditions['condition']['icon_url'] = icon_url
             except KeyError as e:
                 # Something changed in the response format, generate an error
-                resp['error'] = 'Error parsing Wunderground API data: {}'.format(str(e))
+                resp['error'] = 'Error parsing Wunderground API data: {}' \
+                                .format(str(e))
             else:
                 # Reset retrieval time
                 self.last_req = int(time.time())
@@ -206,14 +225,17 @@ class LocalWeather():
         if self.last_req == 0:
             self._interval = -1
 
-        # If we made a request within caching period and have a cached result, use that instead
-        if self.conditions and (self._interval < self._CACHE_EXPIRY) and (self._interval >= 0):
+        # If we made a request within caching period and have a cached
+        # result, use that instead
+        if self.conditions and (self._interval < self._CACHE_EXPIRY) \
+           and (self._interval >= 0):
             resp['weather'] = self.conditions
             resp['retrieval_age'] = self._interval
             return resp
 
         # Determine location query type
-        # API documentation here: http://api.wunderground.com/weather/api/d/docs?d=data/index
+        # API documentation here:
+        # http://api.wunderground.com/weather/api/d/docs?d=data/index
         # Prefer lat,long over zipcode
         if (self.location is None) and (self.zipcode is None):
             query = 'autoip'
@@ -223,7 +245,9 @@ class LocalWeather():
             query = self.zipcode
 
         # Get Wunderground weather conditions
-        request_url = 'https://api.wunderground.com/api/{}/{}/q/{}.json'.format(self.api_key, 'conditions/forecast/astronomy', query)
+        request_url = 'https://api.wunderground.com/api/{}/{}/q/{}.json' \
+                      .format(self.api_key, 'conditions/forecast/astronomy',
+                              query)
         api_response = self._wunderground_req(request_url)
 
         if isinstance(api_response, requests.Response):
@@ -248,15 +272,17 @@ class ControllerError(Exception):
         return repr(self.msg)
 
 class Controller():
-    """This is the controller code that determines whether the heating / cooling system
-    should be enabled based on the thermostat set point."""
+    """This is the controller code that determines whether the
+    heating / cooling system should be enabled based on the thermostat
+    set point."""
 
     def __init__(self):
         try:
             self.cfg = Config()
             config = self.cfg.get_config()
         except IOError as e:
-            raise ControllerError('Error getting configuration: {}'.format(str(e)))
+            raise ControllerError('Error getting configuration: {}' \
+                                  .format(str(e)))
         else:
             self._HEATING = config['GPIO']['heat_pin']
             self._COOLING = config['GPIO']['cool_pin']
@@ -272,7 +298,8 @@ class Controller():
     def get_status(self):
         if (GPIO.input(self._HEATING) and GPIO.input(self._COOLING)):
             self.shutdown()
-            raise ControllerError('Both heating and cooling pins were enabled. Both pins disabled as a precaution.')
+            raise ControllerError('Both heating and cooling pins were enabled. \
+                                   Both pins disabled as a precaution.')
         elif GPIO.input(self._HEATING):
             return Status.Heating.value
         elif GPIO.input(self._COOLING):
@@ -313,7 +340,8 @@ class Controller():
             hysteresis = config['behavior']['hysteresis']
         except KeyError as e:
             self.shutdown()
-            raise ControllerError('Error reading Nido configuration: {}'.format(e))
+            raise ControllerError('Error reading Nido configuration: {}' \
+                                  .format(e))
         except ControllerError:
             self.shutdown()
             raise
@@ -326,7 +354,8 @@ class Controller():
             else:
                 self.shutdown()
         else:
-            # Additional modes can be enabled in future, eg. Mode.Cool, Mode.Heat_Cool
+            # Additional modes can be enabled in future, eg. Mode.Cool,
+            # Mode.Heat_Cool
             self.shutdown()
 
         return
@@ -336,7 +365,8 @@ class Controller():
         try:
             f = open(pid_file, 'r')
         except IOError as e:
-            raise ControllerError('Error opening Nido daemon PID file: {}'.format(e))
+            raise ControllerError('Error opening Nido daemon PID file: {}' \
+                                  .format(e))
         else:
             with f:
                 pid = int(f.read().strip())
@@ -419,7 +449,8 @@ class Config():
                         },
                     'modes_available': {
                         'required': False,
-                        'default': [ [ Mode.Heat.name, True ], [ Mode.Cool.name, False ] ]
+                        'default': [ [ Mode.Heat.name, True ],
+                                     [ Mode.Cool.name, False ] ]
                         },
                     'set_temperature': {
                         'required': False,
@@ -466,7 +497,8 @@ class Config():
         if self._is_valid():
             return
         else:
-            raise ConfigError('Error: incomplete configuration, please verify config.yaml settings.')
+            raise ConfigError('Error: incomplete configuration, please verify \
+                              config.yaml settings.')
 
     def get_config(self):
         with open(self._CONFIG, 'r') as f:
@@ -529,7 +561,8 @@ class Config():
         if config is None:
             config = self.get_config()
 
-        # Iterate through schema and check required flag against loaded config
+        # Iterate through schema and check required flag against
+        # loaded config
         for section in self._SCHEMA:
             for setting in self._SCHEMA[section]:
                 if self._SCHEMA[section][setting]['required'] == True:
@@ -539,16 +572,20 @@ class Config():
                         return False
                 # If setting is not required, check if a default value exists
                 #   and set it if not set in the config
-                elif set_defaults and 'default' in self._SCHEMA[section][setting]:
+                elif set_defaults and 'default' in self._SCHEMA[section] \
+                                                               [setting]:
                     if section not in config:
                         default_setting = {
                                 section: {
-                                    setting: self._SCHEMA[section][setting]['default']
+                                    setting: self._SCHEMA[section][setting] \
+                                                                  ['default']
                                     }
                                 }
                         config.update(default_setting)
                     elif setting not in config[section]:
-                        config[section][setting] = self._SCHEMA[section][setting]['default']
+                        config[section][setting] = self._SCHEMA[section] \
+                                                               [setting] \
+                                                               ['default']
 
         if update:
             self._set_config(config)
