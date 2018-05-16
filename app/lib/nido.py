@@ -1,7 +1,38 @@
-import requests, json, time, yaml, os, signal, re
+#   Nido, a Raspberry Pi-based home thermostat.
+#
+#   Copyright (C) 2016 Alex Marshall
+#
+#   This program is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with this program.
+#   If not, see <http://www.gnu.org/licenses/>.
+
+import requests
+from requests import RequestException
+import time
+import yaml
+import os
+import re
 from enum import Enum
-import RPi.GPIO as GPIO
-from Adafruit_BME280 import *
+
+if 'NIDO_TESTING' in os.environ:
+    from testing import FakeGPIO, FakeSensor as BME280
+    GPIO = FakeGPIO(os.environ['NIDO_TESTING_GPIO'])
+    BME280_OSAMPLE_8 = None
+else:
+    import RPi.GPIO as GPIO
+    from Adafruit_BME280 import BME280, BME280_OSAMPLE_8
+
+_NIDO_BASE = os.environ['NIDO_BASE']
 
 # Enums:
 #   Mode
@@ -18,16 +49,19 @@ from Adafruit_BME280 import *
 #   ConfigError
 #   Config
 
+
 class Mode(Enum):
     Off = 0
     Heat = 1
     Cool = 2
     Heat_Cool = 3
 
+
 class Status(Enum):
     Off = 0
     Heating = 1
     Cooling = 2
+
 
 class FormTypes(Enum):
     text = 0
@@ -36,6 +70,7 @@ class FormTypes(Enum):
     radio = 3
     select = 4
     textarea = 5
+
 
 class Sensor():
     def __init__(self, mode=BME280_OSAMPLE_8):
@@ -53,11 +88,13 @@ class Sensor():
                 'relative_humidity': self.sensor.read_humidity()
                 }
         except Exception as e:
-            resp['error'] = 'Exception getting sensor data: {} {}'.format(type(e), str(e))
+            resp['error'] = 'Exception getting sensor data: {} {}' \
+                            .format(type(e), str(e))
         else:
             resp['conditions'] = conditions
-        
+
         return resp
+
 
 class LocalWeather():
     def __init__(self, zipcode=None, location=None):
@@ -113,16 +150,21 @@ class LocalWeather():
             try:
                 api_error = r_json['response']['error']
             except KeyError:
-                resp['error'] = 'Unknown Wunderground API error. Response data: ' + str(r_json)
+                resp['error'] = 'Unknown Wunderground API error. Response \
+                                 data: ' + str(r_json)
             else:
                 if 'description' in api_error:
-                    resp['error'] = 'Wunderground API error ({}): {}'.format(api_error['type'], api_error['description'])
+                    resp['error'] = 'Wunderground API error ({}): {}' \
+                                    .format(api_error['type'],
+                                            api_error['description'])
                 else:
-                    resp['error'] = 'Wunderground API error ({})'.format(api_error['type'])
+                    resp['error'] = 'Wunderground API error ({})' \
+                                    .format(api_error['type'])
         else:
             try:
                 # Remove '%' and format relatively humidity as a number
-                rh = re.sub('[^0-9]', '', current_observation['relative_humidity'])
+                rh = re.sub('[^0-9]', '',
+                            current_observation['relative_humidity'])
                 rh = int(float(rh))
                 # Get shortest term high/low forecast
                 for period in forecast:
@@ -131,14 +173,21 @@ class LocalWeather():
                         fcast_low = float(period['low']['celsius'])
                 self.conditions = {
                         'location': {
-                            'full': current_observation['display_location']['full'],
-                            'city': current_observation['display_location']['city'],
-                            'state': current_observation['display_location']['state'],
-                            'zipcode': current_observation['display_location']['zip'],
-                            'country': current_observation['display_location']['country'],
+                            'full': current_observation['display_location']
+                                                       ['full'],
+                            'city': current_observation['display_location']
+                                                       ['city'],
+                            'state': current_observation['display_location']
+                                                        ['state'],
+                            'zipcode': current_observation['display_location']
+                                                          ['zip'],
+                            'country': current_observation['display_location']
+                                                          ['country'],
                             'coordinates': {
-                                'latitude': current_observation['display_location']['latitude'],
-                                'longitude': current_observation['display_location']['longitude']
+                                'latitude': current_observation
+                                            ['display_location']['latitude'],
+                                'longitude': current_observation
+                                             ['display_location']['longitude']
                                 },
                             },
                         'temp_c': current_observation['temp_c'],
@@ -153,15 +202,20 @@ class LocalWeather():
                             'low': fcast_low
                             },
                         'solar': {
-                            'sunrise': int(sun_phase['sunrise']['hour'] + sun_phase['sunrise']['minute']),
-                            'sunset': int(sun_phase['sunset']['hour'] + sun_phase['sunset']['minute'])
+                            'sunrise': int(sun_phase['sunrise']['hour']
+                                           + sun_phase['sunrise']['minute']),
+                            'sunset': int(sun_phase['sunset']['hour']
+                                          + sun_phase['sunset']['minute'])
                             }
                         }
                 # Convert icon URL to HTTPS
-                self.conditions['condition']['icon_url'] = re.sub('(http)', 'https', current_observation['icon_url'], count=1)
+                icon_url = re.sub('(http)', 'https',
+                                  current_observation['icon_url'], count=1)
+                self.conditions['condition']['icon_url'] = icon_url
             except KeyError as e:
                 # Something changed in the response format, generate an error
-                resp['error'] = 'Error parsing Wunderground API data: {}'.format(str(e))
+                resp['error'] = 'Error parsing Wunderground API data: {}' \
+                                .format(str(e))
             else:
                 # Reset retrieval time
                 self.last_req = int(time.time())
@@ -181,14 +235,17 @@ class LocalWeather():
         if self.last_req == 0:
             self._interval = -1
 
-        # If we made a request within caching period and have a cached result, use that instead
-        if self.conditions and (self._interval < self._CACHE_EXPIRY) and (self._interval >= 0):
+        # If we made a request within caching period and have a cached
+        # result, use that instead
+        if self.conditions and (self._interval < self._CACHE_EXPIRY) \
+           and (self._interval >= 0):
             resp['weather'] = self.conditions
             resp['retrieval_age'] = self._interval
             return resp
 
         # Determine location query type
-        # API documentation here: http://api.wunderground.com/weather/api/d/docs?d=data/index
+        # API documentation here:
+        # http://api.wunderground.com/weather/api/d/docs?d=data/index
         # Prefer lat,long over zipcode
         if (self.location is None) and (self.zipcode is None):
             query = 'autoip'
@@ -198,7 +255,9 @@ class LocalWeather():
             query = self.zipcode
 
         # Get Wunderground weather conditions
-        request_url = 'https://api.wunderground.com/api/{}/{}/q/{}.json'.format(self.api_key, 'conditions/forecast/astronomy', query)
+        request_url = 'https://api.wunderground.com/api/{}/{}/q/{}.json' \
+                      .format(self.api_key, 'conditions/forecast/astronomy',
+                              query)
         api_response = self._wunderground_req(request_url)
 
         if isinstance(api_response, requests.Response):
@@ -209,8 +268,9 @@ class LocalWeather():
         if self.conditions:
             resp['weather'] = self.conditions
             resp['retrieval_age'] = self._interval
-        
+
         return resp
+
 
 class ControllerError(Exception):
     """Exception class for errors generated by the controller"""
@@ -222,17 +282,19 @@ class ControllerError(Exception):
     def __str__(self):
         return repr(self.msg)
 
+
 class Controller():
-    """This is the controller code that determines whether the heating / cooling system
-    should be enabled based on the thermostat set point."""
+    """This is the controller code that determines whether the
+    heating / cooling system should be enabled based on the thermostat
+    set point."""
 
     def __init__(self):
-        # Get Nido configuration
         try:
             self.cfg = Config()
             config = self.cfg.get_config()
         except IOError as e:
-            raise ControllerError('Error getting configuration: {}'.format(str(e)))
+            raise ControllerError('Error getting configuration: {}'
+                                  .format(str(e)))
         else:
             self._HEATING = config['GPIO']['heat_pin']
             self._COOLING = config['GPIO']['cool_pin']
@@ -248,7 +310,8 @@ class Controller():
     def get_status(self):
         if (GPIO.input(self._HEATING) and GPIO.input(self._COOLING)):
             self.shutdown()
-            raise ControllerError('Both heating and cooling pins were enabled. Both pins disabled as a precaution.')
+            raise ControllerError('Both heating and cooling pins were enabled. \
+                                   Both pins disabled as a precaution.')
         elif GPIO.input(self._HEATING):
             return Status.Heating.value
         elif GPIO.input(self._COOLING):
@@ -257,23 +320,23 @@ class Controller():
             return Status.Off.value
 
     def _enable_heating(self, status, temp, set_temp, hysteresis):
-        if ( (temp + hysteresis) < set_temp ):
+        if (temp + hysteresis) < set_temp:
             GPIO.output(self._HEATING, True)
             GPIO.output(self._COOLING, False)
-        elif ( (temp < set_temp) and (status is Status.Heating) ):
+        elif (temp < set_temp) and (status is Status.Heating):
             GPIO.output(self._HEATING, True)
             GPIO.output(self._COOLING, False)
         return
-    
+
     def _enable_cooling(self, status, temp, set_temp, hysteresis):
-        if ( (temp + hysteresis) > set_temp ):
+        if (temp + hysteresis) > set_temp:
             GPIO.output(self._HEATING, False)
             GPIO.output(self._COOLING, True)
-        elif ( (temp > set_temp) and (status is Status.Cooling) ):
+        elif (temp > set_temp) and (status is Status.Cooling):
             GPIO.output(self._HEATING, False)
             GPIO.output(self._COOLING, True)
         return
-    
+
     def shutdown(self):
         GPIO.output(self._HEATING, False)
         GPIO.output(self._COOLING, False)
@@ -289,7 +352,8 @@ class Controller():
             hysteresis = config['behavior']['hysteresis']
         except KeyError as e:
             self.shutdown()
-            raise ControllerError('Error reading Nido configuration: {}'.format(e))
+            raise ControllerError('Error reading Nido configuration: {}'
+                                  .format(e))
         except ControllerError:
             self.shutdown()
             raise
@@ -302,25 +366,16 @@ class Controller():
             else:
                 self.shutdown()
         else:
-            # Additional modes can be enabled in future, eg. Mode.Cool, Mode.Heat_Cool
+            # Additional modes can be enabled in future, eg. Mode.Cool,
+            # Mode.Heat_Cool
             self.shutdown()
 
         return
 
-    def signal_daemon(self):
-        pid_file = self.cfg.get_config()['daemon']['pid_file']
-        try:
-            f = open(pid_file, 'r')
-        except IOError as e:
-            raise ControllerError('Error opening Nido daemon PID file: {}'.format(e))
-        else:
-            with f:
-                pid = int(f.read().strip())
-                os.kill(pid, signal.SIGUSR1)
-
     def daemon_running(self):
         pid_file = self.cfg.get_config()['daemon']['pid_file']
         return os.path.isfile(pid_file)
+
 
 class ConfigError(Exception):
     """Exception class for errors generated by the Config class"""
@@ -332,9 +387,10 @@ class ConfigError(Exception):
     def __str__(self):
         return repr(self.msg)
 
+
 class Config():
     def __init__(self):
-        self._CONFIG = '/home/pi/nido/app/cfg/config.yaml'
+        self._CONFIG = '{}/app/cfg/config.yaml'.format(_NIDO_BASE)
         self._SCHEMA_VERSION = '1.3'
         self._SCHEMA = {
                 'GPIO': {
@@ -395,7 +451,8 @@ class Config():
                         },
                     'modes_available': {
                         'required': False,
-                        'default': [ [ Mode.Heat.name, True ], [ Mode.Cool.name, False ] ]
+                        'default': [[Mode.Heat.name, True],
+                                    [Mode.Cool.name, False]]
                         },
                     'set_temperature': {
                         'required': False,
@@ -403,7 +460,7 @@ class Config():
                         },
                     'modes': {
                         'required': False,
-                        'default': [ Mode.Off.name, Mode.Heat.name ]
+                        'default': [Mode.Off.name, Mode.Heat.name]
                         },
                     'mode_set': {
                         'required': False,
@@ -442,7 +499,8 @@ class Config():
         if self._is_valid():
             return
         else:
-            raise ConfigError('Error: incomplete configuration, please verify config.yaml settings.')
+            raise ConfigError('Error: incomplete configuration, please verify \
+                              config.yaml settings.')
 
     def get_config(self):
         with open(self._CONFIG, 'r') as f:
@@ -505,26 +563,31 @@ class Config():
         if config is None:
             config = self.get_config()
 
-        # Iterate through schema and check required flag against loaded config
+        # Iterate through schema and check required flag against
+        # loaded config
         for section in self._SCHEMA:
             for setting in self._SCHEMA[section]:
-                if self._SCHEMA[section][setting]['required'] == True:
+                if self._SCHEMA[section][setting]['required'] is True:
                     if section not in config:
                         return False
                     elif setting not in config[section]:
                         return False
                 # If setting is not required, check if a default value exists
                 #   and set it if not set in the config
-                elif set_defaults and 'default' in self._SCHEMA[section][setting]:
+                elif set_defaults and 'default' in self._SCHEMA[section]\
+                                                               [setting]:
                     if section not in config:
                         default_setting = {
                                 section: {
-                                    setting: self._SCHEMA[section][setting]['default']
+                                    setting: self._SCHEMA[section][setting]
+                                                                  ['default']
                                     }
                                 }
                         config.update(default_setting)
                     elif setting not in config[section]:
-                        config[section][setting] = self._SCHEMA[section][setting]['default']
+                        config[section][setting] = self._SCHEMA[section]\
+                                                               [setting]\
+                                                               ['default']
 
         if update:
             self._set_config(config)
@@ -532,7 +595,7 @@ class Config():
 
     @staticmethod
     def list_modes(modes_available):
-        modes = [ Mode.Off.name ]
+        modes = [Mode.Off.name]
         heat = False
         cool = False
 
