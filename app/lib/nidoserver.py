@@ -20,7 +20,7 @@ import json
 from functools import wraps
 from flask import session, abort, request
 from werkzeug.routing import BaseConverter
-from nido import Config, ConfigError, Controller
+from nido import Config, ConfigError
 from scheduler import NidoDaemonService
 
 _CONFIG = Config()
@@ -56,7 +56,7 @@ class JSONResponse:
 #           two values
 def validate_json_req(req_data, valid):
     # Make sure we have JSON in the body first
-    if (req_data == None) or (req_data == {}):
+    if req_data is None or req_data == {}:
         return False
 
     # Request data can't have more entries than the validation set

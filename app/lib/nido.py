@@ -17,11 +17,10 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 
 import requests
-import json
+from requests import RequestException
 import time
 import yaml
 import os
-import signal
 import re
 from enum import Enum
 
@@ -93,7 +92,7 @@ class Sensor():
                             .format(type(e), str(e))
         else:
             resp['conditions'] = conditions
-        
+
         return resp
 
 
@@ -174,20 +173,20 @@ class LocalWeather():
                         fcast_low = float(period['low']['celsius'])
                 self.conditions = {
                         'location': {
-                            'full': current_observation['display_location'] \
+                            'full': current_observation['display_location']
                                                        ['full'],
-                            'city': current_observation['display_location'] \
+                            'city': current_observation['display_location']
                                                        ['city'],
-                            'state': current_observation['display_location'] \
+                            'state': current_observation['display_location']
                                                         ['state'],
-                            'zipcode': current_observation['display_location'] \
+                            'zipcode': current_observation['display_location']
                                                           ['zip'],
-                            'country': current_observation['display_location'] \
+                            'country': current_observation['display_location']
                                                           ['country'],
                             'coordinates': {
-                                'latitude': current_observation \
+                                'latitude': current_observation
                                             ['display_location']['latitude'],
-                                'longitude': current_observation \
+                                'longitude': current_observation
                                              ['display_location']['longitude']
                                 },
                             },
@@ -204,9 +203,9 @@ class LocalWeather():
                             },
                         'solar': {
                             'sunrise': int(sun_phase['sunrise']['hour']
-                                       + sun_phase['sunrise']['minute']),
+                                           + sun_phase['sunrise']['minute']),
                             'sunset': int(sun_phase['sunset']['hour']
-                                      + sun_phase['sunset']['minute'])
+                                          + sun_phase['sunset']['minute'])
                             }
                         }
                 # Convert icon URL to HTTPS
@@ -269,7 +268,7 @@ class LocalWeather():
         if self.conditions:
             resp['weather'] = self.conditions
             resp['retrieval_age'] = self._interval
-        
+
         return resp
 
 
@@ -294,7 +293,7 @@ class Controller():
             self.cfg = Config()
             config = self.cfg.get_config()
         except IOError as e:
-            raise ControllerError('Error getting configuration: {}' \
+            raise ControllerError('Error getting configuration: {}'
                                   .format(str(e)))
         else:
             self._HEATING = config['GPIO']['heat_pin']
@@ -321,23 +320,23 @@ class Controller():
             return Status.Off.value
 
     def _enable_heating(self, status, temp, set_temp, hysteresis):
-        if ( (temp + hysteresis) < set_temp ):
+        if (temp + hysteresis) < set_temp:
             GPIO.output(self._HEATING, True)
             GPIO.output(self._COOLING, False)
-        elif ( (temp < set_temp) and (status is Status.Heating) ):
+        elif (temp < set_temp) and (status is Status.Heating):
             GPIO.output(self._HEATING, True)
             GPIO.output(self._COOLING, False)
         return
-    
+
     def _enable_cooling(self, status, temp, set_temp, hysteresis):
-        if ( (temp + hysteresis) > set_temp ):
+        if (temp + hysteresis) > set_temp:
             GPIO.output(self._HEATING, False)
             GPIO.output(self._COOLING, True)
-        elif ( (temp > set_temp) and (status is Status.Cooling) ):
+        elif (temp > set_temp) and (status is Status.Cooling):
             GPIO.output(self._HEATING, False)
             GPIO.output(self._COOLING, True)
         return
-    
+
     def shutdown(self):
         GPIO.output(self._HEATING, False)
         GPIO.output(self._COOLING, False)
@@ -353,7 +352,7 @@ class Controller():
             hysteresis = config['behavior']['hysteresis']
         except KeyError as e:
             self.shutdown()
-            raise ControllerError('Error reading Nido configuration: {}' \
+            raise ControllerError('Error reading Nido configuration: {}'
                                   .format(e))
         except ControllerError:
             self.shutdown()
@@ -452,8 +451,8 @@ class Config():
                         },
                     'modes_available': {
                         'required': False,
-                        'default': [ [ Mode.Heat.name, True ],
-                                     [ Mode.Cool.name, False ] ]
+                        'default': [[Mode.Heat.name, True],
+                                    [Mode.Cool.name, False]]
                         },
                     'set_temperature': {
                         'required': False,
@@ -461,7 +460,7 @@ class Config():
                         },
                     'modes': {
                         'required': False,
-                        'default': [ Mode.Off.name, Mode.Heat.name ]
+                        'default': [Mode.Off.name, Mode.Heat.name]
                         },
                     'mode_set': {
                         'required': False,
@@ -568,26 +567,26 @@ class Config():
         # loaded config
         for section in self._SCHEMA:
             for setting in self._SCHEMA[section]:
-                if self._SCHEMA[section][setting]['required'] == True:
+                if self._SCHEMA[section][setting]['required'] is True:
                     if section not in config:
                         return False
                     elif setting not in config[section]:
                         return False
                 # If setting is not required, check if a default value exists
                 #   and set it if not set in the config
-                elif set_defaults and 'default' in self._SCHEMA[section] \
+                elif set_defaults and 'default' in self._SCHEMA[section]\
                                                                [setting]:
                     if section not in config:
                         default_setting = {
                                 section: {
-                                    setting: self._SCHEMA[section][setting] \
+                                    setting: self._SCHEMA[section][setting]
                                                                   ['default']
                                     }
                                 }
                         config.update(default_setting)
                     elif setting not in config[section]:
-                        config[section][setting] = self._SCHEMA[section] \
-                                                               [setting] \
+                        config[section][setting] = self._SCHEMA[section]\
+                                                               [setting]\
                                                                ['default']
 
         if update:
@@ -596,7 +595,7 @@ class Config():
 
     @staticmethod
     def list_modes(modes_available):
-        modes = [ Mode.Off.name ]
+        modes = [Mode.Off.name]
         heat = False
         cool = False
 

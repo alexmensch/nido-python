@@ -17,7 +17,6 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 
 import rpyc
-import json
 from functools import wraps
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
@@ -149,11 +148,11 @@ class NidoDaemonService:
     def add_scheduled_job(self, type, day_of_week=None, hour=None, minute=None,
                           job_id=None, mode=None, temp=None, scale=None):
         func, args, name = self._parse_mode_settings(type, mode=mode,
-                                                           temp=temp,
-                                                           scale=scale)
+                                                     temp=temp,
+                                                     scale=scale)
         self._check_cron_parameters(day_of_week=day_of_week, hour=hour,
                                     minute=minute)
-        job = self._connection.root.add_job('nidod:NidoSchedulerService.{}' \
+        job = self._connection.root.add_job('nidod:NidoSchedulerService.{}'
                                             .format(func), args=args,
                                             name=name, jobstore='schedule',
                                             id=job_id, trigger='cron',
@@ -165,10 +164,11 @@ class NidoDaemonService:
     def modify_scheduled_job(self, job_id, type=None, mode=None, temp=None,
                              scale=None):
         func, args, name = self._parse_mode_settings(type, mode=mode,
-                                                           temp=temp,
-                                                           scale=scale)
+                                                     temp=temp,
+                                                     scale=scale)
         job = self._connection.root.modify_job(job_id,
-                                               func='nidod:NidoSchedulerService.{}'
+                                               func=
+                                               'nidod:NidoSchedulerService.{}'
                                                .format(func),
                                                args=args,
                                                name=name)
@@ -179,8 +179,8 @@ class NidoDaemonService:
         self._check_cron_parameters(day_of_week=day_of_week, hour=hour,
                                     minute=minute)
         job = self._connection.root.reschedule_job(job_id, trigger='cron',
-                                                    day_of_week=day_of_week,
-                                                    hour=hour, minute=minute)
+                                                   day_of_week=day_of_week,
+                                                   hour=hour, minute=minute)
         return self._return_job(job)
 
     @keepalive
@@ -245,14 +245,14 @@ class NidoDaemonService:
             trigger['run_date'] = j.trigger.run_date \
                                   .strftime('%m/%d/%Y %H:%M:%S')
         else:
-            raise NidoDaemonServiceError('Unknown trigger type: {}' \
+            raise NidoDaemonServiceError('Unknown trigger type: {}'
                                          .format(type(j.trigger)))
 
         job = {
             'id': j.id,
             'name': j.name,
             'args': j.args,
-            'next_run_time': j.next_run_time.strftime('%m/%d/%Y %H:%M:%S') \
+            'next_run_time': j.next_run_time.strftime('%m/%d/%Y %H:%M:%S')
                              if j.next_run_time else None,
             'trigger': trigger
         }
@@ -284,7 +284,7 @@ class NidoDaemonService:
                 args = [temp, scale]
                 name = 'Temp: {:.1f}{}'.format(float(temp), scale.upper())
         else:
-            raise NidoDaemonServiceError('Invalid job type specified: {}' \
+            raise NidoDaemonServiceError('Invalid job type specified: {}'
                                          .format(type))
         return (func, args, name)
 
