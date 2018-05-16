@@ -98,19 +98,10 @@ def keepalive(func):
         except EOFError:
             self._connect()
             return func(self, *args, **kwargs)
-
-    return check_connection
-
-
-def raise_exceptions(func):
-    @wraps(func)
-    def catch_exceptions(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
         except (JobLookupError, ConflictingIdError) as e:
             raise NidoDaemonServiceError('{}'.format(e.message))
 
-    return catch_exceptions
+    return check_connection
 
 
 class NidoDaemonServiceError(Exception):
@@ -144,7 +135,6 @@ class NidoDaemonService:
         return job
 
     @keepalive
-    @raise_exceptions
     def get_scheduled_jobs(self, jobstore=None):
         jobs = self._connection.root.get_jobs(jobstore=jobstore)
         if self._json:
@@ -152,12 +142,10 @@ class NidoDaemonService:
         return jobs
 
     @keepalive
-    @raise_exceptions
     def get_scheduled_job(self, job_id):
         return self._return_job(self._connection.root.get_job(job_id))
 
     @keepalive
-    @raise_exceptions
     def add_scheduled_job(self, type, day_of_week=None, hour=None, minute=None,
                           job_id=None, mode=None, temp=None, scale=None):
         if type == 'mode':
@@ -191,7 +179,6 @@ class NidoDaemonService:
         return self._return_job(job)
 
     @keepalive
-    @raise_exceptions
     def modify_scheduled_job(self, job_id, type, mode=None, temp=None,
                              scale=None):
         ######
@@ -206,7 +193,6 @@ class NidoDaemonService:
                                          .format(type))
 
     @keepalive
-    @raise_exceptions
     def reschedule_job(self, job_id, day_of_week=None, hour=None, minute=None):
         ######
         # TODO
@@ -216,17 +202,14 @@ class NidoDaemonService:
                                                     hour=hour, minute=minute)
 
     @keepalive
-    @raise_exceptions
     def pause_scheduled_job(self, job_id):
         return self._return_job(self._connection.root.pause_job(job_id))
 
     @keepalive
-    @raise_exceptions
     def resume_scheduled_job(self, job_id):
         return self._return_job(self._connection.root.resume_job(job_id))
 
     @keepalive
-    @raise_exceptions
     def remove_scheduled_job(self, job_id):
         self._connection.root.remove_job(job_id)
         if self._json:
