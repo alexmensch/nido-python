@@ -217,6 +217,8 @@ class NidoDaemonService:
                                         })
 
     def _jsonify_job(self, j):
+        if j is None:
+            raise NidoDaemonServiceError('No job exists with that ID.')
         if isinstance(j.trigger, DateTrigger):
             trigger = {
                 'timezone': str(j.trigger.run_date.tzinfo)
