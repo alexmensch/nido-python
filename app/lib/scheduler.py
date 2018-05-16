@@ -148,28 +148,11 @@ class NidoDaemonService:
     @keepalive
     def add_scheduled_job(self, type, day_of_week=None, hour=None, minute=None,
                           job_id=None, mode=None, temp=None, scale=None):
-        if type == 'mode':
-            if mode is None:
-                raise NidoDaemonServiceError('No mode specified.')
-            else:
-                func = 'set_mode'
-                args = [mode]
-                name = 'Mode: {}'.format(mode.lower())
-        elif type == 'temp':
-            if temp is None or scale is None:
-                raise NidoDaemonServiceError('Both temperature value and \
-                                              scale are required.')
-            else:
-                func = 'set_temp'
-                args = [temp, scale]
-                name = 'Temp: {:.1f}{}'.format(float(temp), scale.upper())
-        else:
-            raise NidoDaemonServiceError('Invalid job type specified: {}' \
-                                         .format(type))
-
-        if day_of_week is None and hour is None and minute is None:
-            raise NidoDaemonServiceError('No timing specified for job.')
-
+        func, args, name = self._parse_mode_settings(type, mode=mode,
+                                                           temp=temp,
+                                                           scale=scale)
+        self._check_cron_parameters(day_of_week=day_of_week, hour=hour,
+                                    minute=minute)
         job = self._connection.root.add_job('nidod:NidoSchedulerService.{}' \
                                             .format(func), args=args,
                                             name=name, jobstore='schedule',
@@ -179,27 +162,26 @@ class NidoDaemonService:
         return self._return_job(job)
 
     @keepalive
-    def modify_scheduled_job(self, job_id, type, mode=None, temp=None,
+    def modify_scheduled_job(self, job_id, type=None, mode=None, temp=None,
                              scale=None):
-        ######
-        # TODO
-        ######
-        if type == 'mode':
-            return self._connection.root.modify_job(job_id, args=[mode])
-        elif type == 'temp':
-            return self._connection.root.modify_job(job_id, args=[temp, scale])
-        else:
-            raise NidoDaemonServiceError('Invalid job type specified: {}' \
-                                         .format(type))
+        func, args, name = self._parse_mode_settings(type, mode=mode,
+                                                           temp=temp,
+                                                           scale=scale)
+        job = self._connection.root.modify_job(job_id,
+                                               func='nidod:NidoSchedulerService.{}'
+                                               .format(func),
+                                               args=args,
+                                               name=name)
+        return self._return_job(job)
 
     @keepalive
     def reschedule_job(self, job_id, day_of_week=None, hour=None, minute=None):
-        ######
-        # TODO
-        ######
-        return self._connection.root.reschedule_job(job_id, trigger='cron',
+        self._check_cron_parameters(day_of_week=day_of_week, hour=hour,
+                                    minute=minute)
+        job = self._connection.root.reschedule_job(job_id, trigger='cron',
                                                     day_of_week=day_of_week,
                                                     hour=hour, minute=minute)
+        return self._return_job(job)
 
     @keepalive
     def pause_scheduled_job(self, job_id):
@@ -228,8 +210,11 @@ class NidoDaemonService:
     def _connect(self):
         self._connection = rpyc.connect(self._config['schedule']['rpc_host'],
                                         self._config['schedule']['rpc_port'],
-                                        config={'allow_public_attrs': True,
-                                        'instantiate_custom_exceptions': True})
+                                        config={
+                                        'allow_public_attrs': True,
+                                        'instantiate_custom_exceptions': True,
+                                        'allow_pickle': True
+                                        })
 
     def _jsonify_job(self, j):
         if isinstance(j.trigger, DateTrigger):
@@ -281,3 +266,30 @@ class NidoDaemonService:
                 continue
             job_list.append(self._jsonify_job(j))
         return job_list
+
+    def _parse_mode_settings(self, type, mode=None, temp=None, scale=None):
+        if type == 'mode':
+            if mode is None:
+                raise NidoDaemonServiceError('No mode specified.')
+            else:
+                func = 'set_mode'
+                args = [mode]
+                name = 'Mode: {}'.format(mode.upper())
+        elif type == 'temp':
+            if temp is None or scale is None:
+                raise NidoDaemonServiceError('Both temperature value and \
+                                              scale are required.')
+            else:
+                func = 'set_temp'
+                args = [temp, scale]
+                name = 'Temp: {:.1f}{}'.format(float(temp), scale.upper())
+        else:
+            raise NidoDaemonServiceError('Invalid job type specified: {}' \
+                                         .format(type))
+        return (func, args, name)
+
+    def _check_cron_parameters(self, day_of_week=None, hour=None,
+                               minute=None):
+        if day_of_week is None and hour is None and minute is None:
+            raise NidoDaemonServiceError('No timing specified for job.')
+        return None

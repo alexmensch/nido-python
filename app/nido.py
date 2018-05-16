@@ -16,10 +16,9 @@
 #   along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 
-import json
 import os
 from numbers import Number
-from flask import Flask, request, session, g, render_template, flash
+from flask import Flask, request, session, render_template
 from lib.nido import (Sensor, LocalWeather, Config, Controller, Status,
                       ControllerError)
 import lib.nidoserver as ns
@@ -63,7 +62,7 @@ def login():
         resp.data['logged_in'] = True
     else:
         if (request.form['username'] != cfg['flask']['username']
-            or request.form['password'] != cfg['flask']['password']):
+                or request.form['password'] != cfg['flask']['password']):
             resp.data['error'] = 'Incorrect login credentials.'
             resp.data['logged_in'] = False
         else:
@@ -101,7 +100,7 @@ def get_state():
     resp = ns.JSONResponse()
     resp.data['state'] = {}
     resp.data['error'] = []
-    
+
     try:
         state = Controller().get_status()
     except ControllerError as e:
@@ -110,9 +109,9 @@ def get_state():
         resp.data['error'].append(err_msg)
     else:
         # state = Heating / Cooling / Off
-        nidoState = { 'status': Status(state).name }
+        nidoState = {'status': Status(state).name}
         resp.data['state'].update(nidoState)
-        
+
     # Returns a JSON dict with an 'error' key on error
     # On success, returns a JSON dict with a 'conditions' key
     sensor_data = Sensor().get_conditions()
@@ -121,7 +120,7 @@ def get_state():
     else:
         resp.data['state'].update(sensor_data)
 
-    daemonState = { 'daemon_running': Controller().daemon_running() }
+    daemonState = {'daemon_running': Controller().daemon_running()}
     resp.data['state'].update(daemonState)
 
     if len(resp.data['error']) == 0:
@@ -155,7 +154,7 @@ def get_config():
 def set_config():
     resp = ns.JSONResponse()
     new_cfg = request.get_json()
-        
+
     # Expect to receive a json dict with
     # one or more of the following pairs
     validation = {
@@ -240,7 +239,8 @@ def api_schedule_add_job(type):
             mode -> What mode should be triggered (off, heat, cool)
             temp -> What temperature should be triggered (float value)
             scale -> What temperature scale the temp is in ("C" or "F")
-        Combination of cron-style timing options:
+        Combination of cron-style timing options (supplying at least
+        one of the following is required):
             day_of_week -> Specify the day(s) of the week that the job
                            should be triggered
             hour -> Specify the hour(s) that the job should be triggered
@@ -255,14 +255,14 @@ def api_schedule_add_job(type):
 
     job_kwargs = request.get_json()
     del job_kwargs['secret']
-        
+
     if type.lower() == 'mode' or type.lower() == 'temp':
         try:
             resp.data['job'] = nds.add_scheduled_job(type, **job_kwargs)
         except NidoDaemonServiceError as e:
             resp.data['error'] = 'Error adding job: {}'.format(e)
     else:
-        resp.data['error'] = 'Invalid mode specified.'
+        resp.data['error'] = 'Invalid mode specified.'    
         resp.status = 400
 
     return resp.get_flask_response(app)
@@ -270,12 +270,64 @@ def api_schedule_add_job(type):
 @app.route('/api/schedule/modify/<string:id>', methods=['POST'])
 @ns.require_secret
 def api_schedule_modify_jobid(id):
-    pass
+    """Endpoint to modify the job parameters of a scheduled job.
+
+    The 'id' value in the URL must be the ID of an existing
+    scheduled job.
+    The body must consist of a JSON object with the following
+    valid keys depending on the job type:
+        Job type:
+            type -> "mode" or "temp"
+        "mode" type:
+            mode -> What mode should be triggered (off, heat, cool)
+        "temp" type:
+            temp -> What temperature should be triggered (float value)
+            scale -> What temperature scale the temp is in ("C" or "F")
+    """
+
+    resp = ns.JSONResponse()
+    nds = NidoDaemonService(json=True)
+
+    job_kwargs = request.get_json()
+    del job_kwargs['secret']
+
+    try:
+        resp.data['job'] = nds.modify_scheduled_job(id, **job_kwargs)
+    except NidoDaemonServiceError as e:
+        resp.data['error'] = 'Error modifying job ID ({}): {}'.format(id, e)
+
+    return resp.get_flask_response(app)
 
 @app.route('/api/schedule/reschedule/<string:id>', methods=['POST'])
 @ns.require_secret
 def api_schedule_reschedule_jobid(id):
-    pass
+    """Endpoint to modify the schedule of a scheduled job.
+
+    The 'id' value in the URL must be the ID of an existing
+    scheduled job.
+    The body must consist of a JSON object with the following
+    valid keys depending on the job type:
+        Combination of cron-style timing options (supplying at least
+        one of the following is required):
+            day_of_week -> Specify the day(s) of the week that the job
+                           should be triggered
+            hour -> Specify the hour(s) that the job should be triggered
+            minute -> Specify the minute(s) that the job
+                      should be triggered
+    """
+
+    resp = ns.JSONResponse()
+    nds = NidoDaemonService(json=True)
+
+    job_kwargs = request.get_json()
+    del job_kwargs['secret']
+
+    try:
+        resp.data['job'] = nds.reschedule_job(id, **job_kwargs)
+    except NidoDaemonServiceError as e:
+        resp.data['error'] = 'Error rescheduling job ID ({}): {}'.format(id, e)
+
+    return resp.get_flask_response(app)
 
 @app.route('/api/schedule/pause/<string:id>', methods=['POST'])
 @ns.require_secret

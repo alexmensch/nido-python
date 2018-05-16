@@ -36,7 +36,8 @@ class JSONResponse:
         return
 
     def get_flask_response(self, app):
-        response = app.make_response(json.dumps(self.data))
+        response = app.make_response(json.dumps(self.data, sort_keys=True,
+                                                ensure_ascii=False))
         response.headers['Content-Type'] = 'application/json'
         response.status_code = self.status
         return response
