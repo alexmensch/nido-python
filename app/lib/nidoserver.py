@@ -18,6 +18,7 @@
 
 from __future__ import print_function
 from __future__ import absolute_import
+from builtins import object
 import json
 from functools import wraps
 from flask import session, abort, request
@@ -29,7 +30,7 @@ _CONFIG = Config()
 _PUBLIC_API_SECRET = _CONFIG.get_config()['flask']['public_api_secret']
 
 
-class JSONResponse:
+class JSONResponse(object):
     def __init__(self):
         self.status = 200
         self.data = {
@@ -63,7 +64,7 @@ def validate_json_req(req_data, valid):
         return False
 
     # Request data can't have more entries than the validation set
-    if len(valid.keys()) < len(req_data.keys()):
+    if len(valid) < len(req_data):
         print('Bad length')
         return False
 
@@ -140,7 +141,7 @@ def require_secret(route):
         # Prepare a JSONResponse in case we need it
         resp = JSONResponse()
 
-        if 'secret' in req_data.keys():
+        if 'secret' in list(req_data.keys()):
             if req_data['secret'] == _PUBLIC_API_SECRET:
                 return route(*args, **kwargs)
             else:

@@ -32,6 +32,8 @@
 # Alex Marshall, 2016/12/03
 
 from __future__ import print_function
+from builtins import str
+from builtins import object
 import sys
 import os
 import time
@@ -39,7 +41,7 @@ import atexit
 from signal import signal, SIGTERM
 
 
-class Daemon:
+class Daemon(object):
     """
     A generic daemon class.
 

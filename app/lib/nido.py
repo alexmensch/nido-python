@@ -17,6 +17,10 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import
+from __future__ import division
+from builtins import map
+from builtins import str
+from builtins import object
 import requests
 from requests import RequestException
 import time
@@ -73,7 +77,7 @@ class FormTypes(Enum):
     textarea = 5
 
 
-class Sensor():
+class Sensor(object):
     def __init__(self, mode=BME280_OSAMPLE_8):
         self.sensor = BME280(mode)
 
@@ -98,7 +102,7 @@ class Sensor():
         return resp
 
 
-class LocalWeather():
+class LocalWeather(object):
     def __init__(self, zipcode=None, location=None):
         if zipcode:
             self.set_zipcode(zipcode)
@@ -289,7 +293,7 @@ class ControllerError(Exception):
         return repr(self.msg)
 
 
-class Controller():
+class Controller(object):
     """This is the controller code that determines whether the
     heating / cooling system should be enabled based on the thermostat
     set point."""
@@ -396,7 +400,7 @@ class ConfigError(Exception):
         return repr(self.msg)
 
 
-class Config():
+class Config(object):
     def __init__(self):
         self._CONFIG = '{}/app/cfg/config.yaml'.format(_NIDO_BASE)
         self._SCHEMA_VERSION = '1.3'

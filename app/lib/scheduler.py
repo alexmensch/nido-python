@@ -17,6 +17,8 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import absolute_import
+from builtins import str
+from builtins import object
 import rpyc
 from functools import wraps
 from apscheduler.triggers.cron import CronTrigger
@@ -116,7 +118,7 @@ class NidoDaemonServiceError(Exception):
         return repr(self.msg)
 
 
-class NidoDaemonService:
+class NidoDaemonService(object):
     """Wrapper service to view/add/modify/delete daemon scheduler jobs
     via RPC."""
 

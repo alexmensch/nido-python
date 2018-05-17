@@ -1,7 +1,8 @@
+from builtins import object
 import yaml
 
 
-class FakeGPIO():
+class FakeGPIO(object):
     def __init__(self, state_file):
         self._pins = {}
         self.BCM = None
@@ -45,7 +46,7 @@ class FakeGPIO():
             yaml.dump(self._pins, f, default_flow_style=False, indent=4)
 
 
-class FakeSensor():
+class FakeSensor(object):
     def __init__(self, mode):
         self._temp = 21.12
         self._pressure = 101331.01
