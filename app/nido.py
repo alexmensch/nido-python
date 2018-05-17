@@ -104,8 +104,7 @@ def get_state():
     try:
         state = Controller().get_status()
     except ControllerError as e:
-        err_msg = 'Exception getting current state from controller: {}' \
-                  .format(str(e))
+        err_msg = 'Exception getting current state from controller: {}'.format(str(e))
         resp.data['error'].append(err_msg)
     else:
         # state = Heating / Cooling / Off
@@ -189,8 +188,7 @@ def api_set_mode(set_mode):
     resp = ns.set_config_helper(resp, mode=set_mode)
     return resp.get_flask_response(app)
 
-@app.route('/api/set/temp/<regex("(([0-9]*)(\.([0-9]+))?)"):temp> \
-            /<regex("[cCfF]"):scale>', methods=['POST'])
+@app.route('/api/set/temp/<regex("(([0-9]*)(\.([0-9]+))?)"):temp>/<regex("[cCfF]"):scale>', methods=['POST'])
 @ns.require_secret
 def api_set_temp(temp, scale):
     """Endpoint to accept a new set temperature in either
