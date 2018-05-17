@@ -127,8 +127,7 @@ class NidoDaemonService:
 
     @keepalive
     def wakeup(self):
-        job = self._connection.root \
-              .add_job('nidod:NidoSchedulerService.wakeup')
+        job = self._connection.root.add_job('nidod:NidoSchedulerService.wakeup')
         if self._json:
             return self._jsonify_job(job)
         return job
