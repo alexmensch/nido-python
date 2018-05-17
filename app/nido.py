@@ -41,13 +41,12 @@ app.config.from_object(__name__)
 # Register custom converter with Flask
 app.url_map.converters['regex'] = ns.RegexConverter
 
-# Application routes
-#   All routes are POST-only and should only return JSON.
-#   The / route only serves to return the React-based UI
-#
+
 @app.route('/')
 def render_ui():
+    """The / route only serves to return the React-based UI."""
     return render_template('index.html', google_api_key=GOOGLE_API_KEY)
+
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -55,7 +54,7 @@ def login():
     resp = ns.JSONResponse()
     # Get config
     cfg = config.get_config()
-    
+
     if 'logged_in' in session:
         resp.data['message'] = 'User already logged in.'
         resp.data['username'] = session['username']
@@ -77,6 +76,7 @@ def login():
 
     return resp.get_flask_response(app)
 
+
 @app.route('/logout', methods=['POST'])
 def logout():
     # Initialize response object
@@ -92,6 +92,7 @@ def logout():
         resp.data['error'] = 'User not logged in.'
         resp.data['logged_in'] = False
     return resp.get_flask_response(app)
+
 
 @app.route('/get_state', methods=['POST'])
 @ns.require_session
@@ -127,6 +128,7 @@ def get_state():
         del resp.data['error']
     return resp.get_flask_response(app)
 
+
 @app.route('/get_weather', methods=['POST'])
 @ns.require_session
 def get_weather():
@@ -141,6 +143,7 @@ def get_weather():
 
     return resp.get_flask_response(app)
 
+
 @app.route('/get_config', methods=['POST'])
 @ns.require_session
 def get_config():
@@ -148,6 +151,7 @@ def get_config():
     cfg = config.get_config()
     resp.data['config'] = cfg['config']
     return resp.get_flask_response(app)
+
 
 @app.route('/set_config', methods=['POST'])
 @ns.require_session
@@ -163,7 +167,7 @@ def set_config():
         'modes_available': list,
         'mode_set': basestring,
         'set_temperature': Number
-        }
+    }
 
     # Update local configuration with user data
     if ns.validate_json_req(new_cfg, validation):
@@ -174,8 +178,10 @@ def set_config():
 
     return resp.get_flask_response(app)
 
+
 # Public API routes
 #   Secured by a pre-shared secret key in the request body
+
 
 @app.route('/api/set/mode/<string:set_mode>', methods=['POST'])
 @ns.require_secret
@@ -189,8 +195,11 @@ def api_set_mode(set_mode):
     resp = ns.set_config_helper(resp, mode=set_mode)
     return resp.get_flask_response(app)
 
-@app.route('/api/set/temp/<regex("(([0-9]*)(\.([0-9]+))?)"):temp> \
-            /<regex("[cCfF]"):scale>', methods=['POST'])
+
+@app.route(
+    '/api/set/temp/<regex("(([0-9]*)(\.([0-9]+))?)"):temp>'
+    '/<regex("[cCfF]"):scale>', methods=['POST']
+)
 @ns.require_secret
 def api_set_temp(temp, scale):
     """Endpoint to accept a new set temperature in either
@@ -204,6 +213,7 @@ def api_set_temp(temp, scale):
     resp = ns.set_config_helper(resp, temp_scale=[temp, scale])
     return resp.get_flask_response(app)
 
+
 @app.route('/api/schedule/get/all', methods=['POST'])
 @ns.require_secret
 def api_schedule_get_all():
@@ -213,6 +223,7 @@ def api_schedule_get_all():
     nds = NidoDaemonService(json=True)
     resp.data['jobs'] = nds.get_scheduled_jobs()
     return resp.get_flask_response(app)
+
 
 @app.route('/api/schedule/get/<string:id>', methods=['POST'])
 @ns.require_secret
@@ -226,6 +237,7 @@ def api_schedule_get_jobid(id):
     except NidoDaemonServiceError as e:
         resp.data['error'] = 'Error getting job: {}'.format(e)
     return resp.get_flask_response(app)
+
 
 @app.route('/api/schedule/add/<string:type>', methods=['POST'])
 @ns.require_secret
@@ -262,10 +274,11 @@ def api_schedule_add_job(type):
         except NidoDaemonServiceError as e:
             resp.data['error'] = 'Error adding job: {}'.format(e)
     else:
-        resp.data['error'] = 'Invalid mode specified.'    
+        resp.data['error'] = 'Invalid mode specified.'
         resp.status = 400
 
     return resp.get_flask_response(app)
+
 
 @app.route('/api/schedule/modify/<string:id>', methods=['POST'])
 @ns.require_secret
@@ -298,6 +311,7 @@ def api_schedule_modify_jobid(id):
 
     return resp.get_flask_response(app)
 
+
 @app.route('/api/schedule/reschedule/<string:id>', methods=['POST'])
 @ns.require_secret
 def api_schedule_reschedule_jobid(id):
@@ -329,6 +343,7 @@ def api_schedule_reschedule_jobid(id):
 
     return resp.get_flask_response(app)
 
+
 @app.route('/api/schedule/pause/<string:id>', methods=['POST'])
 @ns.require_secret
 def api_schedule_pause_jobid(id):
@@ -340,6 +355,7 @@ def api_schedule_pause_jobid(id):
         resp.data['error'] = 'Error pausing job: {}'.format(e)
     return resp.get_flask_response(app)
 
+
 @app.route('/api/schedule/resume/<string:id>', methods=['POST'])
 @ns.require_secret
 def api_schedule_resume_jobid(id):
@@ -350,6 +366,7 @@ def api_schedule_resume_jobid(id):
     except NidoDaemonServiceError as e:
         resp.data['error'] = 'Error resuming job: {}'.format(e)
     return resp.get_flask_response(app)
+
 
 @app.route('/api/schedule/remove/<string:id>', methods=['POST'])
 @ns.require_secret

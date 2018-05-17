@@ -16,12 +16,14 @@
 #   along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
+from __future__ import absolute_import
 import json
 from functools import wraps
 from flask import session, abort, request
 from werkzeug.routing import BaseConverter
-from nido import Config, ConfigError
-from scheduler import NidoDaemonService
+from .nido import Config, ConfigError
+from .scheduler import NidoDaemonService
 
 _CONFIG = Config()
 _PUBLIC_API_SECRET = _CONFIG.get_config()['flask']['public_api_secret']
@@ -31,13 +33,14 @@ class JSONResponse:
     def __init__(self):
         self.status = 200
         self.data = {
-                'version': _CONFIG.get_version()
-                }
+            'version': _CONFIG.get_version()
+        }
         return
 
     def get_flask_response(self, app):
-        response = app.make_response(json.dumps(self.data, sort_keys=True,
-                                                ensure_ascii=False))
+        response = app.make_response(
+            json.dumps(self.data, sort_keys=True, ensure_ascii=False)
+        )
         response.headers['Content-Type'] = 'application/json'
         response.status_code = self.status
         return response
@@ -61,19 +64,21 @@ def validate_json_req(req_data, valid):
 
     # Request data can't have more entries than the validation set
     if len(valid.keys()) < len(req_data.keys()):
-        print 'Bad length'
+        print('Bad length')
         return False
 
     # Check that each element in the request data is valid
     for setting in req_data:
         if setting not in valid:
-            print 'Setting name is not in valid dict'
+            print('Setting name is not in valid dict')
             return False
         elif not isinstance(req_data[setting], valid[setting]):
-            print 'Setting value is not instance of valid type'
-            print 'setting: {}, type: {}'.format(req_data[setting],
-                                                 type(req_data[setting]))
-            print 'valid type: {}'.format(valid[setting])
+            print('Setting value is not instance of valid type')
+            print(
+                'setting: {}, type: {}'
+                .format(req_data[setting], type(req_data[setting]))
+            )
+            print('valid type: {}'.format(valid[setting]))
             return False
 
     # No tests failed

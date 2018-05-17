@@ -16,6 +16,7 @@
 #   along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import absolute_import
 import requests
 from requests import RequestException
 import time
@@ -25,12 +26,12 @@ import re
 from enum import Enum
 
 if 'NIDO_TESTING' in os.environ:
-    from testing import FakeGPIO, FakeSensor as BME280
+    from .testing import FakeGPIO, FakeSensor as BME280
     GPIO = FakeGPIO(os.environ['NIDO_TESTING_GPIO'])
     BME280_OSAMPLE_8 = None
 else:
     import RPi.GPIO as GPIO
-    from Adafruit_BME280 import BME280, BME280_OSAMPLE_8
+    from .Adafruit_BME280 import BME280, BME280_OSAMPLE_8
 
 _NIDO_BASE = os.environ['NIDO_BASE']
 
@@ -86,10 +87,11 @@ class Sensor():
                 'temp_c': self.sensor.read_temperature(),
                 'pressure_mb': self.sensor.read_pressure() / 100,
                 'relative_humidity': self.sensor.read_humidity()
-                }
+            }
         except Exception as e:
-            resp['error'] = 'Exception getting sensor data: {} {}' \
-                            .format(type(e), str(e))
+            resp['error'] = (
+                'Exception getting sensor data: {} {}'.format(type(e), str(e))
+            )
         else:
             resp['conditions'] = conditions
 
@@ -150,16 +152,20 @@ class LocalWeather():
             try:
                 api_error = r_json['response']['error']
             except KeyError:
-                resp['error'] = 'Unknown Wunderground API error. Response \
-                                 data: ' + str(r_json)
+                resp['error'] = (
+                    'Unknown Wunderground API error. Response data: '
+                    + str(r_json)
+                )
             else:
                 if 'description' in api_error:
-                    resp['error'] = 'Wunderground API error ({}): {}' \
-                                    .format(api_error['type'],
-                                            api_error['description'])
+                    resp['error'] = (
+                        'Wunderground API error ({}): {}'
+                        .format(api_error['type'], api_error['description'])
+                    )
                 else:
-                    resp['error'] = 'Wunderground API error ({})' \
-                                    .format(api_error['type'])
+                    resp['error'] = (
+                        'Wunderground API error ({})'.format(api_error['type'])
+                    )
         else:
             try:
                 # Remove '%' and format relatively humidity as a number
@@ -171,51 +177,47 @@ class LocalWeather():
                     if period['period'] == 1:
                         fcast_high = float(period['high']['celsius'])
                         fcast_low = float(period['low']['celsius'])
+
+                display_location = current_observation['display_location']
+                sunrise = sun_phase['sunrise']
+                sunset = sun_phase['sunset']
                 self.conditions = {
-                        'location': {
-                            'full': current_observation['display_location']
-                                                       ['full'],
-                            'city': current_observation['display_location']
-                                                       ['city'],
-                            'state': current_observation['display_location']
-                                                        ['state'],
-                            'zipcode': current_observation['display_location']
-                                                          ['zip'],
-                            'country': current_observation['display_location']
-                                                          ['country'],
-                            'coordinates': {
-                                'latitude': current_observation
-                                            ['display_location']['latitude'],
-                                'longitude': current_observation
-                                             ['display_location']['longitude']
-                                },
-                            },
-                        'temp_c': current_observation['temp_c'],
-                        'relative_humidity': rh,
-                        'pressure_mb': current_observation['pressure_mb'],
-                        'condition': {
-                            'description': current_observation['weather'],
-                            'icon_url': current_observation['icon_url']
-                            },
-                        'forecast': {
-                            'high': fcast_high,
-                            'low': fcast_low
-                            },
-                        'solar': {
-                            'sunrise': int(sun_phase['sunrise']['hour']
-                                           + sun_phase['sunrise']['minute']),
-                            'sunset': int(sun_phase['sunset']['hour']
-                                          + sun_phase['sunset']['minute'])
-                            }
+                    'location': {
+                        'full': display_location['full'],
+                        'city': display_location['city'],
+                        'state': display_location['state'],
+                        'zipcode': display_location['zip'],
+                        'country': display_location['country'],
+                        'coordinates': {
+                            'latitude': display_location['latitude'],
+                            'longitude': display_location['longitude']
                         }
+                    },
+                    'temp_c': current_observation['temp_c'],
+                    'relative_humidity': rh,
+                    'pressure_mb': current_observation['pressure_mb'],
+                    'condition': {
+                        'description': current_observation['weather'],
+                        'icon_url': current_observation['icon_url']
+                    },
+                    'forecast': {
+                        'high': fcast_high,
+                        'low': fcast_low
+                    },
+                    'solar': {
+                        'sunrise': int(sunrise['hour'] + sunrise['minute']),
+                        'sunset': int(sunset['hour'] + sunset['minute'])
+                    }
+                }
                 # Convert icon URL to HTTPS
                 icon_url = re.sub('(http)', 'https',
                                   current_observation['icon_url'], count=1)
                 self.conditions['condition']['icon_url'] = icon_url
             except KeyError as e:
                 # Something changed in the response format, generate an error
-                resp['error'] = 'Error parsing Wunderground API data: {}' \
-                                .format(str(e))
+                resp['error'] = (
+                    'Error parsing Wunderground API data: {}'.format(str(e))
+                )
             else:
                 # Reset retrieval time
                 self.last_req = int(time.time())
@@ -237,8 +239,8 @@ class LocalWeather():
 
         # If we made a request within caching period and have a cached
         # result, use that instead
-        if self.conditions and (self._interval < self._CACHE_EXPIRY) \
-           and (self._interval >= 0):
+        if (self.conditions and (self._interval < self._CACHE_EXPIRY)
+                and (self._interval >= 0)):
             resp['weather'] = self.conditions
             resp['retrieval_age'] = self._interval
             return resp
@@ -255,9 +257,13 @@ class LocalWeather():
             query = self.zipcode
 
         # Get Wunderground weather conditions
-        request_url = 'https://api.wunderground.com/api/{}/{}/q/{}.json' \
-                      .format(self.api_key, 'conditions/forecast/astronomy',
-                              query)
+        request_url = (
+            'https://api.wunderground.com/api/{}/{}/q/{}.json'
+            .format(
+                self.api_key, 'conditions/forecast/astronomy',
+                query
+            )
+        )
         api_response = self._wunderground_req(request_url)
 
         if isinstance(api_response, requests.Response):
@@ -310,8 +316,10 @@ class Controller():
     def get_status(self):
         if (GPIO.input(self._HEATING) and GPIO.input(self._COOLING)):
             self.shutdown()
-            raise ControllerError('Both heating and cooling pins were enabled. \
-                                   Both pins disabled as a precaution.')
+            raise ControllerError(
+                'Both heating and cooling pins were enabled. '
+                'Both pins disabled as a precaution.'
+            )
         elif GPIO.input(self._HEATING):
             return Status.Heating.value
         elif GPIO.input(self._COOLING):
@@ -393,114 +401,116 @@ class Config():
         self._CONFIG = '{}/app/cfg/config.yaml'.format(_NIDO_BASE)
         self._SCHEMA_VERSION = '1.3'
         self._SCHEMA = {
-                'GPIO': {
-                    'heat_pin': {
-                        'required': True
-                        },
-                    'cool_pin': {
-                        'required': True
-                        },
-                    },
-                'behavior': {
-                    'hysteresis': {
-                        'required': False,
-                        'default': 0.6
-                        }
-                    },
-                'flask': {
-                    'port': {
-                        'required': True
-                        },
-                    'debug': {
-                        'required': False,
-                        'default': False
-                        },
-                    'secret_key': {
-                        'required': True
-                        },
-                    'public_api_secret': {
-                        'required': True
-                        },
-                    'username': {
-                        'required': True
-                        },
-                    'password': {
-                        'required': True
-                        }
-                    },
-                'wunderground': {
-                    'api_key': {
-                        'required': True
-                        }
-                    },
-                'google': {
-                    'api_key': {
-                        'required': True
-                        }
-                    },
-                'config': {
-                    'location': {
-                        'required': False
-                        },
-                    'location_label': {
-                        'required': False
-                        },
-                    'celsius': {
-                        'required': False,
-                        'default': True
-                        },
-                    'modes_available': {
-                        'required': False,
-                        'default': [[Mode.Heat.name, True],
-                                    [Mode.Cool.name, False]]
-                        },
-                    'set_temperature': {
-                        'required': False,
-                        'default': 21
-                        },
-                    'modes': {
-                        'required': False,
-                        'default': [Mode.Off.name, Mode.Heat.name]
-                        },
-                    'mode_set': {
-                        'required': False,
-                        'default': Mode.Off.name
-                        }
-                    },
-                'daemon': {
-                    'pid_file': {
-                        'required': True
-                        },
-                    'log_file': {
-                        'required': True
-                        },
-                    'work_dir': {
-                        'required': True
-                        }
-                    },
-                'schedule': {
-                    'poll_interval': {
-                        'required': False,
-                        'default': 300
-                        },
-                    'db': {
-                        'required': True
-                        },
-                    'rpc_host': {
-                        'required': False,
-                        'default': 'localhost'
-                        },
-                    'rpc_port': {
-                        'required': False,
-                        'default': 49152
-                        }
-                    }
+            'GPIO': {
+                'heat_pin': {
+                    'required': True
+                },
+                'cool_pin': {
+                    'required': True
+                },
+            },
+            'behavior': {
+                'hysteresis': {
+                    'required': False,
+                    'default': 0.6
                 }
+            },
+            'flask': {
+                'port': {
+                    'required': True
+                },
+                'debug': {
+                    'required': False,
+                    'default': False
+                },
+                'secret_key': {
+                    'required': True
+                },
+                'public_api_secret': {
+                    'required': True
+                },
+                'username': {
+                    'required': True
+                },
+                'password': {
+                    'required': True
+                }
+            },
+            'wunderground': {
+                'api_key': {
+                    'required': True
+                }
+            },
+            'google': {
+                'api_key': {
+                    'required': True
+                }
+            },
+            'config': {
+                'location': {
+                    'required': False
+                },
+                'location_label': {
+                    'required': False
+                },
+                'celsius': {
+                    'required': False,
+                    'default': True
+                },
+                'modes_available': {
+                    'required': False,
+                    'default': [[Mode.Heat.name, True],
+                                [Mode.Cool.name, False]]
+                },
+                'set_temperature': {
+                    'required': False,
+                    'default': 21
+                },
+                'modes': {
+                    'required': False,
+                    'default': [Mode.Off.name, Mode.Heat.name]
+                },
+                'mode_set': {
+                    'required': False,
+                    'default': Mode.Off.name
+                }
+            },
+            'daemon': {
+                'pid_file': {
+                    'required': True
+                },
+                'log_file': {
+                    'required': True
+                },
+                'work_dir': {
+                    'required': True
+                }
+            },
+            'schedule': {
+                'poll_interval': {
+                    'required': False,
+                    'default': 300
+                },
+                'db': {
+                    'required': True
+                },
+                'rpc_host': {
+                    'required': False,
+                    'default': 'localhost'
+                },
+                'rpc_port': {
+                    'required': False,
+                    'default': 49152
+                }
+            }
+        }
         if self._is_valid():
             return
         else:
-            raise ConfigError('Error: incomplete configuration, please verify \
-                              config.yaml settings.')
+            raise ConfigError(
+                'Error: incomplete configuration, please verify '
+                'config.yaml settings.'
+            )
 
     def get_config(self):
         with open(self._CONFIG, 'r') as f:
@@ -565,29 +575,29 @@ class Config():
 
         # Iterate through schema and check required flag against
         # loaded config
-        for section in self._SCHEMA:
-            for setting in self._SCHEMA[section]:
-                if self._SCHEMA[section][setting]['required'] is True:
+        schema = self._SCHEMA
+        for section in schema:
+            for setting in schema[section]:
+                if schema[section][setting]['required'] is True:
                     if section not in config:
                         return False
                     elif setting not in config[section]:
                         return False
-                # If setting is not required, check if a default value exists
-                #   and set it if not set in the config
-                elif set_defaults and 'default' in self._SCHEMA[section]\
-                                                               [setting]:
+                # If setting is not required, check if a default value
+                #   exists and set it if not set in the config.
+                elif (set_defaults and 'default'
+                      in schema[section][setting]):
                     if section not in config:
                         default_setting = {
-                                section: {
-                                    setting: self._SCHEMA[section][setting]
-                                                                  ['default']
-                                    }
-                                }
+                            section: {
+                                setting: schema[section][setting]['default']
+                            }
+                        }
                         config.update(default_setting)
                     elif setting not in config[section]:
-                        config[section][setting] = self._SCHEMA[section]\
-                                                               [setting]\
-                                                               ['default']
+                        config[section][setting] = (
+                            schema[section][setting]['default']
+                        )
 
         if update:
             self._set_config(config)
