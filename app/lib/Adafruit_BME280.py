@@ -99,8 +99,7 @@ class BME280(object):
         self._mode = mode
         # Create I2C device.
         if i2c is None:
-            from .Adafruit_GPIO.I2C import I2C
-            i2c = I2C
+            from .Adafruit_GPIO import I2C as i2c
         self._device = i2c.get_i2c_device(address, **kwargs)
         # Load calibration values.
         self._load_calibration()
