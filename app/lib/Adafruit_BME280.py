@@ -4,23 +4,34 @@
 # Based on the BMP280 driver with BME280 changes provided by
 # David J Taylor, Edinburgh (www.satsignal.eu)
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
 #
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
 #
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+# CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+# ###
+#
+# Modified by Alex Marshall on MAY/18/2018 with futurize for Python 3
+# support.
+#
+
+from __future__ import absolute_import
+from __future__ import division
+from builtins import object
 
 import logging
 import time
@@ -80,12 +91,15 @@ class BME280(object):
         if mode not in [BME280_OSAMPLE_1, BME280_OSAMPLE_2, BME280_OSAMPLE_4,
                         BME280_OSAMPLE_8, BME280_OSAMPLE_16]:
             raise ValueError(
-                'Unexpected mode value {0}.  Set mode to one of BME280_ULTRALOWPOWER, BME280_STANDARD, BME280_HIGHRES, or BME280_ULTRAHIGHRES'.format(mode))
+                'Unexpected mode value {0}.  Set mode to one of '
+                'BME280_ULTRALOWPOWER, BME280_STANDARD, BME280_HIGHRES, or '
+                'BME280_ULTRAHIGHRES'
+                .format(mode)
+            )
         self._mode = mode
         # Create I2C device.
         if i2c is None:
-            import Adafruit_GPIO.I2C as I2C
-            i2c = I2C
+            from .Adafruit_GPIO import I2C as i2c
         self._device = i2c.get_i2c_device(address, **kwargs)
         # Load calibration values.
         self._load_calibration()
@@ -120,20 +134,8 @@ class BME280(object):
         h5 = self._device.readS8(BME280_REGISTER_DIG_H6)
         h5 = (h5 << 24) >> 20
         self.dig_H5 = h5 | (
-        self._device.readU8(BME280_REGISTER_DIG_H5) >> 4 & 0x0F)
-
-        '''
-        print '0xE4 = {0:2x}'.format (self._device.readU8 (BME280_REGISTER_DIG_H4))
-        print '0xE5 = {0:2x}'.format (self._device.readU8 (BME280_REGISTER_DIG_H5))
-        print '0xE6 = {0:2x}'.format (self._device.readU8 (BME280_REGISTER_DIG_H6))
-
-        print 'dig_H1 = {0:d}'.format (self.dig_H1)
-        print 'dig_H2 = {0:d}'.format (self.dig_H2)
-        print 'dig_H3 = {0:d}'.format (self.dig_H3)
-        print 'dig_H4 = {0:d}'.format (self.dig_H4)
-        print 'dig_H5 = {0:d}'.format (self.dig_H5)
-        print 'dig_H6 = {0:d}'.format (self.dig_H6)
-        '''
+            self._device.readU8(BME280_REGISTER_DIG_H5) >> 4 & 0x0F
+        )
 
     def read_raw_temp(self):
         """Reads the raw (uncompensated) temperature from the sensor."""
@@ -152,9 +154,10 @@ class BME280(object):
         return raw
 
     def read_raw_pressure(self):
-        """Reads the raw (uncompensated) pressure level from the sensor."""
-        """Assumes that the temperature has already been read """
-        """i.e. that enough delay has been provided"""
+        """Reads the raw (uncompensated) pressure level from the sensor.
+        Assumes that the temperature has already been read
+        i.e. that enough delay has been provided
+        """
         msb = self._device.readU8(BME280_REGISTER_PRESSURE_DATA)
         lsb = self._device.readU8(BME280_REGISTER_PRESSURE_DATA + 1)
         xlsb = self._device.readU8(BME280_REGISTER_PRESSURE_DATA + 2)
@@ -162,8 +165,9 @@ class BME280(object):
         return raw
 
     def read_raw_humidity(self):
-        """Assumes that the temperature has already been read """
-        """i.e. that enough delay has been provided"""
+        """Assumes that the temperature has already been read
+        i.e. that enough delay has been provided
+        """
         msb = self._device.readU8(BME280_REGISTER_HUMIDITY_DATA)
         lsb = self._device.readU8(BME280_REGISTER_HUMIDITY_DATA + 1)
         raw = (msb << 8) | lsb
@@ -174,8 +178,10 @@ class BME280(object):
         # float in Python is double precision
         UT = float(self.read_raw_temp())
         var1 = (UT / 16384.0 - self.dig_T1 / 1024.0) * float(self.dig_T2)
-        var2 = ((UT / 131072.0 - self.dig_T1 / 8192.0) * (
-        UT / 131072.0 - self.dig_T1 / 8192.0)) * float(self.dig_T3)
+        var2 = (
+            ((UT / 131072.0 - self.dig_T1 / 8192.0)
+                * (UT / 131072.0 - self.dig_T1 / 8192.0)) * float(self.dig_T3)
+        )
         self.t_fine = int(var1 + var2)
         temp = (var1 + var2) / 5120.0
         return temp
@@ -188,7 +194,8 @@ class BME280(object):
         var2 = var2 + var1 * self.dig_P5 * 2.0
         var2 = var2 / 4.0 + self.dig_P4 * 65536.0
         var1 = (
-               self.dig_P3 * var1 * var1 / 524288.0 + self.dig_P2 * var1) / 524288.0
+            self.dig_P3 * var1 * var1 / 524288.0 + self.dig_P2 * var1
+        ) / 524288.0
         var1 = (1.0 + var1 / 32768.0) * self.dig_P1
         if var1 == 0:
             return 0
@@ -203,13 +210,15 @@ class BME280(object):
         adc = self.read_raw_humidity()
         # print 'Raw humidity = {0:d}'.format (adc)
         h = self.t_fine - 76800.0
-        h = (adc - (self.dig_H4 * 64.0 + self.dig_H5 / 16384.8 * h)) * (
-        self.dig_H2 / 65536.0 * (1.0 + self.dig_H6 / 67108864.0 * h * (
-        1.0 + self.dig_H3 / 67108864.0 * h)))
+        h = (
+            (adc - (self.dig_H4 * 64.0 + self.dig_H5 / 16384.8 * h))
+            * (self.dig_H2 / 65536.0
+                * (1.0 + self.dig_H6 / 67108864.0 * h
+                    * (1.0 + self.dig_H3 / 67108864.0 * h)))
+        )
         h = h * (1.0 - self.dig_H1 * h / 524288.0)
         if h > 100:
             h = 100
         elif h < 0:
             h = 0
         return h
-

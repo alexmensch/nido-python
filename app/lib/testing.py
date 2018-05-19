@@ -1,7 +1,16 @@
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from builtins import object
+
 import yaml
 
 
-class FakeGPIO():
+class FakeGPIO(object):
     def __init__(self, state_file):
         self._pins = {}
         self.BCM = None
@@ -46,7 +55,7 @@ class FakeGPIO():
         return None
 
 
-class FakeSensor():
+class FakeSensor(object):
     def __init__(self, mode):
         self._temp = 17.17
         self._pressure = 101331.01

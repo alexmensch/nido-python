@@ -18,11 +18,18 @@
 #   along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import unicode_literals
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+
 import sys
 import logging
 import logging.handlers
 import os
-from datetime import datetime
 from lib.daemon import Daemon
 from lib.nido import Config, Controller
 from lib.scheduler import NidoSchedulerService
@@ -42,28 +49,29 @@ class NidoDaemon(Daemon):
 
         self.scheduler = BackgroundScheduler()
         jobstores = {
-                'default': {'type': 'memory'},
-                'schedule': SQLAlchemyJobStore(url='sqlite:///{}'
-                                               .format(db_path))
-                }
-        job_defaults = {
-                'coalesce': True,
-                'misfire_grace_time': 60
-                }
+            'default': {'type': 'memory'},
+            'schedule': SQLAlchemyJobStore(
+                url='sqlite:///{}'.format(db_path)
+            )
+        }
+        job_defaults = {'coalesce': True, 'misfire_grace_time': 10}
         self.scheduler.configure(jobstores=jobstores,
                                  job_defaults=job_defaults)
-        self.scheduler.add_job(NidoSchedulerService.wakeup,
-                               trigger='interval', seconds=poll_interval,
-                               name='Poll')
+        self.scheduler.add_job(
+            NidoSchedulerService.wakeup, trigger='interval',
+            seconds=poll_interval, name='Poll'
+        )
         self.scheduler.add_job(NidoSchedulerService.wakeup, name='Poll')
         self.scheduler.start()
 
-        RPCserver = ThreadedServer(NidoSchedulerService(self.scheduler),
-                                   port=rpc_port,
-                                   protocol_config={
-                                   'allow_public_attrs': True,
-                                   'allow_pickle': True
-                                   })
+        RPCserver = ThreadedServer(
+            NidoSchedulerService(self.scheduler),
+            port=rpc_port,
+            protocol_config={
+                'allow_public_attrs': True,
+                'allow_pickle': True
+            }
+        )
         RPCserver.start()
 
     def quit(self):
