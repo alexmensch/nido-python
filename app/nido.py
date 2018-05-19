@@ -17,6 +17,7 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import logging
 from numbers import Number
 from flask import Flask, request, session, render_template
 from lib.nido import (Sensor, LocalWeather, Config, Controller, Status,
@@ -362,6 +363,18 @@ def api_schedule_remove_jobid(id):
 
 
 if __name__ == '__main__':
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(
+        fmt='%(asctime)s [%(levelname)s] %(name)s | %(message)s',
+        datefmt='%d/%m/%Y %H:%M:%S'
+    )
+    handler.setFormatter(formatter)
+    root = logging.getLogger()
+    if 'NIDO_DEBUG' in os.environ:
+        root.setLevel(logging.DEBUG)
+    else:
+        root.setLevel(logging.INFO)
+    root.addHandler(handler)
     # We're using an adhoc SSL context, which is not considered secure
     # by browsers because it invokes a self-signed certificate.
     app.run(host='0.0.0.0', port=config.get_config()['flask']['port'],
