@@ -17,19 +17,19 @@ class FakeGPIO(object):
         self.OUT = None
         self._state = state_file
         self._write()
-        return
+        return None
 
     def setwarnings(self, bool):
-        return
+        return None
 
     def setmode(self, mode):
-        return
+        return None
 
     def setup(self, pin, mode):
         self._get_pins()
         if pin not in self._pins:
             self._set_pin(pin, False)
-        return
+        return None
 
     def input(self, pin):
         self._get_pins()
@@ -37,29 +37,30 @@ class FakeGPIO(object):
 
     def output(self, pin, state):
         self._set_pin(pin, state)
-        return
+        return None
 
     def _set_pin(self, pin, state):
         self._pins[pin] = state
         self._write()
-        return
+        return None
 
     def _get_pins(self):
         with open(self._state, 'r') as f:
             self._pins = yaml.load(f)
-        return
+        return None
 
     def _write(self):
         with open(self._state, 'w') as f:
             yaml.dump(self._pins, f, default_flow_style=False, indent=4)
+        return None
 
 
 class FakeSensor(object):
     def __init__(self, mode):
-        self._temp = 21.12
+        self._temp = 17.17
         self._pressure = 101331.01
         self._humidity = 50.05
-        return
+        return None
 
     def read_temperature(self):
         return self._temp

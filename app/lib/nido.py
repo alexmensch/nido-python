@@ -33,6 +33,9 @@ import time
 import yaml
 import os
 import re
+import logging
+import requests
+from requests import RequestException
 from enum import Enum
 
 if 'NIDO_TESTING' in os.environ:
@@ -86,6 +89,8 @@ class FormTypes(Enum):
 class Sensor(object):
     def __init__(self, mode=BME280_OSAMPLE_8):
         self.sensor = BME280(mode)
+        self._l = logging.getLogger(__name__)
+        return None
 
     def get_conditions(self):
         # Initialize response dict
@@ -93,16 +98,23 @@ class Sensor(object):
 
         # Get sensor data
         try:
-            conditions = {
-                'temp_c': self.sensor.read_temperature(),
-                'pressure_mb': self.sensor.read_pressure() / 100,
-                'relative_humidity': self.sensor.read_humidity()
-            }
+            temp_c = self.sensor.read_temperature()
+            pressure_mb = self.sensor.read_pressure() / 100
+            relative_humidity = self.sensor.read_humidity()
+            self._l.debug(
+                'Sensor data: T = {}C | P = {} | RH = {}'
+                .format(temp_c, pressure_mb, relative_humidity)
+            )
         except Exception as e:
             resp['error'] = (
                 'Exception getting sensor data: {} {}'.format(type(e), str(e))
             )
         else:
+            conditions = {
+                'temp_c': temp_c,
+                'pressure_mb': pressure_mb,
+                'relative_humidity': relative_humidity
+            }
             resp['conditions'] = conditions
 
         return resp
@@ -110,6 +122,7 @@ class Sensor(object):
 
 class LocalWeather(object):
     def __init__(self, zipcode=None, location=None):
+        self._l = logging.getLogger(__name__)
         if zipcode:
             self.set_zipcode(zipcode)
         else:
@@ -305,12 +318,14 @@ class Controller(object):
     set point."""
 
     def __init__(self):
+        self._l = logging.getLogger(__name__)
         try:
             self.cfg = Config()
             config = self.cfg.get_config()
         except IOError as e:
-            raise ControllerError('Error getting configuration: {}'
-                                  .format(str(e)))
+            raise ControllerError(
+                'Error getting configuration: {}'.format(str(e))
+            )
         else:
             self._HEATING = config['GPIO']['heat_pin']
             self._COOLING = config['GPIO']['cool_pin']
@@ -320,30 +335,45 @@ class Controller(object):
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(self._HEATING, GPIO.OUT)
         GPIO.setup(self._COOLING, GPIO.OUT)
+        self._l.debug(
+            'GPIO pins configured: heat = {} | cool = {}'
+            .format(self._HEATING, self._COOLING)
+        )
 
         return
 
     def get_status(self):
         if (GPIO.input(self._HEATING) and GPIO.input(self._COOLING)):
+            self._l.error('** Both heating and cooling pins enabled. **')
             self.shutdown()
             raise ControllerError(
                 'Both heating and cooling pins were enabled. '
                 'Both pins disabled as a precaution.'
             )
         elif GPIO.input(self._HEATING):
+            self._l.debug('Get status: {}'.format(Status.Heating.name))
             return Status.Heating.value
         elif GPIO.input(self._COOLING):
+            self._l.debug('Get state: {}'.format(Status.Cooling.name))
             return Status.Cooling.value
         else:
+            self._l.debug('Get state: {}'.format(Status.Off.name))
             return Status.Off.value
 
     def _enable_heating(self, status, temp, set_temp, hysteresis):
         if (temp + hysteresis) < set_temp:
             GPIO.output(self._HEATING, True)
             GPIO.output(self._COOLING, False)
+            self._l.debug(
+                'Enabled HEAT: {} < {}'.format(temp + hysteresis, set_temp)
+            )
         elif (temp < set_temp) and (status is Status.Heating):
             GPIO.output(self._HEATING, True)
             GPIO.output(self._COOLING, False)
+            self._l.debug(
+                'Enabled HEAT: {} < {} and status = Heating'
+                .format(temp, set_temp)
+            )
         return
 
     def _enable_cooling(self, status, temp, set_temp, hysteresis):
@@ -358,6 +388,7 @@ class Controller(object):
     def shutdown(self):
         GPIO.output(self._HEATING, False)
         GPIO.output(self._COOLING, False)
+        self._l.debug('Shut down GPIO pins.')
         return
 
     def update(self):
@@ -366,7 +397,7 @@ class Controller(object):
             mode = config['config']['mode_set']
             status = self.get_status()
             temp = Sensor().get_conditions()['conditions']['temp_c']
-            set_temp = config['config']['set_temperature']
+            set_temp = float(config['config']['set_temperature'])
             hysteresis = config['behavior']['hysteresis']
         except KeyError as e:
             self.shutdown()
@@ -380,6 +411,10 @@ class Controller(object):
             self.shutdown()
         elif mode == Mode.Heat.name:
             if temp < set_temp:
+                self._l.debug(
+                    'Mode = Heat | {} < {} | Enabling heating'
+                    .format(temp, set_temp)
+                )
                 self._enable_heating(status, temp, set_temp, hysteresis)
             else:
                 self.shutdown()

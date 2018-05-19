@@ -80,11 +80,17 @@ class NidoSchedulerService(rpyc.Service):
 
     @staticmethod
     def set_temp(temp, scale):
-        return Config().set_temp(temp, scale)
+        if Config().set_temp(temp, scale):
+            return NidoSchedulerService.wakeup()
+        else:
+            return False
 
     @staticmethod
     def set_mode(mode):
-        return Config().set_mode(mode)
+        if Config().set_mode(mode):
+            return NidoSchedulerService.wakeup()
+        else:
+            return False
 
     @staticmethod
     def wakeup():

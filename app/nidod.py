@@ -27,7 +27,9 @@ standard_library.install_aliases()
 from builtins import *
 
 import sys
-from datetime import datetime
+import logging
+import logging.handlers
+import os
 from lib.daemon import Daemon
 from lib.nido import Config, Controller
 from lib.scheduler import NidoSchedulerService
@@ -38,6 +40,7 @@ from rpyc.utils.server import ThreadedServer
 
 class NidoDaemon(Daemon):
     def run(self):
+        self._l.debug('Starting run loop for Nido daemon')
         self.controller = Controller()
         config = Config().get_config()
         poll_interval = config['schedule']['poll_interval']
@@ -51,13 +54,14 @@ class NidoDaemon(Daemon):
                 url='sqlite:///{}'.format(db_path)
             )
         }
-        job_defaults = {'coalesce': True}
+        job_defaults = {'coalesce': True, 'misfire_grace_time': 10}
         self.scheduler.configure(jobstores=jobstores,
                                  job_defaults=job_defaults)
         self.scheduler.add_job(
             NidoSchedulerService.wakeup, trigger='interval',
             seconds=poll_interval, name='Poll'
         )
+        self.scheduler.add_job(NidoSchedulerService.wakeup, name='Poll')
         self.scheduler.start()
 
         RPCserver = ThreadedServer(
@@ -68,21 +72,13 @@ class NidoDaemon(Daemon):
                 'allow_pickle': True
             }
         )
-
-        sys.stdout.write(
-            '{} [Info] Nido daemon started\n'.format(datetime.utcnow())
-        )
-        sys.stdout.flush()
-
         RPCserver.start()
 
     def quit(self):
         self.scheduler.shutdown()
         self.controller.shutdown()
-        sys.stdout.write(
-            '{} [Info] Nido daemon shutdown\n'.format(datetime.utcnow())
-        )
-        sys.stdout.flush()
+        self._l.info('Nido daemon shutdown')
+        self._l.info('********************')
         return
 
 
@@ -91,6 +87,20 @@ if __name__ == '__main__':
     pid_file = config['daemon']['pid_file']
     work_dir = config['daemon']['work_dir']
     log_file = config['daemon']['log_file']
+
+    handler = logging.handlers.WatchedFileHandler(log_file)
+    formatter = logging.Formatter(
+        fmt='%(asctime)s [%(levelname)s] %(name)s | %(message)s',
+        datefmt='%d/%m/%Y %H:%M:%S'
+    )
+    handler.setFormatter(formatter)
+    root = logging.getLogger()
+    if 'NIDO_DEBUG' in os.environ:
+        root.setLevel(logging.DEBUG)
+    else:
+        root.setLevel(logging.INFO)
+    root.addHandler(handler)
+
     daemon = NidoDaemon(pid_file, work_dir, stderr=log_file, stdout=log_file)
 
     if 'start' == sys.argv[1]:
