@@ -3,11 +3,11 @@
 sil=""
 debug=""
 testing=""
-python3=""
-py_ver="python"
-usage() { echo "Usage: $0 -b <base path> [-s] [-d] [-t] [-3]" 1>&2; exit 1; }
+python2=""
+py_ver="python3"
+usage() { echo "Usage: $0 -b <base path> [-s] [-d] [-t] [-2]" 1>&2; exit 1; }
 
-while getopts ":b:sdt3" opt; do
+while getopts ":b:sdt2" opt; do
     case "${opt}" in
         b)
             base=${OPTARG}
@@ -21,8 +21,8 @@ while getopts ":b:sdt3" opt; do
         t)
             testing=true
             ;;
-        3)
-            python3=true
+        2)
+            python2=true
             ;;
         *)
             usage
@@ -44,8 +44,8 @@ if [ "${testing}" = true ]; then
     export NIDO_TESTING_GPIO="/tmp/gpio_pins.yaml"
 fi
 
-if [ "${python3}" = true ]; then
-    py_ver="python3"
+if [ "${python2}" = true ]; then
+    py_ver="python"
 fi
 
 export NIDO_BASE=${base}

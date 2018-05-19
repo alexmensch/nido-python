@@ -34,8 +34,6 @@ import yaml
 import os
 import re
 import logging
-import requests
-from requests import RequestException
 from enum import Enum
 
 if 'NIDO_TESTING' in os.environ:
@@ -408,6 +406,7 @@ class Controller(object):
             raise
 
         if mode == Mode.Off.name:
+            self._l.debug('Mode = Off | Set temp {}C'.format(set_temp))
             self.shutdown()
         elif mode == Mode.Heat.name:
             if temp < set_temp:
