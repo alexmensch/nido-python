@@ -47,13 +47,15 @@ class NidoDaemon(Daemon):
                                                .format(db_path))
                 }
         job_defaults = {
-                'coalesce': True
+                'coalesce': True,
+                'misfire_grace_time': 60
                 }
         self.scheduler.configure(jobstores=jobstores,
                                  job_defaults=job_defaults)
         self.scheduler.add_job(NidoSchedulerService.wakeup,
                                trigger='interval', seconds=poll_interval,
                                name='Poll')
+        self.scheduler.add_job(NidoSchedulerService.wakeup, name='Poll')
         self.scheduler.start()
 
         RPCserver = ThreadedServer(NidoSchedulerService(self.scheduler),
