@@ -409,11 +409,8 @@ class Controller(object):
             self._l.debug('Mode = Off | Set temp {}C'.format(set_temp))
             self.shutdown()
         elif mode == Mode.Heat.name:
+            self._l.debug('Mode = Heat | Set temp {}C'.format(set_temp))
             if temp < set_temp:
-                self._l.debug(
-                    'Mode = Heat | {} < {} | Enabling heating'
-                    .format(temp, set_temp)
-                )
                 self._enable_heating(status, temp, set_temp, hysteresis)
             else:
                 self.shutdown()
