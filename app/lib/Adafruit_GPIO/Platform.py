@@ -28,7 +28,7 @@
 
 from __future__ import absolute_import
 
-from . import platform
+import platform
 import re
 
 # Platform identification constants.
