@@ -35,6 +35,7 @@ import sys
 import os
 import time
 import atexit
+import logging
 from signal import signal, SIGTERM
 
 
@@ -52,6 +53,7 @@ class Daemon:
         self.stderr = stderr
         self.pidfile = pidfile
         self.workdir = workdir
+        self._l = logging.getLogger(__name__)
 
     def daemonize(self):
         """
@@ -129,6 +131,7 @@ class Daemon:
             sys.exit(1)
 
         # Start the daemon
+        self._l.info('Starting Nido daemon')
         self.daemonize()
         self.run()
 
