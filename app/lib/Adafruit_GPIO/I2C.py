@@ -28,6 +28,9 @@
 #
 
 from __future__ import absolute_import
+from builtins import hex
+from builtins import range
+from builtins import object
 
 import logging
 import subprocess
