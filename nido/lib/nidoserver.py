@@ -33,7 +33,6 @@ from .nido import Config, ConfigError
 from .scheduler import NidoDaemonService
 
 _CONFIG = Config()
-_PUBLIC_API_SECRET = _CONFIG.get_config()['flask']['public_api_secret']
 
 
 class JSONResponse(object):
@@ -122,44 +121,6 @@ def set_config_helper(resp, cfg=None, mode=None, temp_scale=None):
     except Exception as e:
         resp.data['warning'] = 'Server error signalling daemon: {}'.format(e)
     return resp
-
-
-# Decorator for routes that require a session cookie
-#
-def require_session(route):
-    @wraps(route)
-    def check_session(*args, **kwargs):
-        if not session.get('logged_in'):
-            abort(403)
-        else:
-            return route(*args, **kwargs)
-
-    return check_session
-
-
-# Decorator for API routes to verify that client supplied a secret
-# in the request body
-#
-def require_secret(route):
-    @wraps(route)
-    def check_secret(*args, **kwargs):
-        req_data = request.get_json()
-        # Prepare a JSONResponse in case we need it
-        resp = JSONResponse()
-
-        if 'secret' in list(req_data.keys()):
-            if req_data['secret'] == _PUBLIC_API_SECRET:
-                return route(*args, **kwargs)
-            else:
-                resp.data['error'] = 'Invalid secret.'
-                resp.status = 401
-        else:
-            resp.data['error'] = 'JSON in request was invalid.'
-            resp.status = 400
-
-        return resp.get_flask_response()
-
-    return check_secret
 
 
 # Custom URL converter to allow use of regex

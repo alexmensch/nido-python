@@ -439,7 +439,7 @@ class ConfigError(Exception):
 
 class Config(object):
     def __init__(self):
-        self._CONFIG = '{}/app/cfg/config.yaml'.format(_NIDO_BASE)
+        self._CONFIG = '{}/nido/cfg/config.yaml'.format(_NIDO_BASE)
         self._SCHEMA_VERSION = '1.3'
         self._SCHEMA = {
             'GPIO': {
