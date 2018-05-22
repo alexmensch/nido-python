@@ -18,8 +18,8 @@
 
 from functools import wraps
 from flask import Blueprint, session, current_app, request, abort, g
-from .lib.nidoserver import JSONResponse
-from .lib.nido import Config
+from nido.lib.nidoserver import JSONResponse
+from nido.lib.nido import Config
 
 bp = Blueprint('auth', __name__)
 

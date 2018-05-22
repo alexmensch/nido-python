@@ -23,17 +23,10 @@ from __future__ import absolute_import
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-from builtins import str
-from past.builtins import basestring
 
 import os
 import logging
-from numbers import Number
-from flask import Flask, request, session, render_template
-from .lib.nido import (Sensor, LocalWeather, Config, Controller, Status,
-                       ControllerError)
-import nido.lib.nidoserver as ns
-from .lib.scheduler import NidoDaemonService, NidoDaemonServiceError
+from flask import Flask
 
 handler = logging.StreamHandler()
 formatter = logging.Formatter(
@@ -68,8 +61,6 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    app.url_map.converters['regex'] = ns.RegexConverter
-
     @app.route('/')
     def render_ui():
         """The / route only serves to return the React-based UI."""
@@ -78,9 +69,12 @@ def create_app(test_config=None):
             google_api_key=app.config['GOOGLE_API_KEY']
         )
 
-    from . import auth, web, api
+    from nido import auth, web
+    from nido.api import basic, schedule, RegexConverter
+    app.url_map.converters['regex'] = RegexConverter
     app.register_blueprint(auth.bp)
     app.register_blueprint(web.bp)
-    app.register_blueprint(api.bp)
+    app.register_blueprint(basic.bp, url_prefix='/api')
+    app.register_blueprint(schedule.bp, url_prefix='/api/schedule')
 
     return app

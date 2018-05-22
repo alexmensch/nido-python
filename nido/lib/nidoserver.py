@@ -28,7 +28,6 @@ from builtins import object
 import json
 from functools import wraps
 from flask import session, abort, request
-from werkzeug.routing import BaseConverter
 from .nido import Config, ConfigError
 from .scheduler import NidoDaemonService
 
@@ -121,13 +120,3 @@ def set_config_helper(resp, cfg=None, mode=None, temp_scale=None):
     except Exception as e:
         resp.data['warning'] = 'Server error signalling daemon: {}'.format(e)
     return resp
-
-
-# Custom URL converter to allow use of regex
-# Source: https://stackoverflow.com/questions/5870188 \
-# /does-flask-support-regular-expressions-in-its-url-routing
-#
-class RegexConverter(BaseConverter):
-    def __init__(self, url_map, *items):
-        super(RegexConverter, self).__init__(url_map)
-        self.regex = items[0]
