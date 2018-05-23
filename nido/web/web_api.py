@@ -18,14 +18,15 @@
 
 from builtins import str
 from past.builtins import basestring
+
 from numbers import Number
 from flask import Blueprint, current_app, g, request
+
 from nido.auth import require_session
-from nido.lib.nidoserver import (
-    JSONResponse, validate_json_req, set_config_helper
-)
-from nido.lib.nido import (
-    Status, Controller, ControllerError, Sensor, LocalWeather, Config
+from nido.web import LocalWeather, set_config_helper, validate_json_req
+from nido.api import JSONResponse
+from nido.lib.hardware import (
+    Status, Controller, ControllerError, Sensor, Config
 )
 
 bp = Blueprint('web', __name__)
@@ -84,7 +85,9 @@ def get_weather():
           storing the object in the session.
           Needs to be a serializable object (see Flask documentation).
     """
-    g.resp.data = LocalWeather().get_conditions()
+    g.resp.data = LocalWeather(
+        current_app.config['WUNDERGROUND_API_KEY']
+    ).get_conditions()
     return g.resp.get_flask_response(current_app)
 
 

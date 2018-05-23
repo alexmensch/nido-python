@@ -53,6 +53,8 @@ def create_app(test_config=None):
         app.config.from_object(config_object)
     else:
         app.config.from_mapping(test_config)
+    # Load private config values from instance folder
+    app.config.from_pyfile('private-config.py')
 
     try:
         os.makedirs(app.instance_path)
@@ -67,11 +69,12 @@ def create_app(test_config=None):
             google_api_key=app.config['GOOGLE_API_KEY']
         )
 
-    from . import auth, web
-    from .api import basic, schedule, RegexConverter
+    from nido import auth
+    from nido.web import web_api
+    from nido.api import basic, schedule, RegexConverter
     app.url_map.converters['regex'] = RegexConverter
     app.register_blueprint(auth.bp)
-    app.register_blueprint(web.bp)
+    app.register_blueprint(web_api.bp)
     app.register_blueprint(basic.bp, url_prefix='/api')
     app.register_blueprint(schedule.bp, url_prefix='/api/schedule')
 

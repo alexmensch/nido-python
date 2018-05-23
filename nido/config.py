@@ -1,16 +1,13 @@
 from builtins import object
-from nido.lib.nido import Config
 
 
 class FlaskConfig(object):
-    nidoConfig = Config()
     DEBUG = False
     TESTING = False
-    SECRET_KEY = nidoConfig.get_config()['flask']['secret_key']
-    HOST = '0.0.0.0'
-    PORT = 443
-    GOOGLE_API_KEY = nidoConfig.get_config()['google']['api_key']
-    PUBLIC_API_SECRET = nidoConfig.get_config()['flask']['public_api_secret']
+    FLASK_RUN_HOST = '0.0.0.0'
+    FLASK_RUN_PORT = 443
+    RPC_HOST = 'localhost'
+    RPC_PORT = 49152
 
 
 class DevelopmentConfig(FlaskConfig):

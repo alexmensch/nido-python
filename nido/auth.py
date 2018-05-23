@@ -18,8 +18,8 @@
 
 from functools import wraps
 from flask import Blueprint, session, current_app, request, abort, g
-from nido.lib.nidoserver import JSONResponse
-from nido.lib.nido import Config
+
+from nido.api import JSONResponse
 
 bp = Blueprint('auth', __name__)
 
@@ -49,9 +49,10 @@ def login():
         g.resp.data['username'] = session['username']
         g.resp.data['logged_in'] = True
     else:
-        cfg = Config().get_config()
-        if (request.form['username'] != cfg['flask']['username']
-                or request.form['password'] != cfg['flask']['password']):
+        USERNAME = current_app.config['USERNAME']
+        PASSWORD = current_app.config['PASSWORD']
+        if (request.form['username'] != USERNAME
+                or request.form['password'] != PASSWORD):
             g.resp.data['error'] = 'Incorrect login credentials.'
             g.resp.data['logged_in'] = False
         else:

@@ -17,8 +17,8 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 
 from flask import Blueprint, current_app, request, g
-from nido.api import require_secret
-from nido.lib.nidoserver import JSONResponse
+
+from nido.api import require_secret, JSONResponse
 from nido.lib.scheduler import NidoDaemonService, NidoDaemonServiceError
 
 bp = Blueprint('api_rpc', __name__)
@@ -27,7 +27,11 @@ bp = Blueprint('api_rpc', __name__)
 @bp.before_app_request
 def json_response():
     g.resp = JSONResponse()
-    g.nds = NidoDaemonService(json=True)
+    g.nds = NidoDaemonService(
+        current_app.config['RPC_HOST'],
+        current_app.config['RPC_PORT'],
+        json=True
+    )
     return None
 
 

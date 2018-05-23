@@ -135,9 +135,10 @@ class NidoDaemonService(object):
     """Wrapper service to view/add/modify/delete daemon scheduler jobs
     via RPC."""
 
-    def __init__(self, json=False):
+    def __init__(self, host, port, json=False):
         self._json = json
-        self._config = Config().get_config()
+        self._host = host
+        self._port = port
         self._connect()
         return
 
@@ -228,8 +229,8 @@ class NidoDaemonService(object):
 
     def _connect(self):
         self._connection = rpyc.connect(
-            self._config['schedule']['rpc_host'],
-            self._config['schedule']['rpc_port'],
+            self._host,
+            self._port,
             config={
                 'allow_public_attrs': True,
                 'instantiate_custom_exceptions': True,

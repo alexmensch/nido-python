@@ -16,10 +16,12 @@
 #   along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 
+from builtins import object
+
 from functools import wraps
 from flask import current_app, request
 from werkzeug.routing import BaseConverter
-from nido.lib.nidoserver import JSONResponse
+import json
 
 
 def require_secret(route):
@@ -45,6 +47,20 @@ def require_secret(route):
         return resp.get_flask_response()
 
     return check_secret
+
+
+class JSONResponse(object):
+    def __init__(self):
+        self.status = 200
+        return
+
+    def get_flask_response(self, app):
+        response = app.make_response(
+            json.dumps(self.data, sort_keys=True, ensure_ascii=False)
+        )
+        response.headers['Content-Type'] = 'application/json'
+        response.status_code = self.status
+        return response
 
 
 # Custom URL converter to allow use of regex

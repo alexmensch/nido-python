@@ -17,8 +17,9 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 
 from flask import Blueprint, current_app, g
-from nido.api import require_secret
-from nido.lib.nidoserver import set_config_helper, JSONResponse
+
+from nido.api import require_secret, JSONResponse
+from nido.web import set_config_helper
 
 bp = Blueprint('api_local', __name__)
 
