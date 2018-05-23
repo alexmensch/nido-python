@@ -16,21 +16,30 @@
 #   along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 
-from functools import wraps
-from flask import Blueprint, session, current_app, request, abort, g
-from .lib.nidoserver import JSONResponse
-from .lib.nido import Config
+from numbers import Number
+from flask import Blueprint, current_app, g, request
+from nido.auth import require_session
+from nido.lib.nidoserver import (
+    JSONResponse, validate_json_req, set_config_helper
+)
+from nido.lib.nido import (
+    Status, Controller, ControllerError, Sensor, LocalWeather, Config
+)
 
-bp = Blueprint('auth', __name__)
+bp = Blueprint('web', __name__)
 
 
-@app.route('/get_state', methods=['POST'])
-@ns.require_session
+@bp.before_app_request
+def json_response():
+    g.resp = JSONResponse()
+    return None
+
+
+@bp.route('/get_state', methods=['POST'])
+@require_session
 def get_state():
-    # Initialize response object
-    resp = ns.JSONResponse()
-    resp.data['state'] = {}
-    resp.data['error'] = []
+    g.resp.data['state'] = {}
+    g.resp.data['error'] = []
 
     try:
         state = Controller().get_status()
@@ -39,56 +48,55 @@ def get_state():
             'Exception getting current state from controller: {}'
             .format(str(e))
         )
-        resp.data['error'].append(err_msg)
+        g.resp.data['error'].append(err_msg)
     else:
         # state = Heating / Cooling / Off
         nidoState = {'status': Status(state).name}
-        resp.data['state'].update(nidoState)
+        g.resp.data['state'].update(nidoState)
 
     # Returns a JSON dict with an 'error' key on error
     # On success, returns a JSON dict with a 'conditions' key
     sensor_data = Sensor().get_conditions()
     if 'error' in sensor_data:
-        resp.data['error'].append(sensor_data['error'])
+        g.resp.data['error'].append(sensor_data['error'])
     else:
-        resp.data['state'].update(sensor_data)
+        g.resp.data['state'].update(sensor_data)
 
     daemonState = {'daemon_running': Controller().daemon_running()}
-    resp.data['state'].update(daemonState)
+    g.resp.data['state'].update(daemonState)
 
-    if len(resp.data['error']) == 0:
-        del resp.data['error']
-    return resp.get_flask_response(app)
+    if len(g.resp.data['error']) == 0:
+        del g.resp.data['error']
+    return g.resp.get_flask_response(current_app)
 
 
-@app.route('/get_weather', methods=['POST'])
-@ns.require_session
+@bp.route('/get_weather', methods=['POST'])
+@require_session
 def get_weather():
-    resp = ns.JSONResponse()
-    # Any errors will be passed through
-    # The receiving application should note the retrieval_age value
-    # as necessary.
-    # TODO: Support caching built into the LocalWeather() object by
-    #       storing the object in the session.
-    #       Needs to be a serializable object (see Flask documentation).
-    resp.data = LocalWeather().get_conditions()
+    """
+    Get local weather conditions via the Weather Underground API.
+    Any errors will be passed through in the JSON response.
+    The receiving application should note the retrieval_age value
+    as necessary.
+    TODO: Support caching built into the LocalWeather() object by
+          storing the object in the session.
+          Needs to be a serializable object (see Flask documentation).
+    """
+    g.resp.data = LocalWeather().get_conditions()
+    return g.resp.get_flask_response(current_app)
 
-    return resp.get_flask_response(app)
 
-
-@app.route('/get_config', methods=['POST'])
-@ns.require_session
+@bp.route('/get_config', methods=['POST'])
+@require_session
 def get_config():
-    resp = ns.JSONResponse()
-    cfg = config.get_config()
-    resp.data['config'] = cfg['config']
-    return resp.get_flask_response(app)
+    cfg = Config().get_config()
+    g.resp.data['config'] = cfg['config']
+    return g.resp.get_flask_response(current_app)
 
 
-@app.route('/set_config', methods=['POST'])
-@ns.require_session
+@bp.route('/set_config', methods=['POST'])
+@require_session
 def set_config():
-    resp = ns.JSONResponse()
     new_cfg = request.get_json()
 
     # Expect to receive a json dict with
@@ -102,10 +110,10 @@ def set_config():
     }
 
     # Update local configuration with user data
-    if ns.validate_json_req(new_cfg, validation):
-        resp = ns.set_config_helper(resp, cfg=new_cfg)
+    if validate_json_req(new_cfg, validation):
+        g.resp = set_config_helper(g.resp, cfg=new_cfg)
     else:
-        resp.data['error'] = 'JSON in request was invalid.'
-        resp.status = 400
+        g.resp.data['error'] = 'JSON in request was invalid.'
+        g.resp.status = 400
 
-    return resp.get_flask_response(app)
+    return g.resp.get_flask_response(current_app)

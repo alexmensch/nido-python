@@ -16,9 +16,17 @@
 #   along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 
-from flask import current_app, g
-from nido.api import bp, require_secret
-from nido.lib.nidoserver import set_config_helper
+from flask import Blueprint, current_app, g
+from nido.api import require_secret
+from nido.lib.nidoserver import set_config_helper, JSONResponse
+
+bp = Blueprint('api_local', __name__)
+
+
+@bp.before_app_request
+def json_response():
+    g.resp = JSONResponse()
+    return None
 
 
 @bp.route('/set/mode/<string:set_mode>', methods=['POST'])

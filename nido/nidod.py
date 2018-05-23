@@ -30,9 +30,11 @@ import sys
 import logging
 import logging.handlers
 import os
-from nido.daemon.base import Daemon
-from nido.lib.nido import Config, Controller
-from nido.lib.scheduler import NidoSchedulerService
+from dotenv import load_dotenv
+load_dotenv()
+from daemon.base import Daemon
+from lib.nido import Config, Controller
+from lib.scheduler import NidoSchedulerService
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from rpyc.utils.server import ThreadedServer

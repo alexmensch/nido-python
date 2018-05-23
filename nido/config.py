@@ -1,4 +1,4 @@
-from lib.nido import Config
+from nido.lib.nido import Config
 
 
 class FlaskConfig(object):

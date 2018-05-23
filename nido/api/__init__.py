@@ -17,12 +17,9 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 
 from functools import wraps
-from flask import Blueprint, current_app, request, g
+from flask import current_app, request
 from werkzeug.routing import BaseConverter
 from nido.lib.nidoserver import JSONResponse
-from nido.lib.scheduler import NidoDaemonService
-
-bp = Blueprint('api', __name__)
 
 
 def require_secret(route):
@@ -48,13 +45,6 @@ def require_secret(route):
         return resp.get_flask_response()
 
     return check_secret
-
-
-@bp.before_app_request
-def json_response():
-    g.resp = JSONResponse()
-    g.nds = NidoDaemonService(json=True)
-    return None
 
 
 # Custom URL converter to allow use of regex

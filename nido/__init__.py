@@ -43,15 +43,13 @@ root.addHandler(handler)
 
 
 def create_app(test_config=None):
-    app = Flask(__name__,
-                instance_path='instance',
-                instance_relative_config=True)
+    app = Flask(__name__, instance_relative_config=True)
 
     if test_config is None:
         if 'NIDO_DEBUG' in os.environ:
-            config_object = 'config.DevelopmentConfig'
+            config_object = 'nido.config.DevelopmentConfig'
         else:
-            config_object = 'config.ProductionConfig'
+            config_object = 'nido.config.ProductionConfig'
         app.config.from_object(config_object)
     else:
         app.config.from_mapping(test_config)
@@ -69,8 +67,8 @@ def create_app(test_config=None):
             google_api_key=app.config['GOOGLE_API_KEY']
         )
 
-    from nido import auth, web
-    from nido.api import basic, schedule, RegexConverter
+    from . import auth, web
+    from .api import basic, schedule, RegexConverter
     app.url_map.converters['regex'] = RegexConverter
     app.register_blueprint(auth.bp)
     app.register_blueprint(web.bp)
