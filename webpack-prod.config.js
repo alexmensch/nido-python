@@ -2,9 +2,9 @@ const webpack = require('webpack');
 
 module.exports = {
         devtool: 'cheap-module-source-map',
-	context: __dirname + "/app",
+	context: __dirname + "/nido",
 	entry: {
-		javascript: './nido.js',
+		javascript: './react/nido.js',
 	},
 
 	output: {

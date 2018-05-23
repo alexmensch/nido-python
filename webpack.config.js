@@ -1,7 +1,7 @@
 module.exports = {
-	context: __dirname + "/app",
+	context: __dirname + "/nido",
 	entry: {
-		javascript: './nido.js',
+		javascript: './react/nido.js',
 	},
 
 	output: {
