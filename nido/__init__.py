@@ -26,7 +26,7 @@ from builtins import *
 
 import os
 import logging
-from flask import Flask
+from flask import Flask, render_template
 
 handler = logging.StreamHandler()
 formatter = logging.Formatter(
@@ -43,7 +43,7 @@ root.addHandler(handler)
 
 
 def create_app(test_config=None):
-    app = Flask(__name__, instance_relative_config=True)
+    app = Flask('nido', instance_relative_config=True)
 
     if test_config is None:
         if 'NIDO_DEBUG' in os.environ:

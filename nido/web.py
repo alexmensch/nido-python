@@ -16,6 +16,8 @@
 #   along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 
+from builtins import str
+from past.builtins import basestring
 from numbers import Number
 from flask import Blueprint, current_app, g, request
 from nido.auth import require_session
