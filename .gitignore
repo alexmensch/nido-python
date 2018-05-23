@@ -8,6 +8,7 @@ __pycache__/
 
 venv/
 instance/
+*.egg-info/
 
 node_modules/
 npm-debug.log
@@ -17,7 +18,7 @@ npm-debug.log
 config.yaml
 
 # Database
-nido/db/nido.db
+nido.db
 
 # Webpack'd JS
 nido/static/js/nido.js
