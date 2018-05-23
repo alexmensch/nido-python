@@ -3,6 +3,8 @@
 # With gunicorn:
 # $ sudo -E gunicorn -w 1 -b 0.0.0.0:80 'nido:create_app()'
 
+# Using .env at the moment, but should export ENV variables in this script for debug
+
 sil=""
 debug=""
 testing=""

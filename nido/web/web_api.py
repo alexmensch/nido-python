@@ -20,6 +20,7 @@ from builtins import str
 from past.builtins import basestring
 
 from numbers import Number
+import logging
 from flask import Blueprint, current_app, g, request
 
 from nido.auth import require_session
@@ -29,7 +30,7 @@ from nido.lib.hardware import (
     Status, Controller, ControllerError, Sensor, Config
 )
 
-bp = Blueprint('web', __name__)
+bp = Blueprint('web_api', __name__)
 
 
 @bp.before_app_request

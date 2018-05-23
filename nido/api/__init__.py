@@ -52,6 +52,7 @@ def require_secret(route):
 class JSONResponse(object):
     def __init__(self):
         self.status = 200
+        self.data = {}
         return
 
     def get_flask_response(self, app):
