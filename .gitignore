@@ -9,6 +9,9 @@ __pycache__/
 venv/
 instance/
 *.egg-info/
+# wheel
+build/
+dist/
 
 node_modules/
 npm-debug.log
