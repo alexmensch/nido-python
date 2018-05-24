@@ -3,7 +3,7 @@
 - To build the frontend application, you will need Node.js installed. Instructions can be found on the [Node.js website](https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions).
 
 # Installation
-Run `source install` to install required Python modules and Node.js components.
+Run `source ./install` to install required Python modules and Node.js components.
 
 ## Initial application configuration
 1. Rename `nido/cfg/config-example.yaml` to `nido/cfg/config.yaml` with your own settings.
