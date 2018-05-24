@@ -5,3 +5,10 @@ npm install
 npm run build-prod
 mkdir instance
 openssl req -x509 -newkey rsa:4096 -nodes -out instance/nido_cert.pem -keyout instance/nido_key.pem -days 365
+pip install -e .
+pip install -r requirements.txt
+echo "********"
+echo "To complete installation you must create:"
+echo " instance/private-config.py"
+echo " nido/cfg/config.yaml"
+echo "********"
