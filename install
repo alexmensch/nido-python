@@ -18,9 +18,9 @@
 
 echo "Setting up python3 venv..."
 python3 -m venv venv && source venv/bin/activate
+mkdir instance
 
 echo "Creating local adhoc SSL certificates..."
-mkdir instance
 openssl req -x509 -newkey rsa:4096 -nodes -out instance/nido_cert.pem -keyout instance/nido_key.pem -days 365
 
 pip install --upgrade pip
