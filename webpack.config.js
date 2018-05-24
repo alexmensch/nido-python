@@ -1,12 +1,12 @@
 module.exports = {
 	context: __dirname + "/nido",
 	entry: {
-		javascript: './react/nido.js',
+		javascript: '../react/nido.js',
 	},
 
 	output: {
 		filename: "nido.js",
-		path: __dirname + "/app/static/js",
+		path: __dirname + "/nido/static/js",
 	},
 
 	module: {

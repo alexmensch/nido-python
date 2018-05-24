@@ -21,7 +21,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 // import polyfill from 'es6-promise'
-import * as Icon from './lib/icons'
+import * as Icon from './icons'
 import fetch from 'isomorphic-fetch'
 import Geosuggest from 'react-geosuggest'
 
