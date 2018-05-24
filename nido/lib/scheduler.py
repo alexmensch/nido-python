@@ -140,7 +140,7 @@ class NidoDaemonService(object):
         self._host = host
         self._port = port
         self._connect()
-        return
+        return None
 
     @keepalive
     def wakeup(self):

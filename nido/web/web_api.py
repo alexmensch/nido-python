@@ -20,7 +20,6 @@ from builtins import str
 from past.builtins import basestring
 
 from numbers import Number
-import logging
 from flask import Blueprint, current_app, g, request
 
 from nido.auth import require_session
