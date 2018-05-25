@@ -19,7 +19,7 @@
 echo "Setting up python3 venv..."
 python3 -m venv venv && source venv/bin/activate
 mkdir instance
-mkdir nido/db && touch nido/db/nido.db
+mkdir nidod/db && touch nidod/db/nido.db
 
 echo "Creating local adhoc SSL certificates..."
 openssl req -x509 -newkey rsa:4096 -nodes -out instance/nido_cert.pem -keyout instance/nido_key.pem -days 365
@@ -35,5 +35,5 @@ echo
 echo "********"
 echo "To complete installation you must create:"
 echo " instance/private-config.py"
-echo " nido/cfg/config.yaml"
 echo "********"
+
