@@ -36,9 +36,9 @@ load_dotenv()
 from rpyc.utils.server import ThreadedServer
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
-from nido.daemon import Daemon
-from nido.lib.hardware import Config, Controller
-from nido.lib.scheduler import NidoSchedulerService
+from nidod import Daemon
+from nidod.lib.hardware import Config, Controller
+from nidod.lib.scheduler import NidoSchedulerService
 
 
 class NidoDaemon(Daemon):

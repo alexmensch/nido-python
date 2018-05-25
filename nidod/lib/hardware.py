@@ -32,12 +32,12 @@ import logging
 from enum import Enum
 
 if 'NIDO_TESTING' in os.environ:
-    from .testing import FakeGPIO, FakeSensor as BME280
+    from nidod.lib.testing import FakeGPIO, FakeSensor as BME280
     GPIO = FakeGPIO(os.environ['NIDO_TESTING_GPIO'])
     BME280_OSAMPLE_8 = None
 else:
     import RPi.GPIO as GPIO
-    from .Adafruit_BME280 import BME280, BME280_OSAMPLE_8
+    from nidod.lib.Adafruit_BME280 import BME280, BME280_OSAMPLE_8
 
 _NIDO_BASE = os.environ['NIDO_BASE']
 
