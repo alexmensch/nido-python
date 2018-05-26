@@ -62,6 +62,7 @@ export NIDO_BASE=${base}
 if [ "${debug}" = false ]; then
     cd ${base} && sudo -E ${py_ver} nido/nidod.py start && sudo -E gunicorn -w 1 -b ${server}:${port} --certfile instance/nido_cert.pem --keyfile instance/nido_key.pem 'nido:create_app()'
 else
+    export FLASK_APP="nido"
     export FLASK_RUN_SERVER="${server}"
     export FLASK_RUN_PORT="${port}"
     export FLASK_ENV="development"
