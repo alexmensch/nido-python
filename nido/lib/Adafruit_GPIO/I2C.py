@@ -34,7 +34,7 @@ from builtins import object
 
 import logging
 import subprocess
-import smbus
+import smbus2 as smbus
 from . import Platform
 
 

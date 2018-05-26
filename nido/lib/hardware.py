@@ -23,16 +23,11 @@ from __future__ import print_function
 from future import standard_library
 standard_library.install_aliases()
 from builtins import *
-from builtins import map
 from builtins import str
 from builtins import object
 
-import requests
-from requests import RequestException
-import time
 import yaml
 import os
-import re
 import logging
 from enum import Enum
 
@@ -45,21 +40,6 @@ else:
     from .Adafruit_BME280 import BME280, BME280_OSAMPLE_8
 
 _NIDO_BASE = os.environ['NIDO_BASE']
-
-# Enums:
-#   Mode
-#   Status
-#   FormTypes
-# Weather data:
-#   LocalWeather
-# Hardware data:
-#   Sensor
-# Hardware control:
-#   ControllerError
-#   Controller
-# Configuration:
-#   ConfigError
-#   Config
 
 
 class Mode(Enum):
@@ -86,13 +66,21 @@ class FormTypes(Enum):
 
 class Sensor(object):
     def __init__(self, mode=BME280_OSAMPLE_8):
-        self.sensor = BME280(mode)
+        try:
+            self.sensor = BME280(mode)
+        except OSError:
+            self.sensor = None
         self._l = logging.getLogger(__name__)
         return None
 
     def get_conditions(self):
         # Initialize response dict
         resp = {}
+
+        # Could not connect to sensor
+        if self.sensor is None:
+            resp['error'] = 'Sensor was not detected.'
+            return resp
 
         # Get sensor data
         try:
@@ -114,187 +102,6 @@ class Sensor(object):
                 'relative_humidity': relative_humidity
             }
             resp['conditions'] = conditions
-
-        return resp
-
-
-class LocalWeather(object):
-    def __init__(self, zipcode=None, location=None):
-        self._l = logging.getLogger(__name__)
-        if zipcode:
-            self.set_zipcode(zipcode)
-        else:
-            self.zipcode = None
-        if location:
-            self.set_location(location)
-        else:
-            self.location = None
-        self.conditions = None
-        # Unix time of last request to implement basic caching
-        self.last_req = 0
-        # Cache expiry period in seconds
-        # 900 == 15 minutes
-        self._CACHE_EXPIRY = 900
-        self.api_key = Config().get_config()['wunderground']['api_key']
-
-    def set_zipcode(self, zipcode):
-        if not isinstance(zipcode, int):
-            raise TypeError
-        self.zipcode = zipcode
-        self.conditions = None
-        return
-
-    def set_location(self, location):
-        if not isinstance(location, tuple):
-            raise TypeError
-        self.location = location
-        self.conditions = None
-        return
-
-    def _wunderground_req(self, request_url):
-        try:
-            r = requests.get(request_url)
-        except RequestException as e:
-            # Making the request failed
-            resp = {}
-            resp['error'] = 'Error retrieving local weather: {}'.format(e)
-            return resp
-        else:
-            return r
-
-    def _wunderground_parse_result(self, r):
-        resp = {}
-        r_json = r.json()
-        try:
-            current_observation = r_json['current_observation']
-            forecast = r_json['forecast']['simpleforecast']['forecastday']
-            sun_phase = r_json['sun_phase']
-        except KeyError:
-            try:
-                api_error = r_json['response']['error']
-            except KeyError:
-                resp['error'] = (
-                    'Unknown Wunderground API error. Response data: '
-                    + str(r_json)
-                )
-            else:
-                if 'description' in api_error:
-                    resp['error'] = (
-                        'Wunderground API error ({}): {}'
-                        .format(api_error['type'], api_error['description'])
-                    )
-                else:
-                    resp['error'] = (
-                        'Wunderground API error ({})'.format(api_error['type'])
-                    )
-        else:
-            try:
-                # Remove '%' and format relatively humidity as a number
-                rh = re.sub('[^0-9]', '',
-                            current_observation['relative_humidity'])
-                rh = int(float(rh))
-                # Get shortest term high/low forecast
-                for period in forecast:
-                    if period['period'] == 1:
-                        fcast_high = float(period['high']['celsius'])
-                        fcast_low = float(period['low']['celsius'])
-
-                display_location = current_observation['display_location']
-                sunrise = sun_phase['sunrise']
-                sunset = sun_phase['sunset']
-                self.conditions = {
-                    'location': {
-                        'full': display_location['full'],
-                        'city': display_location['city'],
-                        'state': display_location['state'],
-                        'zipcode': display_location['zip'],
-                        'country': display_location['country'],
-                        'coordinates': {
-                            'latitude': display_location['latitude'],
-                            'longitude': display_location['longitude']
-                        }
-                    },
-                    'temp_c': current_observation['temp_c'],
-                    'relative_humidity': rh,
-                    'pressure_mb': current_observation['pressure_mb'],
-                    'condition': {
-                        'description': current_observation['weather'],
-                        'icon_url': current_observation['icon_url']
-                    },
-                    'forecast': {
-                        'high': fcast_high,
-                        'low': fcast_low
-                    },
-                    'solar': {
-                        'sunrise': int(sunrise['hour'] + sunrise['minute']),
-                        'sunset': int(sunset['hour'] + sunset['minute'])
-                    }
-                }
-                # Convert icon URL to HTTPS
-                icon_url = re.sub('(http)', 'https',
-                                  current_observation['icon_url'], count=1)
-                self.conditions['condition']['icon_url'] = icon_url
-            except KeyError as e:
-                # Something changed in the response format, generate an error
-                resp['error'] = (
-                    'Error parsing Wunderground API data: {}'.format(str(e))
-                )
-            else:
-                # Reset retrieval time
-                self.last_req = int(time.time())
-                self._interval = 0
-        finally:
-            return resp
-
-    def get_conditions(self):
-        # Initialize response dict
-        resp = {}
-        # How long since last retrieval?
-        self._interval = int(time.time()) - self.last_req
-        # System clock must have changed. Make cache stale.
-        if self._interval < 0:
-            self._interval = self._CACHE_EXPIRY
-        # We've never made a request.
-        if self.last_req == 0:
-            self._interval = -1
-
-        # If we made a request within caching period and have a cached
-        # result, use that instead
-        if (self.conditions and (self._interval < self._CACHE_EXPIRY)
-                and (self._interval >= 0)):
-            resp['weather'] = self.conditions
-            resp['retrieval_age'] = self._interval
-            return resp
-
-        # Determine location query type
-        # API documentation here:
-        # http://api.wunderground.com/weather/api/d/docs?d=data/index
-        # Prefer lat,long over zipcode
-        if (self.location is None) and (self.zipcode is None):
-            query = 'autoip'
-        elif self.location:
-            query = ','.join(map(str, self.location))
-        elif self.zipcode:
-            query = self.zipcode
-
-        # Get Wunderground weather conditions
-        request_url = (
-            'https://api.wunderground.com/api/{}/{}/q/{}.json'
-            .format(
-                self.api_key, 'conditions/forecast/astronomy',
-                query
-            )
-        )
-        api_response = self._wunderground_req(request_url)
-
-        if isinstance(api_response, requests.Response):
-            resp.update(self._wunderground_parse_result(api_response))
-        else:
-            resp.update(api_response)
-
-        if self.conditions:
-            resp['weather'] = self.conditions
-            resp['retrieval_age'] = self._interval
 
         return resp
 
@@ -439,7 +246,7 @@ class ConfigError(Exception):
 
 class Config(object):
     def __init__(self):
-        self._CONFIG = '{}/app/cfg/config.yaml'.format(_NIDO_BASE)
+        self._CONFIG = '{}/nido/cfg/config.yaml'.format(_NIDO_BASE)
         self._SCHEMA_VERSION = '1.3'
         self._SCHEMA = {
             'GPIO': {

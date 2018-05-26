@@ -1,28 +1,31 @@
-*.pyc
 .git
+
+*.pyc
+__pycache__/
+
 *.swp
 *.swo
 
-env
+venv/
+instance/
+*.egg-info/
+# wheel
+build/
+dist/
 
 node_modules/
 npm-debug.log
 .module-cache
+package-lock.json
 
 # Contains private API keys
 config.yaml
 
 # Database
-app/db/nido.db
+nido.db
 
 # Webpack'd JS
-app/static/js/nido.js
-app/static/js/nido.js.map
-
-# Sublime files
-*.sublime-*
+nido/static/js/nido.js
+nido/static/js/nido.js.map
 
 nohup.out
-
-# Local testing
-test.html

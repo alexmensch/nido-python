@@ -1,12 +1,12 @@
 module.exports = {
-	context: __dirname + "/app",
+	context: __dirname + "/nido",
 	entry: {
-		javascript: './nido.js',
+		javascript: '../react/nido.js',
 	},
 
 	output: {
 		filename: "nido.js",
-		path: __dirname + "/app/static/js",
+		path: __dirname + "/nido/static/js",
 	},
 
 	module: {
@@ -16,7 +16,7 @@ module.exports = {
 			exclude: /node_modules/,
 			loader: "babel-loader",
 			query: {
-				presets: ['react', 'es2015'],
+				presets: ['react', 'env'],
 			}
 		},
 		],

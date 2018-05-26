@@ -32,7 +32,7 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.jobstores.base import JobLookupError, ConflictingIdError
-from .nido import Config, Controller
+from nido.lib.hardware import Config, Controller
 
 
 class NidoSchedulerService(rpyc.Service):
@@ -135,11 +135,12 @@ class NidoDaemonService(object):
     """Wrapper service to view/add/modify/delete daemon scheduler jobs
     via RPC."""
 
-    def __init__(self, json=False):
+    def __init__(self, host, port, json=False):
         self._json = json
-        self._config = Config().get_config()
+        self._host = host
+        self._port = port
         self._connect()
-        return
+        return None
 
     @keepalive
     def wakeup(self):
@@ -228,8 +229,8 @@ class NidoDaemonService(object):
 
     def _connect(self):
         self._connection = rpyc.connect(
-            self._config['schedule']['rpc_host'],
-            self._config['schedule']['rpc_port'],
+            self._host,
+            self._port,
             config={
                 'allow_public_attrs': True,
                 'instantiate_custom_exceptions': True,
