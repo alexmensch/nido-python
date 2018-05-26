@@ -26,6 +26,7 @@ python-dateutil==2.7.3
 python-dotenv==0.8.2
 pytz==2018.4
 PyYAML==3.12
+RPi.GPIO==0.6.1
 requests==2.18.4
 rpyc==3.4.4
 six==1.11.0
