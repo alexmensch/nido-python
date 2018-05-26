@@ -21,7 +21,7 @@ Run `source ./install` to install required Python modules and Node.js components
 > Note: `sudo` access is required due to hardware access to GPIO pins
 2. (Optional) You may want to add this line to your `/etc/rc.local` file so that Nido runs automatically at startup. Output from the server will be output to `nohup.out` in your base path.
 ```
-cd /home/pi/nido && bash -c "source venv/bin/activate && nohup ./run-nido.sh -b `pwd` &"
+cd <base path> && bash -c "source venv/bin/activate && nohup ./run-nido.sh -b `pwd` &"
 ```
 
 # Stopping the application
