@@ -1,7 +1,7 @@
 # Prerequisites
 - You will need `python3` installed as the installation environment is built within `venv`. The core application code is also compatible with Python 2.7 using `futurize`, but you will need to build your own environment.
 ```
-sudo apt-get install python3 python3-venv
+sudo apt-get install python3 python3-venv python3-pip
 ```
 - To build the frontend application, you will need Node.js installed. (The steps below are from the [Node.js website](https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions).)
 ```
