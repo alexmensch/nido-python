@@ -66,7 +66,10 @@ class FormTypes(Enum):
 
 class Sensor(object):
     def __init__(self, mode=BME280_OSAMPLE_8):
-        self.sensor = BME280(mode)
+        try:
+            self.sensor = BME280(mode)
+        except OSError:
+            self.sensor = None
         self._l = logging.getLogger(__name__)
         return None
 
