@@ -17,17 +17,23 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 
 echo "Setting up python3 venv..."
+echo
 python3 -m venv venv && source venv/bin/activate
 mkdir instance
 mkdir nidod/db && touch nidod/db/nido.db
 
 echo "Creating local adhoc SSL certificates..."
+echo
 openssl req -x509 -newkey rsa:4096 -nodes -out instance/nido_cert.pem -keyout instance/nido_key.pem -days 365
 
+echo "Setting up pip..."
+echo
 pip install --upgrade pip
 pip install -e .
 pip install -r requirements.txt
 
+echo "Setting up npm..."
+echo
 npm install
 npm run build-prod
 
@@ -36,4 +42,5 @@ echo "********"
 echo "To complete installation you must create:"
 echo " instance/private-config.py"
 echo "********"
+echo
 

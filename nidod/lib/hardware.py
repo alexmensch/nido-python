@@ -66,13 +66,21 @@ class FormTypes(Enum):
 
 class Sensor(object):
     def __init__(self, mode=BME280_OSAMPLE_8):
-        self.sensor = BME280(mode)
+        try:
+            self.sensor = BME280(mode)
+        except OSError:
+            self.sensor = None
         self._l = logging.getLogger(__name__)
         return None
 
     def get_conditions(self):
         # Initialize response dict
         resp = {}
+
+        # Could not connect to sensor
+        if self.sensor is None:
+            resp['error'] = 'Sensor was not detected.'
+            return resp
 
         # Get sensor data
         try:
