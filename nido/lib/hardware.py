@@ -74,6 +74,11 @@ class Sensor(object):
         # Initialize response dict
         resp = {}
 
+        # Could not connect to sensor
+        if self.sensor is None:
+            resp['error'] = 'Sensor was not detected.'
+            return resp
+
         # Get sensor data
         try:
             temp_c = self.sensor.read_temperature()

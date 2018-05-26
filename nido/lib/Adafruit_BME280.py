@@ -102,8 +102,12 @@ class BME280(object):
             from .Adafruit_GPIO import I2C as i2c
         self._device = i2c.get_i2c_device(address, **kwargs)
         # Load calibration values.
-        self._load_calibration()
-        self._device.write8(BME280_REGISTER_CONTROL, 0x3F)
+        try:
+            self._load_calibration()
+        except OSError as e:
+            return None
+        else:
+            self._device.write8(BME280_REGISTER_CONTROL, 0x3F)
         self.t_fine = 0.0
 
     def _load_calibration(self):
