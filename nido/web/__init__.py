@@ -25,6 +25,7 @@ import requests
 from requests import RequestException
 import re
 import time
+from flask import current_app
 
 from nido.lib.hardware import Config, ConfigError
 from nido.lib.scheduler import NidoDaemonService, NidoDaemonServiceError
