@@ -1,13 +1,14 @@
 from builtins import object
 
+import os
+
 
 class FlaskConfig(object):
     ENV = 'production'
     DEBUG = False
     TESTING = False
-
-    RPC_HOST = 'localhost'
-    RPC_PORT = 49152
+    RPC_HOST = os.environ['NIDOD_RPC_HOST']
+    RPC_PORT = os.environ['NIDOD_RPC_PORT']
 
 
 class DevelopmentConfig(FlaskConfig):

@@ -57,7 +57,15 @@ if [ -z "${base}" ]; then
     usage
 fi
 
+# Environment variables common to web server and daemon
 export NIDO_BASE=${base}
+export NIDOD_RPC_PORT="49152"
+# Environment variables used by web server
+export NIDOD_RPC_HOST="localhost"
+# Environment variables used by daemon
+export NIDOD_PID_FILE = '/tmp/nido.pid'
+export NIDOD_WORK_DIR = '/tmp'
+export NIDOD_LOG_FILE = '/var/log/nidod.log'
 
 if [ "${debug}" = false ]; then
     cd ${base} && sudo -E ${py_ver} nido/nidod.py start && sudo -E gunicorn -w 1 -b ${server}:${port} --certfile instance/nido_cert.pem --keyfile instance/nido_key.pem 'nido:create_app()'

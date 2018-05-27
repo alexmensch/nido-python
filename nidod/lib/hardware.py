@@ -29,7 +29,8 @@ from builtins import object
 import yaml
 import os
 import logging
-from enum import Enum
+
+from nidod.config import Mode, Status
 
 if 'NIDO_TESTING' in os.environ:
     from nidod.lib.testing import FakeGPIO, FakeSensor as BME280
@@ -40,28 +41,6 @@ else:
     from nidod.lib.Adafruit_BME280 import BME280, BME280_OSAMPLE_8
 
 _NIDO_BASE = os.environ['NIDO_BASE']
-
-
-class Mode(Enum):
-    Off = 0
-    Heat = 1
-    Cool = 2
-    Heat_Cool = 3
-
-
-class Status(Enum):
-    Off = 0
-    Heating = 1
-    Cooling = 2
-
-
-class FormTypes(Enum):
-    text = 0
-    password = 1
-    checkbox = 2
-    radio = 3
-    select = 4
-    textarea = 5
 
 
 class Sensor(object):
