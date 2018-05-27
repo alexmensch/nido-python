@@ -20,17 +20,10 @@ class Status(Enum):
 
 class SchedulerConfig(object):
     POLL_INTERVAL = 300
-    DB_PATH = '{}/nidod/db/nido.db'.format(os.environ['NIDO_BASE'])
-    # Convert to env variables
-    NIDOD_RPC_HOST = ''  # This is also referenced in nido/config.py
-    NIDOD_RPC_PORT = ''  # This is also referenced in nido/config.py
 
 
 class DaemonConfig(object):
-    # Convert to env variables
-    NIDOD_PID_FILE = ''
-    NIDOD_WORK_DIR = ''
-    NIDOD_LOG_FILE = ''
+    DB_PATH = '{}/nidod/db/nido.db'.format(os.environ['NIDO_BASE'])
 
 
 class HardwareConfig(object):
