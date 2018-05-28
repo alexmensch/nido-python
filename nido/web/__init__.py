@@ -25,10 +25,6 @@ import requests
 from requests import RequestException
 import re
 import time
-from flask import current_app
-
-from nido.lib.hardware import Config, ConfigError
-from nido.lib.scheduler import NidoDaemonService, NidoDaemonServiceError
 
 
 class LocalWeather(object):
@@ -209,41 +205,6 @@ class LocalWeather(object):
             resp['retrieval_age'] = self._interval
 
         return resp
-
-
-def set_config_helper(resp, cfg=None, mode=None, temp_scale=None):
-    _CONFIG = Config()
-    nds = NidoDaemonService(current_app.config['RPC_HOST'],
-                            current_app.config['RPC_PORT'])
-    if mode:
-        if _CONFIG.set_mode(mode):
-            resp.data['message'] = 'Mode updated successfully.'
-        else:
-            resp.data['error'] = 'Invalid mode.'
-            resp.status = 400
-    elif temp_scale:
-        if _CONFIG.set_temp(temp_scale[0], temp_scale[1]):
-            resp.data['message'] = 'Temperature updated successfully.'
-        else:
-            resp.data['error'] = 'Invalid temperature.'
-            resp.status = 400
-    elif cfg:
-        if _CONFIG.update_config(cfg):
-            resp.data['message'] = 'Configuration updated successfully.'
-        else:
-            resp.data['error'] = 'Invalid configuration setting(s).'
-            resp.status = 400
-    else:
-        raise ConfigError('No configuration setting specified.')
-
-    resp.data['config'] = _CONFIG.get_config()['config']
-
-    # Send signal to daemon, if running, to trigger update
-    try:
-        nds.wakeup()
-    except NidoDaemonServiceError as e:
-        resp.data['warning'] = 'Error signalling daemon: {}'.format(e)
-    return resp
 
 
 # Helper function to validate JSON in requests

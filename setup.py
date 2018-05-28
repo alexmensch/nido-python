@@ -23,7 +23,7 @@ with open('README.md', 'r') as fh:
 
 setup(
     name='nido',
-    version='0.2.0',
+    version='0.3.0',
     author='Alex Marshall',
     author_name='alex@moveolabs.com',
     description='Nido, a Raspberry Pi-based home thermostat',

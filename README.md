@@ -13,8 +13,7 @@ sudo apt-get install -y nodejs
 Run `source ./install` to install required Python modules and Node.js components.
 
 ## Initial application configuration
-1. Rename `nido/cfg/config-example.yaml` to `nido/cfg/config.yaml` with your own settings.
-2. Rename `private-config.py.example` to `instance/private-config.py` with your own settings.
+1. Rename `private-config.py.example` to `instance/private-config.py` with your own private settings.
 
 # Running the application
 1. `run-nido.sh -b <base path> [-d]` This runs either Flask/Werkzeug (when the `-d` debug flag is set) or gunicorn. The hardware controller/scheduler daemon is also started.

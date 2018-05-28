@@ -53,7 +53,7 @@ class JSONResponse(object):
     def __init__(self):
         self.status = 200
         self.data = {}
-        return
+        return None
 
     def get_flask_response(self, app):
         response = app.make_response(

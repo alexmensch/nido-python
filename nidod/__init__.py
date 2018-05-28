@@ -18,18 +18,18 @@
 
 #####
 
-# From "A simple unix/linux daemon in Python" by Sander Marechal
-# See http://stackoverflow.com/a/473702/1422096
+#   From "A simple unix/linux daemon in Python" by Sander Marechal
+#   See http://stackoverflow.com/a/473702/1422096
 #
-# Modified to add quit() that allows to run some code before closing
-# the daemon. See: http://stackoverflow.com/a/40423758/1422096
+#   Modified to add quit() that allows to run some code before closing
+#   the daemon. See: http://stackoverflow.com/a/40423758/1422096
 #
-# Joseph Ernest, 2016/11/12
+#   Joseph Ernest, 2016/11/12
 #
-# Modified to force instantiator of Daemon class to specify pidfile
-# and working directory
+#   Modified to force instantiator of Daemon class to specify pidfile
+#   and working directory
 #
-# Alex Marshall, 2016/12/03
+#   Alex Marshall, 2016/12/03
 
 from __future__ import print_function
 from __future__ import unicode_literals

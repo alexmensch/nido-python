@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 #   Nido, a Raspberry Pi-based home thermostat.
 #
 #   Copyright (C) 2016 Alex Marshall
@@ -36,19 +34,19 @@ load_dotenv()
 from rpyc.utils.server import ThreadedServer
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
-from nido.daemon import Daemon
-from nido.lib.hardware import Config, Controller
-from nido.lib.scheduler import NidoSchedulerService
+from nidod import Daemon
+from nidod.config import SchedulerConfig, DaemonConfig
+from nidod.lib.hardware import Controller
+from nidod.lib.rpc.server import NidoDaemonService
 
 
 class NidoDaemon(Daemon):
     def run(self):
         self._l.debug('Starting run loop for Nido daemon')
         self.controller = Controller()
-        config = Config().get_config()
-        poll_interval = config['schedule']['poll_interval']
-        db_path = config['schedule']['db']
-        rpc_port = config['schedule']['rpc_port']
+        poll_interval = SchedulerConfig.POLL_INTERVAL
+        db_path = DaemonConfig.DB_PATH
+        rpc_port = int(os.environ['NIDOD_RPC_PORT'])
 
         self.scheduler = BackgroundScheduler()
         jobstores = {
@@ -61,14 +59,14 @@ class NidoDaemon(Daemon):
         self.scheduler.configure(jobstores=jobstores,
                                  job_defaults=job_defaults)
         self.scheduler.add_job(
-            NidoSchedulerService.wakeup, trigger='interval',
+            NidoDaemonService.wakeup, trigger='interval',
             seconds=poll_interval, name='Poll'
         )
-        self.scheduler.add_job(NidoSchedulerService.wakeup, name='Poll')
+        self.scheduler.add_job(NidoDaemonService.wakeup, name='Poll')
         self.scheduler.start()
 
         RPCserver = ThreadedServer(
-            NidoSchedulerService(self.scheduler),
+            NidoDaemonService(self.scheduler),
             port=rpc_port,
             protocol_config={
                 'allow_public_attrs': True,
@@ -86,10 +84,9 @@ class NidoDaemon(Daemon):
 
 
 if __name__ == '__main__':
-    config = Config().get_config()
-    pid_file = config['daemon']['pid_file']
-    work_dir = config['daemon']['work_dir']
-    log_file = config['daemon']['log_file']
+    pid_file = os.environ['NIDOD_PID_FILE']
+    work_dir = os.environ['NIDOD_WORK_DIR']
+    log_file = os.environ['NIDOD_LOG_FILE']
 
     handler = logging.handlers.WatchedFileHandler(log_file)
     formatter = logging.Formatter(

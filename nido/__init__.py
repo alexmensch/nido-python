@@ -71,11 +71,11 @@ def create_app(test_config=None):
 
     from nido import auth
     from nido.web import web_api
-    from nido.api import basic, schedule, RegexConverter
+    from nido.api import thermostat, schedule, RegexConverter
     app.url_map.converters['regex'] = RegexConverter
     app.register_blueprint(auth.bp)
     app.register_blueprint(web_api.bp)
-    app.register_blueprint(basic.bp, url_prefix='/api')
+    app.register_blueprint(thermostat.bp, url_prefix='/api')
     app.register_blueprint(schedule.bp, url_prefix='/api/schedule')
 
     return app
