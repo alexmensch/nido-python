@@ -22,7 +22,7 @@ package-lock.json
 config.yaml
 
 # Database
-nido.db
+nido.sqlite
 
 # Webpack'd JS
 nido/static/js/nido.js
