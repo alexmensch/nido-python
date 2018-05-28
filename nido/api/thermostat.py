@@ -44,11 +44,13 @@ def api_set_mode(set_mode):
     """
     try:
         g.resp.data['config'] = g.tc.set_mode(set_mode)
-        g.resp.data['message'] = 'Mode updated successfully.'
     except ThermostatClientError as e:
         g.resp.data['error'] = 'Error setting mode: {}'.format(e)
         g.resp.status = 400
-    return g.resp.get_flask_response(current_app)
+    else:
+        g.resp.data['message'] = 'Mode updated successfully.'
+    finally:
+        return g.resp.get_flask_response(current_app)
 
 
 @bp.route(
@@ -65,8 +67,10 @@ def api_set_temp(temp, scale):
     temp = float("{:.1f}".format(float(temp)))
     try:
         g.resp.data['config'] = g.tc.set_temp(temp, scale)
-        g.resp.data['message'] = 'Temperature updated successfully.'
     except ThermostatClientError as e:
         g.resp.data['error'] = 'Error setting temperature: {}'.format(e)
         g.resp.status = 400
-    return g.resp.get_flask_response(current_app)
+    else:
+        g.resp.data['message'] = 'Temperature updated successfully.'
+    finally:
+        return g.resp.get_flask_response(current_app)

@@ -23,11 +23,9 @@ from numbers import Number
 from flask import Blueprint, current_app, g, request
 
 from nido.auth import require_session
-from nido.web import LocalWeather, set_config_helper, validate_json_req
+from nido.web import LocalWeather, validate_json_req
 from nido.api import JSONResponse
-from nido.lib.hardware import (
-    Status, Controller, ControllerError, Sensor, Config
-)
+from nidod.lib.rpc.client import ThermostatClient, ThermostatClientError
 
 bp = Blueprint('web_api', __name__)
 
@@ -35,6 +33,11 @@ bp = Blueprint('web_api', __name__)
 @bp.before_app_request
 def json_response():
     g.resp = JSONResponse()
+    g.tc = ThermostatClient(
+        current_app.config['RPC_HOST'],
+        current_app.config['RPC_PORT'],
+        json=True
+    )
     return None
 
 
@@ -94,29 +97,31 @@ def get_weather():
 @bp.route('/get_config', methods=['POST'])
 @require_session
 def get_config():
-    cfg = Config().get_config()
-    g.resp.data['config'] = cfg['config']
+    g.resp.data['config'] = g.tc.get_settings()
     return g.resp.get_flask_response(current_app)
 
 
 @bp.route('/set_config', methods=['POST'])
 @require_session
 def set_config():
-    new_cfg = request.get_json()
+    new_settings = request.get_json()
 
     # Expect to receive a json dict with
     # one or more of the following pairs
     validation = {
-        'location': list,
-        'celsius': bool,
-        'modes_available': list,
-        'mode_set': basestring,
-        'set_temperature': Number
+        'set_temp': Number,
+        'set_mode': basestring,
+        'celsius': bool
     }
 
-    # Update local configuration with user data
-    if validate_json_req(new_cfg, validation):
-        g.resp = set_config_helper(g.resp, cfg=new_cfg)
+    if validate_json_req(new_settings, validation):
+        try:
+            g.resp.data['config'] = g.tc.set_settings(**new_settings)
+        except ThermostatClientError as e:
+            g.resp.data['error'] = 'Error updating configuration: {}'.format(e)
+            g.resp.status = 400
+        else:
+            g.resp.data['message'] = 'Configuration updated successfully.'
     else:
         g.resp.data['error'] = 'JSON in request was invalid.'
         g.resp.status = 400
