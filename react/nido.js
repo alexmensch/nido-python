@@ -148,8 +148,8 @@ class Dashboard extends React.Component {
       // NOTE: temperature received from server is always in Celsius
       this.setState({
         celsius: nextProps.config.celsius,
-        set_temp: nextProps.config.set_temperature,
-        set_mode: nextProps.config.mode_set
+        set_temp: nextProps.config.set_temp,
+        set_mode: nextProps.config.set_mode
       })
     }
   }
@@ -190,7 +190,7 @@ class Dashboard extends React.Component {
 
   handleTempUnitChange () {
     const newScale = !this.state.celsius
-    let newTemp = this.state.set_temperature
+    let newTemp = this.state.set_temp
 
     if (newScale) {
       newTemp = roundStep(newTemp, 0.5)
@@ -208,7 +208,7 @@ class Dashboard extends React.Component {
 
   handleSetpointChange (increment) {
     const scale = this.state.celsius
-    let newTemp = this.state.set_temperature
+    let newTemp = this.state.set_temp
 
     if (scale) {
       newTemp = roundStep(newTemp, 0.5)
@@ -228,7 +228,7 @@ class Dashboard extends React.Component {
     let newMode
         // Find current mode in list of available modes and increment
     for (let i = 0; i < this.props.config.modes.length; i++) {
-      if (this.state.mode_set === this.props.config.modes[i]) {
+      if (this.state.set_mode === this.props.config.modes[i]) {
         newMode = this.props.config.modes[((i + 1) % this.props.config.modes.length)]
       }
     }
@@ -243,7 +243,7 @@ class Dashboard extends React.Component {
     if (this.props.config && this.props.state && this.props.weather) {
       const scale = this.state.celsius
       const unit = scale ? 'C' : 'F'
-      const settemp = roundDecimal(this.state.set_temperature, 1)
+      const settemp = roundDecimal(this.state.set_temp, 1)
       const sensortemp = roundDecimal(this.props.state.conditions.temp_c, 1)
       const weathertemp = roundDecimal(this.props.weather.temp_c, 1)
       const hightemp = roundDecimal(this.props.weather.forecast.high, 1)
@@ -260,7 +260,7 @@ class Dashboard extends React.Component {
             <ControlSetpoint changeSetpoint={this.handleSetpointChange} />
             <ControlMode changeMode={this.handleModeChange}
               toggleUnit={this.handleTempUnitChange}
-              mode={this.state.mode_set} temp={scale
+              mode={this.state.set_mode} temp={scale
                 ? settemp
                 : tryConvert(settemp, toFahrenheit)}
               unit={unit} />

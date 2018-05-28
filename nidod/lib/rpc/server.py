@@ -25,7 +25,7 @@ standard_library.install_aliases()
 from builtins import *
 
 import rpyc
-from nidod.lib.hardware import Controller
+from nidod.lib.hardware import Controller, Sensor
 from nidod.lib.thermostat import Thermostat
 
 
@@ -108,6 +108,14 @@ class NidoDaemonService(rpyc.Service):
     @staticmethod
     def set_scale(scale):
         Thermostat().set_scale(scale)
+
+    @staticmethod
+    def get_controller_status():
+        return Controller().get_status()
+
+    @staticmethod
+    def get_sensor_data():
+        return Sensor().get_conditions()
 
     @staticmethod
     def wakeup():

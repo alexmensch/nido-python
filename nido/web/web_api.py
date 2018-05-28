@@ -16,7 +16,6 @@
 #   along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 
-from builtins import str
 from past.builtins import basestring
 
 from numbers import Number
@@ -44,36 +43,13 @@ def json_response():
 @bp.route('/get_state', methods=['POST'])
 @require_session
 def get_state():
-    g.resp.data['state'] = {}
-    g.resp.data['error'] = []
-
     try:
-        state = Controller().get_status()
-    except ControllerError as e:
-        err_msg = (
-            'Exception getting current state from controller: {}'
-            .format(str(e))
-        )
-        g.resp.data['error'].append(err_msg)
-    else:
-        # state = Heating / Cooling / Off
-        nidoState = {'status': Status(state).name}
-        g.resp.data['state'].update(nidoState)
-
-    # Returns a JSON dict with an 'error' key on error
-    # On success, returns a JSON dict with a 'conditions' key
-    sensor_data = Sensor().get_conditions()
-    if 'error' in sensor_data:
-        g.resp.data['error'].append(sensor_data['error'])
-    else:
-        g.resp.data['state'].update(sensor_data)
-
-    daemonState = {'daemon_running': Controller().daemon_running()}
-    g.resp.data['state'].update(daemonState)
-
-    if len(g.resp.data['error']) == 0:
-        del g.resp.data['error']
-    return g.resp.get_flask_response(current_app)
+        g.resp.data = g.tc.get_state()
+    except ThermostatClientError as e:
+        g.resp.data['error'] = 'Error getting thermostat state: {}'.format(e)
+        g.resp.status = 400
+    finally:
+        return g.resp.get_flask_response(current_app)
 
 
 @bp.route('/get_weather', methods=['POST'])
@@ -97,8 +73,13 @@ def get_weather():
 @bp.route('/get_config', methods=['POST'])
 @require_session
 def get_config():
-    g.resp.data['config'] = g.tc.get_settings()
-    return g.resp.get_flask_response(current_app)
+    try:
+        g.resp.data['config'] = g.tc.get_settings()
+    except ThermostatClientError as e:
+        g.resp.data['error'] = 'Error getting configuration: {}'.format(e)
+        g.resp.status = 400
+    finally:
+        return g.resp.get_flask_response(current_app)
 
 
 @bp.route('/set_config', methods=['POST'])

@@ -10,9 +10,12 @@ class Thermostat(object):
     def get_settings():
         """Returns a dictionary of the thermostat settings."""
         try:
-            return db.get_settings
+            state = db.get_settings
         except DBError as e:
             raise ThermostatError(e)
+        else:
+            state['modes'] = HardwareConfig.MODES
+            return state
 
     @staticmethod
     def set_settings(set_temp=None, set_mode=None, celsius=None):

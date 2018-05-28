@@ -30,7 +30,7 @@ import os
 import logging
 
 from nidod.config import Mode, Status, HardwareConfig, DaemonConfig
-from nidod.lib.exceptions import ControllerError
+from nidod.lib.exceptions import ControllerError, SensorError
 from nidod.lib.thermostat import Thermostat
 
 if 'NIDO_TESTING' in os.environ:
@@ -57,29 +57,21 @@ class Sensor(object):
 
         # Could not connect to sensor
         if self.sensor is None:
-            resp['error'] = 'Sensor was not detected.'
-            return resp
+            raise SensorError('Sensor was not detected.')
 
-        # Get sensor data
-        try:
-            temp_c = self.sensor.read_temperature()
-            pressure_mb = self.sensor.read_pressure() / 100
-            relative_humidity = self.sensor.read_humidity()
-            self._l.debug(
-                'Sensor data: T = {}C | P = {} | RH = {}'
-                .format(temp_c, pressure_mb, relative_humidity)
-            )
-        except Exception as e:
-            resp['error'] = (
-                'Exception getting sensor data: {} {}'.format(type(e), str(e))
-            )
-        else:
-            conditions = {
-                'temp_c': temp_c,
-                'pressure_mb': pressure_mb,
-                'relative_humidity': relative_humidity
-            }
-            resp['conditions'] = conditions
+        temp_c = self.sensor.read_temperature()
+        pressure_mb = self.sensor.read_pressure() / 100
+        relative_humidity = self.sensor.read_humidity()
+        self._l.debug(
+            'Sensor data: T = {}C | P = {} | RH = {}'
+            .format(temp_c, pressure_mb, relative_humidity)
+        )
+        conditions = {
+            'temp_c': temp_c,
+            'pressure_mb': pressure_mb,
+            'relative_humidity': relative_humidity
+        }
+        resp['conditions'] = conditions
 
         return resp
 

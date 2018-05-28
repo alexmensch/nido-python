@@ -28,6 +28,7 @@ from apscheduler.triggers.date import DateTrigger
 from apscheduler.jobstores.base import JobLookupError, ConflictingIdError
 
 from nidod.lib.exceptions import SchedulerClientError, ThermostatClientError
+from nidod.config import Status
 
 
 class NidoDaemonRPCClient(object):
@@ -63,7 +64,7 @@ class NidoDaemonRPCClient(object):
         self._connect()
         try:
             yield
-        except (ControllerError, ThermostatError) as e:
+        except (ControllerError, ThermostatError, SensorError) as e:
             raise ThermostatClientError(e)
         except (JobLookupError, ConflictingIdError) as e:
             raise SchedulerClientError('{}'.format(e.message))
@@ -76,10 +77,14 @@ class NidoDaemonRPCClient(object):
 class ThermostatClient(NidoDaemonRPCClient):
     """RPC client service to get and set thermostat settings."""
 
-    def wakeup(self):
+    def get_settings(self):
         with self._rpc_session():
-            self.r.wakeup()
-        return None
+            return self.r.get_settings()
+
+    def set_settings(self, set_temp=temp, set_mode=mode, celsius=celsius):
+        with self._rpc_session():
+            self.r.set_settings(set_temp=temp, set_mode=mode, celsius=celsius)
+            return self.r.get_settings()
 
     def set_temp(self, temp, scale):
         with self._rpc_session():
@@ -96,14 +101,20 @@ class ThermostatClient(NidoDaemonRPCClient):
             self.r.set_scale(scale)
             return self.r.get_settings()
 
-    def get_settings(self):
+    def get_state(self):
         with self._rpc_session():
-            return self.r.get_settings()
+            status = self.r.get_controller_status()
+            sensor_data = self.r.get_sensor_data()
 
-    def set_settings(self, set_temp=temp, set_mode=mode, celsius=celsius):
+        response['state'] = {'status': Status(status).name}
+        response['state'].update(sensor_data)
+
+        return response
+
+    def wakeup(self):
         with self._rpc_session():
-            self.r.set_settings(set_temp=temp, set_mode=mode, celsius=celsius)
-            return self.r.get_settings()
+            self.r.wakeup()
+        return None
 
 
 class SchedulerClient(NidoDaemonRPCClient):
