@@ -27,7 +27,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.jobstores.base import JobLookupError, ConflictingIdError
 
-from nidod.lib.exceptions import SchedulerClientError
+from nidod.lib.exceptions import SchedulerClientError, ThermostatClientError
 
 
 class NidoDaemonRPCClient(object):
@@ -61,35 +61,55 @@ class NidoDaemonRPCClient(object):
     @contextmanager
     def _rpc_session(self):
         self._connect()
-        yield
-        self._disconnect()
+        try:
+            yield
+        except (ControllerError, ThermostatError) as e:
+            raise ThermostatClientError(e)
+        except (JobLookupError, ConflictingIdError) as e:
+            raise SchedulerClientError('{}'.format(e.message))
+        else:
+            return None
+        finally:
+            self._disconnect()
+
+
+class ThermostatClient(NidoDaemonRPCClient):
+    """RPC client service to get and set thermostat settings."""
+
+    def wakeup(self):
+        with self._rpc_session():
+            self.r.wakeup()
         return None
+
+    def set_temp(self, temp, scale):
+        with self._rpc_session():
+            self.r.set_temp(temp, scale)
+            return self.r.get_settings()
+
+    def set_mode(self, mode):
+        with self._rpc_session():
+            self.r.set_mode(mode)
+            return self.r.get_settings()
+
+    def set_scale(self, scale):
+        with self._rpc_session():
+            self.r.set_scale(scale)
+            return self.r.get_settings()
+
+    def get_settings(self):
+        with self._rpc_session():
+            return self.r.get_settings()
+
+    def set_settings(self, set_temp=temp, set_mode=mode, celsius=celsius):
+        with self._rpc_session():
+            self.r.set_settings(set_temp=temp, set_mode=mode, celsius=celsius)
+            return self.r.get_settings()
 
 
 class SchedulerClient(NidoDaemonRPCClient):
     """RPC client service to view/add/modify/delete daemon scheduler
     jobs.
     """
-
-    @contextmanager
-    def _rpc_session(self):
-        """Override method to catch class-specific exceptions."""
-        self._connect()
-        try:
-            yield
-        except (JobLookupError, ConflictingIdError) as e:
-            raise NidoDaemonServiceError('{}'.format(e.message))
-        else:
-            return None
-        finally:
-            self._disconnect()
-
-    def wakeup(self):
-        with self._rpc_session():
-            job = self.r.add_job('nidod:NidoDaemonService.wakeup')
-        if self._json:
-            return self._jsonify_job(job)
-        return job
 
     def get_scheduled_jobs(self, jobstore=None):
         with self._rpc_session():

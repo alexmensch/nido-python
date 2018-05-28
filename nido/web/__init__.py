@@ -28,7 +28,8 @@ import time
 from flask import current_app
 
 from nidod.lib.hardware import Config, ConfigError
-from nidod.lib.rpc.client import SchedulerClient, SchedulerClientError
+from nidod.lib.rpc.client import ThermostatClient
+from nidod.lib.exceptions import ThermostatClientError
 
 
 class LocalWeather(object):
@@ -213,8 +214,8 @@ class LocalWeather(object):
 
 def set_config_helper(resp, cfg=None, mode=None, temp_scale=None):
     _CONFIG = Config()
-    sc = SchedulerClient(current_app.config['RPC_HOST'],
-                         current_app.config['RPC_PORT'])
+    tc = ThermostatClient(current_app.config['RPC_HOST'],
+                          current_app.config['RPC_PORT'])
     if mode:
         if _CONFIG.set_mode(mode):
             resp.data['message'] = 'Mode updated successfully.'
@@ -240,8 +241,8 @@ def set_config_helper(resp, cfg=None, mode=None, temp_scale=None):
 
     # Send signal to daemon, if running, to trigger update
     try:
-        sc.wakeup()
-    except SchedulerClientError as e:
+        tc.wakeup()
+    except ThermostatClientError as e:
         resp.data['warning'] = 'Error signalling daemon: {}'.format(e)
     return resp
 

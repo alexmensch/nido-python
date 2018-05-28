@@ -19,7 +19,7 @@
 from flask import Blueprint, current_app, g
 
 from nido.api import require_secret, JSONResponse
-from nido.web import set_config_helper
+from nidod.lib.rpc.client import ThermostatClient, ThermostatClientError
 
 bp = Blueprint('api_local', __name__)
 
@@ -27,6 +27,11 @@ bp = Blueprint('api_local', __name__)
 @bp.before_app_request
 def json_response():
     g.resp = JSONResponse()
+    g.tc = ThermostatClient(
+        current_app.config['RPC_HOST'],
+        current_app.config['RPC_PORT'],
+        json=True
+    )
     return None
 
 
@@ -37,7 +42,12 @@ def api_set_mode(set_mode):
 
     Only setting one of the valid configured modes is possible.
     """
-    g.resp = set_config_helper(g.resp, mode=set_mode)
+    try:
+        g.resp.data['config'] = g.tc.set_mode(set_mode)
+        g.resp.data['message'] = 'Mode updated successfully.'
+    except ThermostatClientError as e:
+        g.resp.data['error'] = 'Error setting mode: {}'.format(e)
+        g.resp.status = 400
     return g.resp.get_flask_response(current_app)
 
 
@@ -53,5 +63,10 @@ def api_set_temp(temp, scale):
     The first regex accepts either integer or floating point numbers.
     """
     temp = float("{:.1f}".format(float(temp)))
-    g.resp = set_config_helper(g.resp, temp_scale=[temp, scale])
+    try:
+        g.resp.data['config'] = g.tc.set_temp(temp, scale)
+        g.resp.data['message'] = 'Temperature updated successfully.'
+    except ThermostatClientError as e:
+        g.resp.data['error'] = 'Error setting temperature: {}'.format(e)
+        g.resp.status = 400
     return g.resp.get_flask_response(current_app)
