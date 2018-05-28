@@ -27,8 +27,8 @@ import re
 import time
 from flask import current_app
 
-from nido.lib.hardware import Config, ConfigError
-from nido.lib.scheduler import NidoDaemonService, NidoDaemonServiceError
+from nidod.lib.hardware import Config, ConfigError
+from nidod.lib.client.scheduler import SchedulerClient, SchedulerClientError
 
 
 class LocalWeather(object):
@@ -213,8 +213,8 @@ class LocalWeather(object):
 
 def set_config_helper(resp, cfg=None, mode=None, temp_scale=None):
     _CONFIG = Config()
-    nds = NidoDaemonService(current_app.config['RPC_HOST'],
-                            current_app.config['RPC_PORT'])
+    sc = SchedulerClient(current_app.config['RPC_HOST'],
+                         current_app.config['RPC_PORT'])
     if mode:
         if _CONFIG.set_mode(mode):
             resp.data['message'] = 'Mode updated successfully.'
@@ -240,8 +240,8 @@ def set_config_helper(resp, cfg=None, mode=None, temp_scale=None):
 
     # Send signal to daemon, if running, to trigger update
     try:
-        nds.wakeup()
-    except NidoDaemonServiceError as e:
+        sc.wakeup()
+    except SchedulerClientError as e:
         resp.data['warning'] = 'Error signalling daemon: {}'.format(e)
     return resp
 
