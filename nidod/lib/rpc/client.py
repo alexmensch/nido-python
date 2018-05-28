@@ -20,7 +20,8 @@ from builtins import *
 from builtins import str
 from builtins import object
 
-from functools import wraps
+from contextlib import contextmanager
+
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.date import DateTrigger
@@ -29,120 +30,12 @@ from apscheduler.jobstores.base import JobLookupError, ConflictingIdError
 from nidod.lib.exceptions import SchedulerClientError
 
 
-def keepalive(func):
-    """Decorator to ensure that RPC connection is active when calls
-    are made.
-
-    Certain exceptions from the underlying APScheduler calls are
-    raised and passed back to the calling function as a
-    SchedulerClientError exception.
-    """
-
-    @wraps(func)
-    def check_connection(self, *args, **kwargs):
-        try:
-            return func(self, *args, **kwargs)
-        except EOFError:
-            self._connect()
-            return func(self, *args, **kwargs)
-        except (JobLookupError, ConflictingIdError) as e:
-            raise SchedulerClientError('{}'.format(e.message))
-
-    return check_connection
-
-
-class SchedulerClient(object):
-    """Wrapper service to view/add/modify/delete daemon scheduler jobs
-    via RPC."""
-
+class NidoDaemonRPCClient(object):
     def __init__(self, host, port, json=False):
         self._json = json
         self._host = host
         self._port = port
-        self._connect()
         return None
-
-    @keepalive
-    def wakeup(self):
-        job = (
-            self._connection.root.add_job('nidod:NidoDaemonService.wakeup')
-        )
-        if self._json:
-            return self._jsonify_job(job)
-        return job
-
-    @keepalive
-    def get_scheduled_jobs(self, jobstore=None):
-        jobs = self._connection.root.get_jobs(jobstore=jobstore)
-        if self._json:
-            return self._jsonify_jobs(jobs)
-        return jobs
-
-    @keepalive
-    def get_scheduled_job(self, job_id):
-        return self._return_job(self._connection.root.get_job(job_id))
-
-    @keepalive
-    def add_scheduled_job(self, type, day_of_week=None, hour=None, minute=None,
-                          job_id=None, mode=None, temp=None, scale=None):
-        func, args, name = self._parse_mode_settings(
-            type, mode=mode, temp=temp, scale=scale
-        )
-        self._check_cron_parameters(
-            day_of_week=day_of_week, hour=hour, minute=minute
-        )
-        job = self._connection.root.add_job(
-            'nidod:NidoDaemonService.{}'.format(func), args=args, name=name,
-            jobstore='schedule', id=job_id, trigger='cron',
-            day_of_week=day_of_week, hour=hour, minute=minute
-        )
-        return self._return_job(job)
-
-    @keepalive
-    def modify_scheduled_job(self, job_id, type=None, mode=None, temp=None,
-                             scale=None):
-        func, args, name = self._parse_mode_settings(
-            type, mode=mode, temp=temp, scale=scale
-        )
-        job = self._connection.root.modify_job(
-            job_id, func='nidod:NidoDaemonService.{}'.format(func),
-            args=args, name=name
-        )
-        return self._return_job(job)
-
-    @keepalive
-    def reschedule_job(self, job_id, day_of_week=None, hour=None, minute=None):
-        self._check_cron_parameters(
-            day_of_week=day_of_week, hour=hour, minute=minute
-        )
-        job = self._connection.root.reschedule_job(
-            job_id, trigger='cron', day_of_week=day_of_week, hour=hour,
-            minute=minute
-        )
-        return self._return_job(job)
-
-    @keepalive
-    def pause_scheduled_job(self, job_id):
-        return self._return_job(self._connection.root.pause_job(job_id))
-
-    @keepalive
-    def resume_scheduled_job(self, job_id):
-        return self._return_job(self._connection.root.resume_job(job_id))
-
-    @keepalive
-    def remove_scheduled_job(self, job_id):
-        self._connection.root.remove_job(job_id)
-        if self._json:
-            return {
-                'message': 'Job removed successfully.',
-                'id': '{}'.format(job_id)
-            }
-        return None
-
-    def _return_job(self, job):
-        if self._json:
-            return self._jsonify_job(job)
-        return job
 
     def _is_connected(self):
         return not self._connection.closed
@@ -157,6 +50,120 @@ class SchedulerClient(object):
                 'allow_pickle': True
             }
         )
+        self.r = self._connection.root
+        return None
+
+    def _disconnect(self):
+        if self._is_connected:
+            self._connection.close()
+        return None
+
+    @contextmanager
+    def _rpc_session(self):
+        self._connect()
+        yield
+        self._disconnect()
+        return None
+
+
+class SchedulerClient(NidoDaemonRPCClient):
+    """RPC client service to view/add/modify/delete daemon scheduler
+    jobs.
+    """
+
+    @contextmanager
+    def _rpc_session(self):
+        """Override method to catch class-specific exceptions."""
+        self._connect()
+        try:
+            yield
+        except (JobLookupError, ConflictingIdError) as e:
+            raise NidoDaemonServiceError('{}'.format(e.message))
+        else:
+            return None
+        finally:
+            self._disconnect()
+
+    def wakeup(self):
+        with self._rpc_session():
+            job = self.r.add_job('nidod:NidoDaemonService.wakeup')
+        if self._json:
+            return self._jsonify_job(job)
+        return job
+
+    def get_scheduled_jobs(self, jobstore=None):
+        with self._rpc_session():
+            jobs = self.r.get_jobs(jobstore=jobstore)
+        if self._json:
+            return self._jsonify_jobs(jobs)
+        return jobs
+
+    def get_scheduled_job(self, job_id):
+        with self._rpc_session():
+            return self._return_job(self.r.get_job(job_id))
+
+    def add_scheduled_job(self, type, day_of_week=None, hour=None, minute=None,
+                          job_id=None, mode=None, temp=None, scale=None):
+        func, args, name = self._parse_mode_settings(
+            type, mode=mode, temp=temp, scale=scale
+        )
+        self._check_cron_parameters(
+            day_of_week=day_of_week, hour=hour, minute=minute
+        )
+        with self._rpc_session():
+            job = self.r.add_job(
+                'nidod:NidoDaemonService.{}'.format(func),
+                args=args, name=name, jobstore='schedule', id=job_id,
+                trigger='cron', day_of_week=day_of_week, hour=hour,
+                minute=minute
+            )
+        return self._return_job(job)
+
+    def modify_scheduled_job(self, job_id, type=None, mode=None, temp=None,
+                             scale=None):
+        func, args, name = self._parse_mode_settings(
+            type, mode=mode, temp=temp, scale=scale
+        )
+        with self._rpc_session():
+            job = self.r.modify_job(
+                job_id, func='nidod:NidoDaemonService.{}'.format(func),
+                args=args, name=name
+            )
+        return self._return_job(job)
+
+    def reschedule_job(self, job_id, day_of_week=None, hour=None, minute=None):
+        self._check_cron_parameters(
+            day_of_week=day_of_week, hour=hour, minute=minute
+        )
+        with self._rpc_session():
+            job = self.r.reschedule_job(
+                job_id, trigger='cron', day_of_week=day_of_week, hour=hour,
+                minute=minute
+            )
+        return self._return_job(job)
+
+    def pause_scheduled_job(self, job_id):
+        with self._rpc_session():
+            return self._return_job(self.r.pause_job(job_id))
+
+    def resume_scheduled_job(self, job_id):
+        with self._rpc_session():
+            return self._return_job(self.r.resume_job(job_id))
+
+    def remove_scheduled_job(self, job_id):
+        with self._rpc_session():
+            self.r.remove_job(job_id)
+        if self._json:
+            return {
+                'message': 'Job removed successfully.',
+                'id': '{}'.format(job_id)
+            }
+        return None
+
+    def _return_job(self, job):
+        if self._json:
+            return self._jsonify_job(job)
+        return job
 
     def _jsonify_job(self, j):
         if j is None:
