@@ -8,7 +8,7 @@ class FlaskConfig(object):
     DEBUG = False
     TESTING = False
     RPC_HOST = os.environ['NIDOD_RPC_HOST']
-    RPC_PORT = os.environ['NIDOD_RPC_PORT']
+    RPC_PORT = int(os.environ['NIDOD_RPC_PORT'])
 
 
 class DevelopmentConfig(FlaskConfig):

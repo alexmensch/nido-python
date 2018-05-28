@@ -46,4 +46,8 @@ if [ -z "${base}" ]; then
 fi
 
 export NIDO_BASE=${base}
-sudo -E ${py_ver} ${base}/nido/daemon.py stop
+export NIDOD_PID_FILE="/tmp/nido.pid"
+export NIDOD_WORK_DIR="/tmp"
+export NIDOD_LOG_FILE="/var/log/nidod.log"
+
+sudo -E ${py_ver} ${base}/nidod/daemon.py stop

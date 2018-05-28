@@ -35,15 +35,15 @@ def json_response():
     return None
 
 
-@bp.route('/set/mode/<string:set_mode>', methods=['POST'])
+@bp.route('/set/mode/<string:mode>', methods=['POST'])
 @require_secret
-def api_set_mode(set_mode):
+def api_set_mode(mode):
     """Endpoint to accept a new mode setting.
 
     Only setting one of the valid configured modes is possible.
     """
     try:
-        g.resp.data['config'] = g.tc.set_mode(set_mode)
+        g.resp.data['config'] = g.tc.set_mode(mode)
     except ThermostatClientError as e:
         g.resp.data['error'] = 'Error setting mode: {}'.format(e)
         g.resp.status = 400

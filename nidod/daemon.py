@@ -46,7 +46,7 @@ class NidoDaemon(Daemon):
         self.controller = Controller()
         poll_interval = SchedulerConfig.POLL_INTERVAL
         db_path = DaemonConfig.DB_PATH
-        rpc_port = os.environ['NIDOD_RPC_PORT']
+        rpc_port = int(os.environ['NIDOD_RPC_PORT'])
 
         self.scheduler = BackgroundScheduler()
         jobstores = {
@@ -84,7 +84,6 @@ class NidoDaemon(Daemon):
 
 
 if __name__ == '__main__':
-    config = Config().get_config()
     pid_file = os.environ['NIDOD_PID_FILE']
     work_dir = os.environ['NIDOD_WORK_DIR']
     log_file = os.environ['NIDOD_LOG_FILE']

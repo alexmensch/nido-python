@@ -1,8 +1,12 @@
 from builtins import object
 
+import logging
+
 from nidod import db
 from nidod.config import Mode, HardwareConfig
 from nidod.lib.exceptions import ThermostatError, DBError
+
+logger = logging.getLogger(__name__)
 
 
 class Thermostat(object):
@@ -10,7 +14,7 @@ class Thermostat(object):
     def get_settings():
         """Returns a dictionary of the thermostat settings."""
         try:
-            state = db.get_settings
+            state = db.get_settings()
         except DBError as e:
             raise ThermostatError(e)
         else:
@@ -25,6 +29,7 @@ class Thermostat(object):
         If the input needs to be sanitized, use set_temp(), set_mode()
         or set_scale() instead.
         """
+        set_mode = Mode[set_mode].value if set_mode is not None else None
         try:
             return db.set_settings(set_temp=set_temp,
                                    set_mode=set_mode,
@@ -49,7 +54,7 @@ class Thermostat(object):
 
         for m in modes:
             if m.upper() == mode.upper():
-                return self.set_settings(set_mode=Mode[m])
+                return self.set_settings(set_mode=m)
 
         raise ThermostatError('Invalid or unconfigured mode.')
 

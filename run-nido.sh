@@ -63,17 +63,17 @@ export NIDOD_RPC_PORT="49152"
 # Environment variables used by web server
 export NIDOD_RPC_HOST="localhost"
 # Environment variables used by daemon
-export NIDOD_PID_FILE = '/tmp/nido.pid'
-export NIDOD_WORK_DIR = '/tmp'
-export NIDOD_LOG_FILE = '/var/log/nidod.log'
+export NIDOD_PID_FILE="/tmp/nido.pid"
+export NIDOD_WORK_DIR="/tmp"
+export NIDOD_LOG_FILE="/var/log/nidod.log"
 
 if [ "${debug}" = false ]; then
-    cd ${base} && sudo -E ${py_ver} nido/daemon.py start && sudo -E gunicorn -w 1 -b ${server}:${port} --certfile instance/nido_cert.pem --keyfile instance/nido_key.pem 'nido:create_app()'
+    cd ${base} && sudo -E ${py_ver} nidod/daemon.py start && sudo -E gunicorn -w 1 -b ${server}:${port} --certfile instance/nido_cert.pem --keyfile instance/nido_key.pem 'nido:create_app()'
 else
     export FLASK_APP="nido"
     export FLASK_RUN_SERVER="${server}"
     export FLASK_RUN_PORT="${port}"
     export FLASK_ENV="development"
     export FLASK_DEBUG="TRUE"
-    cd ${base} && sudo -E ${py_ver} nido/daemon.py start && sudo -E flask run --without-threads
+    cd ${base} && sudo -E ${py_ver} nidod/daemon.py start && sudo -E flask run --without-threads
 fi

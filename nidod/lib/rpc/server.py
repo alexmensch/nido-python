@@ -27,6 +27,7 @@ from builtins import *
 import rpyc
 from nidod.lib.hardware import Controller, Sensor
 from nidod.lib.thermostat import Thermostat
+from nidod.lib.exceptions import ThermostatError
 
 
 class NidoDaemonService(rpyc.Service):
@@ -77,10 +78,10 @@ class NidoDaemonService(rpyc.Service):
         return Thermostat.get_settings()
 
     @staticmethod
-    def set_settings(set_temp=temp, set_mode=mode, celsius=celsius):
+    def set_settings(set_temp=None, set_mode=None, celsius=None):
         try:
-            Thermostat.set_settings(set_temp=temp,
-                                    set_mode=mode,
+            Thermostat.set_settings(set_temp=set_temp,
+                                    set_mode=set_mode,
                                     celsius=celsius)
         except ThermostatError:
             raise

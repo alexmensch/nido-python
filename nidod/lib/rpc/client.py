@@ -21,13 +21,19 @@ from builtins import str
 from builtins import object
 
 from contextlib import contextmanager
+import logging
 
+import rpyc
+from rpyc.utils.classic import obtain
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.jobstores.base import JobLookupError, ConflictingIdError
 
-from nidod.lib.exceptions import SchedulerClientError, ThermostatClientError
+from nidod.lib.exceptions import (
+    SchedulerClientError, ThermostatClientError,
+    ControllerError, ThermostatError, SensorError
+)
 from nidod.config import Status
 
 
@@ -36,6 +42,7 @@ class NidoDaemonRPCClient(object):
         self._json = json
         self._host = host
         self._port = port
+        self._l = logging.getLogger(__name__)
         return None
 
     def _is_connected(self):
@@ -67,7 +74,7 @@ class NidoDaemonRPCClient(object):
         except (ControllerError, ThermostatError, SensorError) as e:
             raise ThermostatClientError(e)
         except (JobLookupError, ConflictingIdError) as e:
-            raise SchedulerClientError('{}'.format(e.message))
+            raise SchedulerClientError(e)
         else:
             return None
         finally:
@@ -79,35 +86,37 @@ class ThermostatClient(NidoDaemonRPCClient):
 
     def get_settings(self):
         with self._rpc_session():
-            return self.r.get_settings()
+            return obtain(self.r.get_settings())
 
-    def set_settings(self, set_temp=temp, set_mode=mode, celsius=celsius):
+    def set_settings(self, set_temp=None, set_mode=None, celsius=None):
         with self._rpc_session():
-            self.r.set_settings(set_temp=temp, set_mode=mode, celsius=celsius)
-            return self.r.get_settings()
+            self.r.set_settings(set_temp=set_temp,
+                                set_mode=set_mode,
+                                celsius=celsius)
+            return obtain(self.r.get_settings())
 
     def set_temp(self, temp, scale):
         with self._rpc_session():
             self.r.set_temp(temp, scale)
-            return self.r.get_settings()
+            return obtain(self.r.get_settings())
 
     def set_mode(self, mode):
         with self._rpc_session():
             self.r.set_mode(mode)
-            return self.r.get_settings()
+            return obtain(self.r.get_settings())
 
     def set_scale(self, scale):
         with self._rpc_session():
             self.r.set_scale(scale)
-            return self.r.get_settings()
+            return obtain(self.r.get_settings())
 
     def get_state(self):
         with self._rpc_session():
             status = self.r.get_controller_status()
             sensor_data = self.r.get_sensor_data()
-
-        response['state'] = {'status': Status(status).name}
-        response['state'].update(sensor_data)
+            response = {}
+            response['state'] = {'status': Status(status).name}
+            response['state'].update(obtain(sensor_data))
 
         return response
 
@@ -125,13 +134,16 @@ class SchedulerClient(NidoDaemonRPCClient):
     def get_scheduled_jobs(self, jobstore=None):
         with self._rpc_session():
             jobs = self.r.get_jobs(jobstore=jobstore)
+            jobs = obtain(jobs)
         if self._json:
             return self._jsonify_jobs(jobs)
         return jobs
 
     def get_scheduled_job(self, job_id):
         with self._rpc_session():
-            return self._return_job(self.r.get_job(job_id))
+            job = self.r.get_job(job_id)
+            job = obtain(job)
+        return self._return_job(job)
 
     def add_scheduled_job(self, type, day_of_week=None, hour=None, minute=None,
                           job_id=None, mode=None, temp=None, scale=None):
@@ -143,11 +155,12 @@ class SchedulerClient(NidoDaemonRPCClient):
         )
         with self._rpc_session():
             job = self.r.add_job(
-                'nidod:NidoDaemonService.{}'.format(func),
+                'nidod.lib.rpc.server:NidoDaemonService.{}'.format(func),
                 args=args, name=name, jobstore='schedule', id=job_id,
                 trigger='cron', day_of_week=day_of_week, hour=hour,
                 minute=minute
             )
+            job = obtain(job)
         return self._return_job(job)
 
     def modify_scheduled_job(self, job_id, type=None, mode=None, temp=None,
@@ -157,9 +170,11 @@ class SchedulerClient(NidoDaemonRPCClient):
         )
         with self._rpc_session():
             job = self.r.modify_job(
-                job_id, func='nidod:NidoDaemonService.{}'.format(func),
+                job_id,
+                func='nidod.lib.rpc.server:NidoDaemonService.{}'.format(func),
                 args=args, name=name
             )
+            job = obtain(job)
         return self._return_job(job)
 
     def reschedule_job(self, job_id, day_of_week=None, hour=None, minute=None):
@@ -171,24 +186,29 @@ class SchedulerClient(NidoDaemonRPCClient):
                 job_id, trigger='cron', day_of_week=day_of_week, hour=hour,
                 minute=minute
             )
+            job = obtain(job)
         return self._return_job(job)
 
     def pause_scheduled_job(self, job_id):
         with self._rpc_session():
-            return self._return_job(self.r.pause_job(job_id))
+            job = self.r.pause_job(job_id)
+            job = obtain(job)
+        return self._return_job(job)
 
     def resume_scheduled_job(self, job_id):
         with self._rpc_session():
-            return self._return_job(self.r.resume_job(job_id))
+            job = self.r.resume_job(job_id)
+            job = obtain(job)
+        return self._return_job(job)
 
     def remove_scheduled_job(self, job_id):
         with self._rpc_session():
             self.r.remove_job(job_id)
-        if self._json:
-            return {
-                'message': 'Job removed successfully.',
-                'id': '{}'.format(job_id)
-            }
+            if self._json:
+                return {
+                    'message': 'Job removed successfully.',
+                    'id': '{}'.format(job_id)
+                }
         return None
 
     def _return_job(self, job):

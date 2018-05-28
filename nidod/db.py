@@ -48,7 +48,7 @@ class _Settings(Base):
     def to_dict(self):
         return {
             'set_temp': self.set_temp,
-            'set_mode': Mode(self.set_mode),
+            'set_mode': Mode(self.set_mode).name,
             'celsius': self.celsius
         }
 
@@ -64,7 +64,6 @@ def _db_session():
         raise DBError(e)
     finally:
         session.close()
-    return None
 
 
 def _get_settings(session):
