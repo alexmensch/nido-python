@@ -38,4 +38,4 @@ cd <base path> && bash -c "source venv/bin/activate && nohup ./run-nido.sh -b `p
 3. Run build process on file changes: `watchman -- trigger ./app build-jsx '*.js' -- npm run build`
 
 ## Testing on a non-Raspberry Pi platform
-To bypass the hardware libraries, you can run `run-nido.sh` with the `-t` flag. The `Testing.py` library will return static sensor information instead and store GPIO pin status in a disk on file.
+To bypass the hardware libraries, you can run `run-nido.sh` with the `-t` flag. The `Testing.py` library will return static sensor information instead and store GPIO pin status in a file on disk.
