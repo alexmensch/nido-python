@@ -6,7 +6,8 @@ from nidod.lib.exceptions import ThermostatError
 
 
 class Thermostat(object):
-    def get_settings(self):
+    @staticmethod
+    def get_settings():
         """Returns a dictionary of the thermostat settings."""
         return db.get_settings
 

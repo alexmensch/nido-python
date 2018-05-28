@@ -31,6 +31,7 @@ import logging
 
 from nidod.config import Mode, Status, HardwareConfig, DaemonConfig
 from nidod.lib.exceptions import ControllerError
+from nidod.lib.thermostat import Thermostat
 
 if 'NIDO_TESTING' in os.environ:
     from nidod.lib.testing import FakeGPIO, FakeSensor as BME280
@@ -155,13 +156,13 @@ class Controller(object):
         return
 
     def update(self):
-        config = self.cfg.get_config()
+        settings = Thermostat.get_settings()
         try:
-            mode = config['config']['mode_set']
+            mode = settings['set_mode']
             status = self.get_status()
             temp = Sensor().get_conditions()['conditions']['temp_c']
-            set_temp = float(config['config']['set_temperature'])
-            hysteresis = config['behavior']['hysteresis']
+            set_temp = settings['set_temp']
+            hysteresis = HardwareConfig.HYSTERESIS
         except KeyError as e:
             self.shutdown()
             raise ControllerError('Error reading Nido configuration: {}'
