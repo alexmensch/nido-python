@@ -20,7 +20,6 @@ echo "Setting up python3 venv..."
 echo
 python3 -m venv venv && source venv/bin/activate
 mkdir instance
-mkdir nidod/db
 
 echo "Creating local adhoc SSL certificates..."
 echo
