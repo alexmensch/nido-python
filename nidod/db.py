@@ -19,7 +19,7 @@
 from contextlib import contextmanager
 
 from sqlalchemy import create_engine, Column, Integer, Boolean, Float
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, SQLAlchemyError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
@@ -34,9 +34,9 @@ Session = sessionmaker(bind=engine)
 class Settings(Base):
     __tablename__ = 'settings'
     id = Column(Integer, primary_key=True)
-    set_temp = Column(Float)
-    set_mode = Column(Integer)
-    celsius = Column(Boolean)
+    set_temp = Column(Float, nullable=False)
+    set_mode = Column(Integer, nullable=False)
+    celsius = Column(Boolean, nullable=False)
 
     def __repr__(self):
         return (
@@ -44,22 +44,51 @@ class Settings(Base):
             .format(self.set_temp, Mode(self.set_mode).name, self.celsius)
         )
 
+    def to_dict(self):
+        return {
+            'set_temp': self.set_temp,
+            'set_mode': Mode(self.set_mode),
+            'celsius': self.celsius
+        }
+
 
 @contextmanager
-def session_scope():
-    """Provide a transactional scope around a series of operations."""
+def _db_session():
     session = Session()
     try:
         yield session
         session.commit()
-    except:
+    except SQLAlchemyError:
         session.rollback()
         raise
     finally:
         session.close()
 
 
-def init_db(base, engine):
+def _get_settings(session):
+    return session.query(Settings).one()
+
+
+def get_settings():
+    with _db_session() as session:
+        settings = _get_settings(session)
+        return settings.to_dict()
+
+
+def set_settings(set_temp=None, set_mode=None, celsius=None):
+    with _db_session() as session:
+        settings = _get_settings(session)
+        if set_temp is not None:
+            settings.set_temp = set_temp
+        if set_mode is not None:
+            settings.set_mode = set_mode
+        if celsius is not None:
+            settings.celsius = celsius
+        session.add(settings)
+    return None
+
+
+def _init_db(base, engine):
     session = Session()
     query = session.query(Settings)
     settings = None
@@ -87,15 +116,6 @@ def init_db(base, engine):
         session.add(settings)
         session.commit()
 
-    # Need to check if table exists with a query
-    # If it does, overwrite what's there, otherwise create it
-    #     with session_scope() as session:
-    #         ThingOne().go(session)
-    #         ThingTwo().go(session)
-
 
 if __name__ == '__main__':
-    init_db(Base, engine)
-
-# query = session.query(db.Settings)
-# query.one()  # Returns MultipleResultsFound and NoResultFound exceptions
+    _init_db(Base, engine)
