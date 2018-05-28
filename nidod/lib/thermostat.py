@@ -2,25 +2,32 @@ from builtins import object
 
 from nidod import db
 from nidod.config import Mode, HardwareConfig
-from nidod.lib.exceptions import ThermostatError
+from nidod.lib.exceptions import ThermostatError, DBError
 
 
 class Thermostat(object):
     @staticmethod
     def get_settings():
         """Returns a dictionary of the thermostat settings."""
-        return db.get_settings
+        try:
+            return db.get_settings
+        except DBError as e:
+            raise ThermostatError(e)
 
-    def set_settings(self, set_temp=None, set_mode=None, celsius=None):
+    @staticmethod
+    def set_settings(set_temp=None, set_mode=None, celsius=None):
         """Set thermostat settings directly without any error-checking
         or temperature scale conversion.
 
         If the input needs to be sanitized, use set_temp(), set_mode()
         or set_scale() instead.
         """
-        return db.set_settings(set_temp=set_temp,
-                               set_mode=set_mode,
-                               celsius=celsius)
+        try:
+            return db.set_settings(set_temp=set_temp,
+                                   set_mode=set_mode,
+                                   celsius=celsius)
+        except DBError as e:
+            raise ThermostatError(e)
 
     def set_temp(self, temp, scale):
         if scale.upper() == 'C':

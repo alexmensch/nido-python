@@ -73,22 +73,41 @@ class NidoSchedulerService(rpyc.Service):
         return self._scheduler.get_jobs(jobstore)
 
     @staticmethod
-    def set_temp(temp, scale):
-        if Config().set_temp(temp, scale):
-            return NidoSchedulerService.wakeup()
+    def get_settings():
+        return Thermostat.get_settings()
+
+    @staticmethod
+    def set_settings(set_temp=temp, set_mode=mode, celsius=celsius):
+        try:
+            Thermostat.set_settings(set_temp=temp,
+                                    set_mode=mode,
+                                    celsius=celsius)
+        except ThermostatError:
+            raise
         else:
-            return False
+            return NidoSchedulerService.wakeup()
+
+    @staticmethod
+    def set_temp(temp, scale):
+        try:
+            Thermostat().set_temp(temp, scale)
+        except ThermostatError:
+            raise
+        else:
+            return NidoSchedulerService.wakeup()
 
     @staticmethod
     def set_mode(mode):
-        if Config().set_mode(mode):
-            return NidoSchedulerService.wakeup()
+        try:
+            Thermostat().set_mode(mode)
+        except ThermostatError:
+            raise
         else:
-            return False
+            return NidoSchedulerService.wakeup()
 
     @staticmethod
     def set_scale(scale):
-        return None
+        Thermostat().set_scale(scale)
 
     @staticmethod
     def wakeup():

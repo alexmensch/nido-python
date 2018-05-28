@@ -25,6 +25,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
 from nidod.config import DaemonConfig, Mode
+from nidod.lib.exceptions import DBError
 
 engine = create_engine('sqlite:///{}'.format(DaemonConfig.DB_PATH))
 Base = declarative_base()
@@ -58,9 +59,9 @@ def _db_session():
     try:
         yield session
         session.commit()
-    except SQLAlchemyError:
+    except SQLAlchemyError as e:
         session.rollback()
-        raise
+        raise DBError(e)
     finally:
         session.close()
     return None
