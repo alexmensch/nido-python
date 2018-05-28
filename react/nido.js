@@ -148,8 +148,8 @@ class Dashboard extends React.Component {
       // NOTE: temperature received from server is always in Celsius
       this.setState({
         celsius: nextProps.config.celsius,
-        set_temperature: nextProps.config.set_temperature,
-        mode_set: nextProps.config.mode_set
+        set_temp: nextProps.config.set_temperature,
+        set_mode: nextProps.config.mode_set
       })
     }
   }
@@ -202,7 +202,7 @@ class Dashboard extends React.Component {
 
     this.setState({
       celsius: newScale,
-      set_temperature: Number(newTemp)
+      set_temp: Number(newTemp)
     })
   }
 
@@ -220,7 +220,7 @@ class Dashboard extends React.Component {
       newTemp = tryConvert(newTemp, toCelsius)
     }
     this.setState({
-      set_temperature: Number(newTemp)
+      set_temp: Number(newTemp)
     })
   }
 
@@ -234,7 +234,7 @@ class Dashboard extends React.Component {
     }
 
     this.setState({
-      mode_set: newMode
+      set_mode: newMode
     })
   }
 
