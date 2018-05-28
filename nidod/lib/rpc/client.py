@@ -65,7 +65,7 @@ class SchedulerClient(object):
     @keepalive
     def wakeup(self):
         job = (
-            self._connection.root.add_job('nidod:NidoSchedulerService.wakeup')
+            self._connection.root.add_job('nidod:NidoDaemonService.wakeup')
         )
         if self._json:
             return self._jsonify_job(job)
@@ -92,7 +92,7 @@ class SchedulerClient(object):
             day_of_week=day_of_week, hour=hour, minute=minute
         )
         job = self._connection.root.add_job(
-            'nidod:NidoSchedulerService.{}'.format(func), args=args, name=name,
+            'nidod:NidoDaemonService.{}'.format(func), args=args, name=name,
             jobstore='schedule', id=job_id, trigger='cron',
             day_of_week=day_of_week, hour=hour, minute=minute
         )
@@ -105,7 +105,7 @@ class SchedulerClient(object):
             type, mode=mode, temp=temp, scale=scale
         )
         job = self._connection.root.modify_job(
-            job_id, func='nidod:NidoSchedulerService.{}'.format(func),
+            job_id, func='nidod:NidoDaemonService.{}'.format(func),
             args=args, name=name
         )
         return self._return_job(job)

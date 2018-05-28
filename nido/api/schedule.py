@@ -19,7 +19,7 @@
 from flask import Blueprint, current_app, request, g
 
 from nido.api import require_secret, JSONResponse
-from nidod.lib.client.scheduler import SchedulerClient, SchedulerClientError
+from nidod.lib.rpc.client import SchedulerClient, SchedulerClientError
 
 bp = Blueprint('api_rpc', __name__)
 

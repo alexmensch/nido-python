@@ -29,7 +29,7 @@ from nidod.lib.hardware import Controller
 from nidod.lib.thermostat import Thermostat
 
 
-class NidoSchedulerService(rpyc.Service):
+class NidoDaemonService(rpyc.Service):
     """Service class that is exposed via RPC.
 
     Methods act on the APScheduler service that is initialized on daemon
@@ -85,7 +85,7 @@ class NidoSchedulerService(rpyc.Service):
         except ThermostatError:
             raise
         else:
-            return NidoSchedulerService.wakeup()
+            return NidoDaemonService.wakeup()
 
     @staticmethod
     def set_temp(temp, scale):
@@ -94,7 +94,7 @@ class NidoSchedulerService(rpyc.Service):
         except ThermostatError:
             raise
         else:
-            return NidoSchedulerService.wakeup()
+            return NidoDaemonService.wakeup()
 
     @staticmethod
     def set_mode(mode):
@@ -103,7 +103,7 @@ class NidoSchedulerService(rpyc.Service):
         except ThermostatError:
             raise
         else:
-            return NidoSchedulerService.wakeup()
+            return NidoDaemonService.wakeup()
 
     @staticmethod
     def set_scale(scale):

@@ -37,7 +37,7 @@ from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from nidod import Daemon
 from nidod.config import SchedulerConfig, DaemonConfig
 from nidod.lib.hardware import Controller
-from nidod.lib.scheduler import NidoSchedulerService
+from nidod.lib.rpc.server import NidoDaemonService
 
 
 class NidoDaemon(Daemon):
@@ -59,14 +59,14 @@ class NidoDaemon(Daemon):
         self.scheduler.configure(jobstores=jobstores,
                                  job_defaults=job_defaults)
         self.scheduler.add_job(
-            NidoSchedulerService.wakeup, trigger='interval',
+            NidoDaemonService.wakeup, trigger='interval',
             seconds=poll_interval, name='Poll'
         )
-        self.scheduler.add_job(NidoSchedulerService.wakeup, name='Poll')
+        self.scheduler.add_job(NidoDaemonService.wakeup, name='Poll')
         self.scheduler.start()
 
         RPCserver = ThreadedServer(
-            NidoSchedulerService(self.scheduler),
+            NidoDaemonService(self.scheduler),
             port=rpc_port,
             protocol_config={
                 'allow_public_attrs': True,

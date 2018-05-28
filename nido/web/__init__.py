@@ -28,7 +28,7 @@ import time
 from flask import current_app
 
 from nidod.lib.hardware import Config, ConfigError
-from nidod.lib.client.scheduler import SchedulerClient, SchedulerClientError
+from nidod.lib.rpc.client import SchedulerClient, SchedulerClientError
 
 
 class LocalWeather(object):
