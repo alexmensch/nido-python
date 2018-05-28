@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 #   Nido, a Raspberry Pi-based home thermostat.
 #
 #   Copyright (C) 2016 Alex Marshall

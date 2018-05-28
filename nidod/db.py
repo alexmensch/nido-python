@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 #   Nido, a Raspberry Pi-based home thermostat.
 #
 #   Copyright (C) 2016 Alex Marshall
@@ -21,8 +19,10 @@
 from contextlib import contextmanager
 
 from sqlalchemy import create_engine, Column, Integer, Boolean, Float
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
 from nidod.config import DaemonConfig, Mode
 
@@ -61,18 +61,37 @@ def session_scope():
 
 def init_db(base, engine):
     session = Session()
+    query = session.query(Settings)
+    settings = None
+    try:
+        settings = query.one()
+    except OperationalError:
+        base.metadata.create_all(engine)
+    except NoResultFound:
+        pass
+    except MultipleResultsFound:
+        rows = query.all()
+        for r in rows:
+            session.delete(r)
+        session.commit()
+    else:
+        settings.set_temp = 21.0
+        settings.set_mode = Mode.Off.value
+        settings.celsius = False
+    finally:
+        if not isinstance(settings, Settings):
+            settings = Settings(set_temp=21.0,
+                                set_mode=Mode.Off.value,
+                                celsius=False)
+        print('Initializing default settings: {}'.format(settings))
+        session.add(settings)
+        session.commit()
+
     # Need to check if table exists with a query
     # If it does, overwrite what's there, otherwise create it
     #     with session_scope() as session:
     #         ThingOne().go(session)
     #         ThingTwo().go(session)
-    base.metadata.create_all(engine)
-    default_settings = Settings(set_temp=21.0,
-                                set_mode=Mode.Off.value,
-                                celsius=False)
-    print('Initializing default settings: {}'.format(default_settings))
-    session.add(default_settings)
-    session.commit()
 
 
 if __name__ == '__main__':

@@ -16,6 +16,14 @@
 #   along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 
+if [ -z "$NIDO_BASE" ]; then
+    echo "NIDO_BASE environment variable must be set to absolute path"
+    echo "of package base."
+    echo "Maybe: export NIDO_BASE=`pwd`"
+    echo
+    exit 1
+fi
+
 echo "Setting up python3 venv..."
 echo
 python3 -m venv venv && source venv/bin/activate
@@ -30,6 +38,11 @@ echo
 pip install --upgrade pip
 pip install -e .
 pip install -r requirements.txt
+
+echo "Initializing daemon database..."
+echo
+export NIDOD_PID_FILE=""
+python nidod/db.py
 
 echo "Setting up npm..."
 echo
