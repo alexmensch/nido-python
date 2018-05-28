@@ -25,7 +25,8 @@ standard_library.install_aliases()
 from builtins import *
 
 import rpyc
-from nidod.lib.hardware import Config, Controller
+from nidod.lib.hardware import Controller
+from nidod.lib.thermostat import Thermostat
 
 
 class NidoSchedulerService(rpyc.Service):

@@ -31,7 +31,7 @@ Base = declarative_base()
 Session = sessionmaker(bind=engine)
 
 
-class Settings(Base):
+class _Settings(Base):
     __tablename__ = 'settings'
     id = Column(Integer, primary_key=True)
     set_temp = Column(Float, nullable=False)
@@ -63,10 +63,11 @@ def _db_session():
         raise
     finally:
         session.close()
+    return None
 
 
 def _get_settings(session):
-    return session.query(Settings).one()
+    return session.query(_Settings).one()
 
 
 def get_settings():
@@ -90,7 +91,7 @@ def set_settings(set_temp=None, set_mode=None, celsius=None):
 
 def _init_db(base, engine):
     session = Session()
-    query = session.query(Settings)
+    query = session.query(_Settings)
     settings = None
     try:
         settings = query.one()
@@ -108,13 +109,15 @@ def _init_db(base, engine):
         settings.set_mode = Mode.Off.value
         settings.celsius = False
     finally:
-        if not isinstance(settings, Settings):
-            settings = Settings(set_temp=21.0,
-                                set_mode=Mode.Off.value,
-                                celsius=False)
-        print('Initializing default settings: {}'.format(settings))
+        if not isinstance(settings, _Settings):
+            settings = _Settings(set_temp=21.0,
+                                 set_mode=Mode.Off.value,
+                                 celsius=False)
+        print('Initializing database with default settings: {}'
+              .format(settings))
         session.add(settings)
         session.commit()
+    return None
 
 
 if __name__ == '__main__':
