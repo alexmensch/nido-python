@@ -13,15 +13,14 @@ sudo apt-get install -y nodejs
 Run `source ./install` to install required Python modules and Node.js components.
 
 ## Initial application configuration
-1. Rename `nido/cfg/config-example.yaml` to `nido/cfg/config.yaml` with your own settings.
-2. Rename `private-config.py.example` to `instance/private-config.py` with your own settings.
+1. Rename `private-config.py.example` to `instance/private-config.py` with your own private settings.
 
 # Running the application
 1. `run-nido.sh -b <base path> [-d]` This runs either Flask/Werkzeug (when the `-d` debug flag is set) or gunicorn. The hardware controller/scheduler daemon is also started.
 > Note: `sudo` access is required due to hardware access to GPIO pins
 2. (Optional) You may want to add this line to your `/etc/rc.local` file so that Nido runs automatically at startup. Output from the server will be output to `nohup.out` in your base path.
 ```
-su <pi user> && cd <base path> && nohup ./run-nido.sh -b <base path> &
+cd <base path> && bash -c "source venv/bin/activate && nohup ./run-nido.sh -b `pwd` &"
 ```
 
 # Stopping the application
