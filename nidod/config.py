@@ -32,4 +32,3 @@ class HardwareConfig(object):
     GPIO_HEAT_PIN = 26
     HYSTERESIS = 0.6
     MODES = [Mode.Off.name, Mode.Heat.name]
-    # Need modes_available method, copy in from Config object
