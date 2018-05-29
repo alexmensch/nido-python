@@ -6,7 +6,7 @@ __pycache__/
 *.swp
 *.swo
 
-venv/
+nido-venv/
 instance/
 *.egg-info/
 # wheel
