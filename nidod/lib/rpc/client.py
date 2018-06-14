@@ -75,10 +75,9 @@ class NidoDaemonRPCClient(object):
             raise ThermostatClientError(e)
         except (JobLookupError, ConflictingIdError) as e:
             raise SchedulerClientError(e)
-        else:
-            return None
         finally:
             self._disconnect()
+        return None
 
 
 class ThermostatClient(NidoDaemonRPCClient):
