@@ -195,7 +195,8 @@ class Device(object):
         with the specified endianness (default little endian, or least
         significant byte first).
         """
-        result = self._bus.read_word_data(self._address, register) & 0xFFFF
+        with SMBusWrapper(self._bus) as bus:
+            result = bus.read_word_data(self._address, register) & 0xFFFF
         self._logger.debug(
             "Read 0x%04X from register pair 0x%02X, 0x%02X",
             result, register, register + 1
