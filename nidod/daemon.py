@@ -88,7 +88,11 @@ if __name__ == '__main__':
     work_dir = os.environ['NIDOD_WORK_DIR']
     log_file = os.environ['NIDOD_LOG_FILE']
 
-    handler = logging.handlers.WatchedFileHandler(log_file)
+    handler = logging.handlers.TimedRotatingFileHandler(
+        log_file,
+        when='midnight',
+        backupCount=7
+    )
     formatter = logging.Formatter(
         fmt='%(asctime)s [%(levelname)s] %(name)s | %(message)s',
         datefmt='%d/%m/%Y %H:%M:%S'
