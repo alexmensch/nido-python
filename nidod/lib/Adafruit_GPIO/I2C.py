@@ -34,8 +34,7 @@ from builtins import object
 
 import logging
 import subprocess
-import smbus2 as smbus
-from smbus import SMBusWrapper
+from smbus2 import SMBusWrapper
 from . import Platform
 
 
