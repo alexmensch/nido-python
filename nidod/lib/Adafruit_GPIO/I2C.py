@@ -35,6 +35,7 @@ from builtins import object
 import logging
 import subprocess
 import smbus2 as smbus
+from smbus import SMBusWrapper
 from . import Platform
 
 
@@ -120,7 +121,7 @@ class Device(object):
         on the specified I2C bus number.
         """
         self._address = address
-        self._bus = smbus.SMBus(busnum)
+        self._bus = busnum
         self._logger = logging.getLogger(
             'Adafruit_I2C.Device.Bus.{0}.Address.{1:#0X}'
             .format(busnum, address)
@@ -129,19 +130,22 @@ class Device(object):
     def writeRaw8(self, value):
         """Write an 8-bit value on the bus (without register)."""
         value = value & 0xFF
-        self._bus.write_byte(self._address, value)
+        with SMBusWrapper(self._bus) as bus:
+            bus.write_byte(self._address, value)
         self._logger.debug("Wrote 0x%02X", value)
 
     def write8(self, register, value):
         """Write an 8-bit value to the specified register."""
         value = value & 0xFF
-        self._bus.write_byte_data(self._address, register, value)
+        with SMBusWrapper(self._bus) as bus:
+            bus.write_byte_data(self._address, register, value)
         self._logger.debug("Wrote 0x%02X to register 0x%02X", value, register)
 
     def write16(self, register, value):
         """Write a 16-bit value to the specified register."""
         value = value & 0xFFFF
-        self._bus.write_word_data(self._address, register, value)
+        with SMBusWrapper(self._bus) as bus:
+            bus.write_word_data(self._address, register, value)
         self._logger.debug(
             "Wrote 0x%04X to register pair 0x%02X, 0x%02X",
             value, register, register + 1
@@ -149,15 +153,15 @@ class Device(object):
 
     def writeList(self, register, data):
         """Write bytes to the specified register."""
-        self._bus.write_i2c_block_data(self._address, register, data)
+        with SMBusWrapper(self._bus) as bus:
+            bus.write_i2c_block_data(self._address, register, data)
         self._logger.debug("Wrote to register 0x%02X: %s", register, data)
 
     def readList(self, register, length):
         """Read a length number of bytes from the specified register.
         Results will be returned as a bytearray."""
-        results = self._bus.read_i2c_block_data(
-            self._address, register, length
-        )
+        with SMBusWrapper(self._bus) as bus:
+            results = bus.read_i2c_block_data(self._address, register, length)
         self._logger.debug(
             "Read the following from register 0x%02X: %s", register, results
         )
@@ -165,13 +169,15 @@ class Device(object):
 
     def readRaw8(self):
         """Read an 8-bit value on the bus (without register)."""
-        result = self._bus.read_byte(self._address) & 0xFF
+        with SMBusWrapper(self._bus) as bus:
+            result = bus.read_byte(self._address) & 0xFF
         self._logger.debug("Read 0x%02X", result)
         return result
 
     def readU8(self, register):
         """Read an unsigned byte from the specified register."""
-        result = self._bus.read_byte_data(self._address, register) & 0xFF
+        with SMBusWrapper(self._bus) as bus:
+            result = bus.read_byte_data(self._address, register) & 0xFF
         self._logger.debug(
             "Read 0x%02X from register 0x%02X",
             result, register
