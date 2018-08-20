@@ -35,7 +35,7 @@ from rpyc.utils.server import ThreadedServer
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from nidod import Daemon
-from nidod.config import SchedulerConfig, DaemonConfig
+from nidod.config import SchedulerConfig, DaemonConfig, MQTTConfig
 from nidod.lib.hardware import Controller
 from nidod.lib.rpc.server import NidoDaemonService
 
@@ -44,7 +44,6 @@ class NidoDaemon(Daemon):
     def run(self):
         self._l.debug('Starting run loop for Nido daemon')
         self.controller = Controller()
-        poll_interval = SchedulerConfig.POLL_INTERVAL
         db_path = DaemonConfig.DB_PATH
         rpc_port = int(os.environ['NIDOD_RPC_PORT'])
 
@@ -60,7 +59,11 @@ class NidoDaemon(Daemon):
                                  job_defaults=job_defaults)
         self.scheduler.add_job(
             NidoDaemonService.wakeup, trigger='interval',
-            seconds=poll_interval, name='Poll'
+            seconds=SchedulerConfig.POLL_INTERVAL, name='Poll'
+        )
+        self.scheduler.add_job(
+            NidoDaemonService.log_data, trigger='interval',
+            seconds=MQTTConfig.POLL_INTERVAL, name='DataLogger'
         )
         self.scheduler.add_job(NidoDaemonService.wakeup, name='Poll')
         self.scheduler.start()

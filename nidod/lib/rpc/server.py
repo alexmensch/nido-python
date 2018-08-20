@@ -28,13 +28,14 @@ import rpyc
 from nidod.lib.hardware import Controller, Sensor
 from nidod.lib.thermostat import Thermostat
 from nidod.lib.exceptions import ThermostatError
+from nidod.lib.datalogger import MQTTDataLogger
 
 
 class NidoDaemonService(rpyc.Service):
     """Service class that is exposed via RPC.
 
     Methods act on the APScheduler service that is initialized on daemon
-    startup. Static functions in the class are be passed into scheduler
+    startup. Static functions in the class are passed into scheduler
     jobs as resulting actions.
 
     Adapted from: https://github.com/agronholm/apscheduler/blob/master \
@@ -121,3 +122,7 @@ class NidoDaemonService(rpyc.Service):
     @staticmethod
     def wakeup():
         return Controller().update()
+
+    @staticmethod
+    def log_data():
+        return MQTTDataLogger().publish_data()

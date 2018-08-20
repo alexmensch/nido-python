@@ -66,6 +66,9 @@ export NIDOD_RPC_HOST="localhost"
 export NIDOD_PID_FILE="/tmp/nido.pid"
 export NIDOD_WORK_DIR="/tmp"
 export NIDOD_LOG_FILE="/var/log/nidod.log"
+export NIDOD_MQTT_CLIENT_NAME="Nido"
+export NIDOD_MQTT_HOSTNAME="localhost"
+export NIDOD_MQTT_PORT="1883"
 
 if [ "${debug}" = false ]; then
     cd ${base} && sudo -E ${py_ver} nidod/daemon.py start && sudo -E gunicorn -w 4 -b ${server}:${port} --certfile instance/nido_cert.pem --keyfile instance/nido_key.pem 'nido:create_app()'
