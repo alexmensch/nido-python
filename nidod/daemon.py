@@ -31,6 +31,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
+import paho.mqtt.client as mqtt
 from rpyc.utils.server import ThreadedServer
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
@@ -44,43 +45,56 @@ class NidoDaemon(Daemon):
     def run(self):
         self._l.debug('Starting run loop for Nido daemon')
         self.controller = Controller()
-        db_path = DaemonConfig.DB_PATH
-        rpc_port = int(os.environ['NIDOD_RPC_PORT'])
+
+        self.MQTTclient = mqtt.Client(
+            MQTTConfig.CLIENT_NAME,
+            clean_session=False
+        )
+        self.MQTTclient.enable_logger()
+        self.MQTTclient.connect_async(
+            MQTTConfig.HOSTNAME,
+            port=int(MQTTConfig.PORT),
+            keepalive=MQTTConfig.KEEPALIVE
+        )
 
         self.scheduler = BackgroundScheduler()
         jobstores = {
             'default': {'type': 'memory'},
             'schedule': SQLAlchemyJobStore(
-                url='sqlite:///{}'.format(db_path)
+                url='sqlite:///{}'.format(DaemonConfig.DB_PATH)
             )
         }
         job_defaults = {'coalesce': True, 'misfire_grace_time': 10}
         self.scheduler.configure(jobstores=jobstores,
                                  job_defaults=job_defaults)
+        self.scheduler.add_job(NidoDaemonService.wakeup, name='Poll')
         self.scheduler.add_job(
             NidoDaemonService.wakeup, trigger='interval',
             seconds=SchedulerConfig.POLL_INTERVAL, name='Poll'
         )
         self.scheduler.add_job(
-            NidoDaemonService.log_data, trigger='interval',
-            seconds=MQTTConfig.POLL_INTERVAL, name='DataLogger'
+            NidoDaemonService.log_data, args=[self.MQTTclient],
+            trigger='interval', seconds=MQTTConfig.POLL_INTERVAL,
+            name='DataLogger'
         )
-        self.scheduler.add_job(NidoDaemonService.wakeup, name='Poll')
-        self.scheduler.start()
 
         self.RPCserver = ThreadedServer(
             NidoDaemonService(self.scheduler),
-            port=rpc_port,
+            port=int(os.environ['NIDOD_RPC_PORT']),
             protocol_config={
                 'allow_public_attrs': True,
                 'allow_pickle': True
             }
         )
-        self.RPCserver.start()
+
+        self.MQTTclient.loop_start()
+        self.scheduler.start()
+        self.RPCserver.start()  # Blocking
 
     def quit(self):
         self.RPCserver.close()
         self.scheduler.shutdown()
+        self.MQTTclient.disconnect()
         self.controller.shutdown()
         self._l.info('Nido daemon shutdown')
         self._l.info('********************')

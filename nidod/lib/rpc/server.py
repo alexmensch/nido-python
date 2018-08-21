@@ -124,5 +124,5 @@ class NidoDaemonService(rpyc.Service):
         return Controller().update()
 
     @staticmethod
-    def log_data():
-        return MQTTDataLogger().publish_data()
+    def log_data(client):
+        return MQTTDataLogger(client).publish_data()
