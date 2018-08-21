@@ -49,5 +49,8 @@ export NIDO_BASE=${base}
 export NIDOD_PID_FILE="/tmp/nido.pid"
 export NIDOD_WORK_DIR="/tmp"
 export NIDOD_LOG_FILE="/var/log/nidod.log"
+export NIDOD_MQTT_HOSTNAME="localhost"
+export NIDOD_MQTT_PORT="1883"
+export NIDOD_MQTT_CLIENT_NAME="Nido"
 
 sudo -E ${py_ver} ${base}/nidod/daemon.py stop

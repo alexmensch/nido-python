@@ -32,3 +32,12 @@ class HardwareConfig(object):
     GPIO_HEAT_PIN = 26
     HYSTERESIS = 0.6
     MODES = [Mode.Off.name, Mode.Heat.name]
+
+
+class MQTTConfig(object):
+    HOSTNAME = os.environ['NIDOD_MQTT_HOSTNAME']
+    PORT = os.environ['NIDOD_MQTT_PORT']
+    KEEPALIVE = 60
+    CLIENT_NAME = os.environ['NIDOD_MQTT_CLIENT_NAME']
+    TOPIC_BASE = 'nido/'
+    POLL_INTERVAL = 10
