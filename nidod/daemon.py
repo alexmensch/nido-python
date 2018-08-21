@@ -68,7 +68,7 @@ class NidoDaemon(Daemon):
         self.scheduler.add_job(NidoDaemonService.wakeup, name='Poll')
         self.scheduler.start()
 
-        RPCserver = ThreadedServer(
+        self.RPCserver = ThreadedServer(
             NidoDaemonService(self.scheduler),
             port=rpc_port,
             protocol_config={
@@ -76,9 +76,10 @@ class NidoDaemon(Daemon):
                 'allow_pickle': True
             }
         )
-        RPCserver.start()
+        self.RPCserver.start()
 
     def quit(self):
+        self.RPCserver.close()
         self.scheduler.shutdown()
         self.controller.shutdown()
         self._l.info('Nido daemon shutdown')
