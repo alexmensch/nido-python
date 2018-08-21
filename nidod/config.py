@@ -40,4 +40,4 @@ class MQTTConfig(object):
     KEEPALIVE = 60
     CLIENT_NAME = os.environ['NIDOD_MQTT_CLIENT_NAME']
     TOPIC_BASE = 'nido/'
-    POLL_INTERVAL = 10
+    POLL_INTERVAL = 60
