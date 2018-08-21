@@ -45,6 +45,12 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'flask~=1.0.2',
+        'flask',
+        'APScheduler',
+        'paho-mqtt',
+        'RPi.GPIO',
+        'rpyc',
+        'smbus2',
+        'SQLAlchemy'
     ],
 )
