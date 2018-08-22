@@ -92,10 +92,10 @@ class NidoDaemon(Daemon):
         self.RPCserver.start()  # Blocking
 
     def quit(self):
+        self.controller.shutdown()
         self.RPCserver.close()
         self.scheduler.shutdown()
         self.MQTTclient.disconnect()
-        self.controller.shutdown()
         self._l.info('Nido daemon shutdown')
         self._l.info('********************')
         return
