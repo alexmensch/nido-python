@@ -23,6 +23,7 @@ import logging
 
 from nidod.lib.hardware import Sensor, Controller
 from nidod.config import MQTTConfig
+from nidod import db
 
 
 class DataLogger(object):
@@ -36,13 +37,18 @@ class DataLogger(object):
     def _get_controller_state(self):
         return Controller().get_status()
 
+    def _get_thermostat_settings(self):
+        return db.get_settings()
+
     def get_data(self):
         data = {}
         sensor_data = self._get_sensor_data()
+        settings = self._get_thermostat_settings()
 
         unixtime = datetime.now().timestamp()
         data['controller'] = self._get_controller_state()
         data.update(sensor_data)
+        data['set_temp'] = settings['set_temp']
         return (unixtime, data)
 
     @staticmethod
