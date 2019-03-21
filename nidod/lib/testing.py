@@ -46,7 +46,7 @@ class FakeGPIO(object):
 
     def _get_pins(self):
         with open(self._state, 'r') as f:
-            self._pins = yaml.load(f)
+            self._pins = yaml.safe_load(f)
         return None
 
     def _write(self):
