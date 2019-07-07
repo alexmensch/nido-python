@@ -18,9 +18,6 @@ npm-debug.log
 .module-cache
 package-lock.json
 
-# Contains private API keys
-config.yaml
-
 # Database
 nido.sqlite
 
