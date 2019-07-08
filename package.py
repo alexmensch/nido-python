@@ -9,6 +9,7 @@ import shlex
 import subprocess
 import os
 
+# This runs inside a Docker container; see build.docker for volume paths
 WHEELHOUSE = "wheelhouse"
 
 class Package(Command):
@@ -108,8 +109,6 @@ class Package(Command):
     def run(self):
         commands = []
         commands.extend([
-            "rm -rf {dir}".format(dir=WHEELHOUSE),
-            "mkdir -p {dir}".format(dir=WHEELHOUSE),
             "pip wheel --wheel-dir={dir} -r requirements.txt".format(dir=WHEELHOUSE)
         ])
     

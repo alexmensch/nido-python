@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #   Nido, a Raspberry Pi-based home thermostat.
 #
 #   Copyright (C) 2016 Alex Marshall
@@ -16,31 +18,20 @@
 #   along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 
-if [ -z "$NIDO_BASE" ]; then
-    echo "NIDO_BASE environment variable must be set to absolute path"
-    echo "of package base."
-    echo "Maybe: export NIDO_BASE=`pwd`"
-    echo
-    exit 1
-fi
-
-echo "Setting up python3 venv..."
-echo
-python3 -m venv nido-venv && source nido-venv/bin/activate
-mkdir instance
-
 echo "Creating local adhoc SSL certificates..."
 echo
 openssl req -x509 -newkey rsa:4096 -nodes -out instance/nido_cert.pem -keyout instance/nido_key.pem -days 365
 
-echo "Setting up pip..."
+echo "Installing required packages..."
 echo
-pip install --upgrade pip
-pip install -r requirements.txt
+pip install -r requirements.txt --no-index --find-links wheelhouse
 
 echo "Initializing daemon database..."
 echo
 export NIDOD_PID_FILE=""
+export NIDOD_MQTT_HOSTNAME=""
+export NIDOD_MQTT_PORT=""
+export NIDOD_MQTT_CLIENT_NAME=""
 python nidod/db.py
 
 echo "Setting up npm..."

@@ -9,9 +9,9 @@ __pycache__/
 nido-venv/
 instance/
 *.egg-info/
-# wheel
 build/
 dist/
+wheelhouse/
 
 node_modules/
 npm-debug.log

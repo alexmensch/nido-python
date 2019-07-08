@@ -15,16 +15,18 @@ prune build
 prune dist
 prune node-modules
 exclude nohup.out
-exclude package-lock.json
 
 # Include auxilliary package files
 include *.py*
 include *.js
-include *.sh
+include run-nido.sh
+include stop-nido.sh
 include package.json
+include package-lock.json
+graft react
 
 # Packaging and install files
 include LICENSE
 include README.md
-include install
+include install.sh
 include requirements.txt
