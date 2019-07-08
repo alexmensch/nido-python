@@ -1,0 +1,13 @@
+FROM nido-base
+
+ENV NIDO_BASE=/app
+ENV VIRTUAL_ENV=/venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+COPY dist/nido*.tar.gz /
+
+WORKDIR $NIDO_BASE
+
+RUN tar -xpvf /nido*.tar.gz -C /app --strip-components=1
+RUN mkdir $NIDO_BASE/instance
+RUN ./install.sh

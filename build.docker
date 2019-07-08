@@ -1,0 +1,11 @@
+FROM nido-base
+
+ENV VIRTUAL_ENV=/venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+RUN pip install wheel setuptools --upgrade
+
+VOLUME /application
+
+ENTRYPOINT cd /application; \
+           python setup.py package
