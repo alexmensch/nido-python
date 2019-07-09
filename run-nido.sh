@@ -70,6 +70,10 @@ export NIDOD_MQTT_CLIENT_NAME="Nido"
 export NIDOD_MQTT_HOSTNAME="localhost"
 export NIDOD_MQTT_PORT="1883"
 
+if [ ! -f "${base}/instance/nido.sqlite" ]; then
+    python nidod/db.py
+fi
+
 if [ "${debug}" = false ]; then
     cd ${base} && sudo -E ${py_ver} nidod/daemon.py start && sudo -E gunicorn -w 4 -b ${server}:${port} --certfile instance/nido_cert.pem --keyfile instance/nido_key.pem 'nido:create_app()'
 else

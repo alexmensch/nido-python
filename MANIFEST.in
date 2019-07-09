@@ -6,6 +6,15 @@ global-exclude __pycache__ *.pyc *.pyo *.swp *.swo
 graft nido/static
 graft nido/templates
 
+# Include start and stop scripts
+include run-nido.sh
+include stop-nido.sh
+
+# Packaging and install files
+include LICENSE
+include requirements.txt
+include package.py
+
 # Exclude all build environment artefacts
 prune instance
 prune nido-venv
@@ -14,19 +23,6 @@ prune .git
 prune build
 prune dist
 prune node-modules
+prune react
+prune mobile
 exclude nohup.out
-
-# Include auxilliary package files
-include *.py*
-include *.js
-include run-nido.sh
-include stop-nido.sh
-include package.json
-include package-lock.json
-graft react
-
-# Packaging and install files
-include LICENSE
-include README.md
-include install.sh
-include requirements.txt
