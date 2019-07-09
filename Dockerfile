@@ -23,22 +23,26 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 RUN pip install pip wheel setuptools --upgrade
 
-COPY . $NIDO_BASE
-WORKDIR $NIDO_BASE
+COPY . $NIDO_BASE-build
+WORKDIR $NIDO_BASE-build
 
 RUN python setup.py package
+
+RUN mkdir -p $NIDO_BASE
+RUN cp dist/nido*.tar.gz $NIDO_BASE/
+RUN tar -xpvf $NIDO_BASE/nido*.tar.gz -C $NIDO_BASE --strip-components=1
+RUN rm -f $NIDO_BASE/nido*.tar.gz
 
 
 FROM base
 
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
+COPY --from=builder $NIDO_BASE $NIDO_BASE
 COPY --from=builder $VIRTUAL_ENV $VIRTUAL_ENV
-COPY --from=builder $NIDO_BASE/dist/nido*.tar.gz $NIDO_BASE/
 
 WORKDIR $NIDO_BASE
 VOLUME $NIDO_BASE/instance
 VOLUME /var/log
 
-RUN tar -xpvf $NIDO_BASE/nido*.tar.gz -C $NIDO_BASE --strip-components=1
 RUN pip install -r requirements.txt --no-index --find-links wheelhouse
