@@ -43,8 +43,7 @@ root.addHandler(handler)
 
 
 def create_app(test_config=None):
-    app = Flask('nido', instance_path='instance',
-                instance_relative_config=True)
+    app = Flask('nido', instance_relative_config=True)
 
     if test_config is None:
         if 'NIDO_DEBUG' in os.environ:
