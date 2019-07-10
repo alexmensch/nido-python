@@ -21,7 +21,7 @@
 sil=""
 py_ver="python3"
 server="0.0.0.0"
-port="443"
+port="80"
 debug=false
 usage() { echo "Usage: $0 -b <base path> [-s] [-d] [-t] [-2]" 1>&2; exit 1; }
 
@@ -75,7 +75,7 @@ if [ ! -f "${base}/instance/nido.sqlite" ]; then
 fi
 
 if [ "${debug}" = false ]; then
-    cd ${base} && ${py_ver} nidod/daemon.py start && gunicorn -w 4 -b ${server}:${port} --certfile instance/nido_cert.pem --keyfile instance/nido_key.pem 'nido:create_app()'
+    cd ${base} && ${py_ver} nidod/daemon.py start && gunicorn -w 4 -b ${server}:${port} 'nido:create_app()'
 else
     export FLASK_APP="nido"
     export FLASK_RUN_SERVER="${server}"
