@@ -53,4 +53,4 @@ export NIDOD_MQTT_HOSTNAME="localhost"
 export NIDOD_MQTT_PORT="1883"
 export NIDOD_MQTT_CLIENT_NAME="Nido"
 
-sudo -E ${py_ver} ${base}/nidod/daemon.py stop
+${py_ver} ${base}/nidod/daemon.py stop

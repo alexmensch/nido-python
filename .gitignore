@@ -26,3 +26,5 @@ nido/static/js/nido.js
 nido/static/js/nido.js.map
 
 nohup.out
+
+private-config.py

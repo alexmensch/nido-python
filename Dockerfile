@@ -46,3 +46,5 @@ VOLUME $NIDO_BASE/instance
 VOLUME /var/log
 
 RUN pip install -r requirements.txt --no-index --find-links wheelhouse
+
+COPY private-config.py $NIDO_BASE/instance

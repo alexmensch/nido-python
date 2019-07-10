@@ -75,12 +75,12 @@ if [ ! -f "${base}/instance/nido.sqlite" ]; then
 fi
 
 if [ "${debug}" = false ]; then
-    cd ${base} && sudo -E ${py_ver} nidod/daemon.py start && sudo -E gunicorn -w 4 -b ${server}:${port} --certfile instance/nido_cert.pem --keyfile instance/nido_key.pem 'nido:create_app()'
+    cd ${base} && ${py_ver} nidod/daemon.py start && gunicorn -w 4 -b ${server}:${port} --certfile instance/nido_cert.pem --keyfile instance/nido_key.pem 'nido:create_app()'
 else
     export FLASK_APP="nido"
     export FLASK_RUN_SERVER="${server}"
     export FLASK_RUN_PORT="${port}"
     export FLASK_ENV="development"
     export FLASK_DEBUG="TRUE"
-    cd ${base} && sudo -E ${py_ver} nidod/daemon.py start && sudo -E flask run --without-threads
+    cd ${base} && ${py_ver} nidod/daemon.py start && flask run --without-threads
 fi
