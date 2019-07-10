@@ -1,0 +1,12 @@
+version: "3"
+services:
+  nido-api:
+    build: ./nido-api
+    ports:
+      - "80:80"
+  nido-daemon:
+    build: ./nido-daemon
+  mosquitto:
+    image: eclipse-mosquitto
+    ports:
+      - "1883:1883"
