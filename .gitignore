@@ -21,8 +21,8 @@ package-lock.json
 nido.sqlite
 
 # Webpack'd JS
-nido/static/js/nido.js
-nido/static/js/nido.js.map
+nido-api/nido/static/js/nido.js
+nido-api/nido/static/js/nido.js.map
 
 nohup.out
 
