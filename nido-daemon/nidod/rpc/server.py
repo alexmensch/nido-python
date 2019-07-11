@@ -25,10 +25,10 @@ standard_library.install_aliases()
 from builtins import *
 
 import rpyc
-from nidod.lib.hardware import Controller, Sensor
-from nidod.lib.thermostat import Thermostat
-from nidod.lib.exceptions import ThermostatError
-from nidod.lib.datalogger import MQTTDataLogger
+from libnido.hardware import Controller, Sensor
+from libnido.thermostat import Thermostat
+from libnido.exceptions import ThermostatError
+from nidod.datalogger import MQTTDataLogger
 
 
 class NidoDaemonService(rpyc.Service):

@@ -30,11 +30,11 @@ from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.jobstores.base import JobLookupError, ConflictingIdError
 
-from nidod.lib.exceptions import (
+from libnido import (
     SchedulerClientError, ThermostatClientError,
     ControllerError, ThermostatError, SensorError
 )
-from nidod.config import Status
+from libnido import Status
 
 
 class NidoDaemonRPCClient(object):

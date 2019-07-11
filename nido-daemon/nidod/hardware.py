@@ -29,9 +29,10 @@ from builtins import object
 import os
 import logging
 
-from nidod.config import Mode, Status, HardwareConfig, DaemonConfig
-from nidod.lib.exceptions import ControllerError, SensorError
-from nidod.lib.thermostat import Thermostat
+from nidod.config import HardwareConfig, DaemonConfig
+from libnido import Mode, Status
+from libnido import ControllerError, SensorError
+from nidod.thermostat import Thermostat
 
 if 'NIDO_TESTING' in os.environ:
     from nidod.lib.testing import FakeGPIO, FakeSensor as BME280

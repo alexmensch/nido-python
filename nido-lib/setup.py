@@ -17,17 +17,16 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 
 from setuptools import find_packages, setup
-from package import Package
 
 with open('README.md', 'r') as fh:
     long_description = fh.read()
 
 setup(
-    name='nido',
-    version='0.4.0',
+    name='libnido',
+    version='0.1.0',
     author='Alex Marshall',
     author_email='alex@moveolabs.com',
-    description='Nido, a Raspberry Pi-based home thermostat',
+    description='Library for Nido, a Raspberry Pi-based home thermostat',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/alexmensch/nido',
@@ -35,21 +34,17 @@ setup(
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: GNU General Public License v3'
         ' or later (GPLv3+)',
-        'Programming Language :: Python :: 3.6'
+        'Programming Language :: Python :: 3.5'
     ],
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
     install_requires=[
-        'flask',
         'APScheduler',
-        'paho-mqtt',
+        'future',
+        'PyYAML',
         'RPi.GPIO',
         'rpyc',
-        'smbus2',
-        'SQLAlchemy'
-    ],
-    cmdclass={
-        "package": Package
-    }
+        'smbus2'
+    ]
 )

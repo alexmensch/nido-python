@@ -27,7 +27,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
 from nidod.config import DaemonConfig, Mode
-from nidod.lib.exceptions import DBError
+from libnido.exceptions import DBError
 
 engine = create_engine('sqlite:///{}'.format(DaemonConfig.DB_PATH))
 Base = declarative_base()

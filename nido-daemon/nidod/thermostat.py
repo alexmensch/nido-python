@@ -4,8 +4,9 @@ from builtins import object
 import logging
 
 from nidod import db
-from nidod.config import Mode, HardwareConfig
-from nidod.lib.exceptions import ThermostatError, DBError
+from nidod.config import HardwareConfig
+from libnido import Mode
+from libnido import ThermostatError, DBError
 
 logger = logging.getLogger(__name__)
 

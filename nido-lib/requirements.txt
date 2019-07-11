@@ -1,0 +1,8 @@
+APScheduler==3.5.1
+future==0.16.0
+PyYAML==3.12
+RPi.GPIO==0.6.1
+rpyc==3.4.4
+smbus2==0.2.0
+
+-e .
