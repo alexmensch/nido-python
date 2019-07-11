@@ -29,7 +29,8 @@ echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
     printf "Deleting..."
-    rm -vrf node_modules instance package-lock.json build __pycache__ nido.egg-info dist nido-venv
+    rm -vrf build nido.egg-info dist nido-venv
+    rm -vrf **/__pycache__ **/node_modules
     echo "done."
     echo
     exit 0
