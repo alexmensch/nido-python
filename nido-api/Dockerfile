@@ -1,5 +1,6 @@
 FROM python:3.5-alpine
 
+VOLUME /app/instance
 COPY . /app
 WORKDIR /app
 
