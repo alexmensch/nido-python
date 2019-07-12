@@ -43,8 +43,6 @@ setup(
         'APScheduler',
         'future',
         'PyYAML',
-        'RPi.GPIO',
-        'rpyc',
-        'smbus2'
+        'rpyc'
     ]
 )

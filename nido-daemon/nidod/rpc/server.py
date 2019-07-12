@@ -25,8 +25,8 @@ standard_library.install_aliases()
 from builtins import *
 
 import rpyc
-from libnido.hardware import Controller, Sensor
-from libnido.thermostat import Thermostat
+from nidod.hardware import Controller, Sensor
+from nidod.thermostat import Thermostat
 from libnido.exceptions import ThermostatError
 from nidod.datalogger import MQTTDataLogger
 

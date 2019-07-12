@@ -43,8 +43,9 @@ setup(
         'APScheduler',
         'future',
         'paho-mqtt',
-        'python-dotenv',
+        'RPi.GPIO',
         'rpyc',
+        'smbus2',
         'SQLAlchemy'
     ]
 )

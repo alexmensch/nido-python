@@ -30,7 +30,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.jobstores.base import JobLookupError, ConflictingIdError
 
-from libnido import (
+from libnido.exceptions import (
     SchedulerClientError, ThermostatClientError,
     ControllerError, ThermostatError, SensorError
 )

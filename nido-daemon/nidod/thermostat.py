@@ -6,7 +6,7 @@ import logging
 from nidod import db
 from nidod.config import HardwareConfig
 from libnido import Mode
-from libnido import ThermostatError, DBError
+from libnido.exceptions import ThermostatError, DBError
 
 logger = logging.getLogger(__name__)
 

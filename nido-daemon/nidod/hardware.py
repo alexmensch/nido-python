@@ -31,7 +31,7 @@ import logging
 
 from nidod.config import HardwareConfig, DaemonConfig
 from libnido import Mode, Status
-from libnido import ControllerError, SensorError
+from libnido.exceptions import ControllerError, SensorError
 from nidod.thermostat import Thermostat
 
 if 'NIDO_TESTING' in os.environ:

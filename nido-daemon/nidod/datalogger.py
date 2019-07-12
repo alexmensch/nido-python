@@ -21,7 +21,7 @@ from builtins import object
 from datetime import datetime
 import logging
 
-from libnido.hardware import Sensor, Controller
+from nidod.hardware import Sensor, Controller
 from nidod.config import MQTTConfig
 from nidod import db
 
