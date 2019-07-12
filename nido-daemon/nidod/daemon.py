@@ -28,8 +28,6 @@ import sys
 import logging
 import logging.handlers
 import os
-from dotenv import load_dotenv
-load_dotenv()
 
 import paho.mqtt.client as mqtt
 from rpyc.utils.server import ThreadedServer

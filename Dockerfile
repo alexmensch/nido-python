@@ -1,50 +1,63 @@
-FROM raspbian/stretch AS base
+FROM raspbian/stretch AS lib-builder
 
 RUN apt-get update && apt-get install -y \
     -o APT::Install-Recommends=false \
     -o APT::Install-Suggests=false \
     python3 \
+    python3-pip \
  && rm -rf /var/lib/apt/lists/*
 
-ENV VIRTUAL_ENV=/venv
-ENV NIDO_BASE=/app
+RUN pip3 install pip wheel setuptools --upgrade
+
+COPY ./nido-lib /nido-lib
+WORKDIR /nido-lib
+
+RUN pip3 wheel --wheel-dir=wheelhouse -r requirements.txt
 
 
-FROM base AS builder
+FROM python:3.5-alpine AS nido-api
 
-RUN apt-get update && apt-get install -y \
-    -o APT::Install-Recommends=false \
-    -o APT::Install-Suggests=false \
-    python3-pip \
-    python3-venv
+VOLUME /app/instance
+COPY ./nido-api /app
+COPY --from=lib-builder /nido-lib/wheelhouse /wheelhouse
 
-RUN python3 -m venv $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+WORKDIR /app
 
-RUN pip install pip wheel setuptools --upgrade
+RUN pip install -r requirements.txt --find-links /wheelhouse
 
-COPY . $NIDO_BASE-build
-WORKDIR $NIDO_BASE-build
+ENV NIDOD_RPC_HOST nido-daemon
+ENV NIDOD_RPC_PORT 49152
 
-RUN python setup.py package
+EXPOSE 80
 
-RUN mkdir -p $NIDO_BASE
-RUN cp dist/nido*.tar.gz $NIDO_BASE/
-RUN tar -xpvf $NIDO_BASE/nido*.tar.gz -C $NIDO_BASE --strip-components=1
-RUN rm -f $NIDO_BASE/nido*.tar.gz
+ENTRYPOINT ["gunicorn", "-b 0.0.0.0:80", "nido:create_app()"]
 
 
-FROM base
+FROM python:3.5-alpine AS nido-daemon
 
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+VOLUME /app/instance
+VOLUME /app/log
+COPY ./nido-daemon /app
+COPY --from=lib-builder /nido-lib/wheelhouse /wheelhouse
 
-COPY --from=builder $NIDO_BASE $NIDO_BASE
-COPY --from=builder $VIRTUAL_ENV $VIRTUAL_ENV
+WORKDIR /app
 
-WORKDIR $NIDO_BASE
-VOLUME $NIDO_BASE/instance
-VOLUME /var/log
+RUN pip install -r requirements.txt --find-links /wheelhouse
 
-RUN pip install -r requirements.txt --no-index --find-links wheelhouse
+ENV NIDO_BASE /app
+ENV NIDOD_PID_FILE /tmp/nido.pid
+ENV NIDOD_WORK_DIR /tmp
+ENV NIDOD_LOG_FILE /app/log/nidod.log
+ENV NIDOD_MQTT_CLIENT_NAME Nido
+ENV NIDOD_MQTT_HOSTNAME mqtt
+ENV NIDOD_MQTT_PORT 1883
 
-COPY private-config.py $NIDO_BASE/instance
+EXPOSE 49152
+
+ENTRYPOINT ["python", "daemon.py", "start"]
+
+
+FROM eclipse-mqtt AS mqtt
+
+COPY ./mqtt/mosquitto.conf /mosquitto/config/mosquitto.conf
+
