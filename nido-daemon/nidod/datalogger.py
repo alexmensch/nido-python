@@ -32,7 +32,7 @@ class DataLogger(object):
         return None
 
     def _get_sensor_data(self):
-        return Sensor().get_conditions()['conditions']
+        return Sensor().get_conditions()["conditions"]
 
     def _get_controller_state(self):
         return Controller().get_status()
@@ -46,17 +46,15 @@ class DataLogger(object):
         settings = self._get_thermostat_settings()
 
         unixtime = datetime.now().timestamp()
-        data['controller'] = self._get_controller_state()
+        data["controller"] = self._get_controller_state()
         data.update(sensor_data)
-        data['set_temp'] = settings['set_temp']
+        data["set_temp"] = settings["set_temp"]
         return (unixtime, data)
 
     @staticmethod
     def format_influx(measurement, data, time):
         nanoseconds = int(time * 1000000000)
-        line_protocol = 'thermostat {}={} {}'.format(
-            measurement, data, nanoseconds
-        )
+        line_protocol = "thermostat {}={} {}".format(measurement, data, nanoseconds)
         return line_protocol
 
 
@@ -69,16 +67,12 @@ class MQTTDataLogger(DataLogger):
     def publish_data(self):
         (unixtime, data) = self.get_data()
         for measurement in data:
-            payload = self.format_influx(
-                measurement,
-                data[measurement],
-                unixtime
-            )
-            self._l.debug('payload: {}'.format(payload))
+            payload = self.format_influx(measurement, data[measurement], unixtime)
+            self._l.debug("payload: {}".format(payload))
             self.client.publish(
-                '{}{}'.format(MQTTConfig.TOPIC_BASE, measurement),
+                "{}{}".format(MQTTConfig.TOPIC_BASE, measurement),
                 payload=payload,
-                qos=2
+                qos=2,
             )
         return None
 

@@ -21,21 +21,19 @@ from flask import Blueprint, current_app, g
 from nido.api import require_secret, JSONResponse
 from nidod.lib.rpc.client import ThermostatClient, ThermostatClientError
 
-bp = Blueprint('api_local', __name__)
+bp = Blueprint("api_local", __name__)
 
 
 @bp.before_app_request
 def json_response():
     g.resp = JSONResponse()
     g.tc = ThermostatClient(
-        current_app.config['RPC_HOST'],
-        current_app.config['RPC_PORT'],
-        json=True
+        current_app.config["RPC_HOST"], current_app.config["RPC_PORT"], json=True
     )
     return None
 
 
-@bp.route('/set/mode/<string:mode>', methods=['POST'])
+@bp.route("/set/mode/<string:mode>", methods=["POST"])
 @require_secret
 def api_set_mode(mode):
     """Endpoint to accept a new mode setting.
@@ -43,19 +41,19 @@ def api_set_mode(mode):
     Only setting one of the valid configured modes is possible.
     """
     try:
-        g.resp.data['config'] = g.tc.set_mode(mode)
+        g.resp.data["config"] = g.tc.set_mode(mode)
     except ThermostatClientError as e:
-        g.resp.data['error'] = 'Error setting mode: {}'.format(e)
+        g.resp.data["error"] = "Error setting mode: {}".format(e)
         g.resp.status = 400
     else:
-        g.resp.data['message'] = 'Mode updated successfully.'
+        g.resp.data["message"] = "Mode updated successfully."
     finally:
         return g.resp.get_flask_response(current_app)
 
 
 @bp.route(
-    '/set/temp/<regex("(([0-9]*)(\.([0-9]+))?)"):temp>'
-    '/<regex("[cCfF]"):scale>', methods=['POST']
+    '/set/temp/<regex("(([0-9]*)(\.([0-9]+))?)"):temp>' '/<regex("[cCfF]"):scale>',
+    methods=["POST"],
 )
 @require_secret
 def api_set_temp(temp, scale):
@@ -66,11 +64,11 @@ def api_set_temp(temp, scale):
     """
     temp = float("{:.1f}".format(float(temp)))
     try:
-        g.resp.data['config'] = g.tc.set_temp(temp, scale)
+        g.resp.data["config"] = g.tc.set_temp(temp, scale)
     except ThermostatClientError as e:
-        g.resp.data['error'] = 'Error setting temperature: {}'.format(e)
+        g.resp.data["error"] = "Error setting temperature: {}".format(e)
         g.resp.status = 400
     else:
-        g.resp.data['message'] = 'Temperature updated successfully.'
+        g.resp.data["message"] = "Temperature updated successfully."
     finally:
         return g.resp.get_flask_response(current_app)

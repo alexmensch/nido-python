@@ -21,40 +21,38 @@ from flask import Blueprint, current_app, request, g
 from nido.api import require_secret, JSONResponse
 from nidod.lib.rpc.client import SchedulerClient, SchedulerClientError
 
-bp = Blueprint('api_rpc', __name__)
+bp = Blueprint("api_rpc", __name__)
 
 
 @bp.before_app_request
 def json_response():
     g.resp = JSONResponse()
     g.sc = SchedulerClient(
-        current_app.config['RPC_HOST'],
-        current_app.config['RPC_PORT'],
-        json=True
+        current_app.config["RPC_HOST"], current_app.config["RPC_PORT"], json=True
     )
     return None
 
 
-@bp.route('/get/all', methods=['POST'])
+@bp.route("/get/all", methods=["POST"])
 @require_secret
 def api_schedule_get_all():
     """Endpoint that returns all jobs in the scheduler."""
-    g.resp.data['jobs'] = g.sc.get_scheduled_jobs()
+    g.resp.data["jobs"] = g.sc.get_scheduled_jobs()
     return g.resp.get_flask_response(current_app)
 
 
-@bp.route('/get/<string:id>', methods=['POST'])
+@bp.route("/get/<string:id>", methods=["POST"])
 @require_secret
 def api_schedule_get_jobid(id):
     """Endpoint that returns a scheduled job with a specific id."""
     try:
-        g.resp.data['job'] = g.sc.get_scheduled_job(id)
+        g.resp.data["job"] = g.sc.get_scheduled_job(id)
     except SchedulerClientError as e:
-        g.resp.data['error'] = 'Error getting job: {}'.format(e)
+        g.resp.data["error"] = "Error getting job: {}".format(e)
     return g.resp.get_flask_response(current_app)
 
 
-@bp.route('/add/<string:type>', methods=['POST'])
+@bp.route("/add/<string:type>", methods=["POST"])
 @require_secret
 def api_schedule_add_job(type):
     """Endpoint to add a new, persistent scheduled job.
@@ -77,21 +75,21 @@ def api_schedule_add_job(type):
             job_id -> Specify a job ID for the job
     """
     job_kwargs = request.get_json()
-    del job_kwargs['secret']
+    del job_kwargs["secret"]
 
-    if type.lower() == 'mode' or type.lower() == 'temp':
+    if type.lower() == "mode" or type.lower() == "temp":
         try:
-            g.resp.data['job'] = g.sc.add_scheduled_job(type, **job_kwargs)
+            g.resp.data["job"] = g.sc.add_scheduled_job(type, **job_kwargs)
         except SchedulerClientError as e:
-            g.resp.data['error'] = 'Error adding job: {}'.format(e)
+            g.resp.data["error"] = "Error adding job: {}".format(e)
     else:
-        g.resp.data['error'] = 'Invalid mode specified.'
+        g.resp.data["error"] = "Invalid mode specified."
         g.resp.status = 400
 
     return g.resp.get_flask_response(current_app)
 
 
-@bp.route('/modify/<string:id>', methods=['POST'])
+@bp.route("/modify/<string:id>", methods=["POST"])
 @require_secret
 def api_schedule_modify_jobid(id):
     """Endpoint to modify the job parameters of a scheduled job.
@@ -109,17 +107,17 @@ def api_schedule_modify_jobid(id):
             scale -> What temperature scale the temp is in ("C" or "F")
     """
     job_kwargs = request.get_json()
-    del job_kwargs['secret']
+    del job_kwargs["secret"]
 
     try:
-        g.resp.data['job'] = g.sc.modify_scheduled_job(id, **job_kwargs)
+        g.resp.data["job"] = g.sc.modify_scheduled_job(id, **job_kwargs)
     except SchedulerClientError as e:
-        g.resp.data['error'] = 'Error modifying job ID ({}): {}'.format(id, e)
+        g.resp.data["error"] = "Error modifying job ID ({}): {}".format(id, e)
 
     return g.resp.get_flask_response(current_app)
 
 
-@bp.route('/reschedule/<string:id>', methods=['POST'])
+@bp.route("/reschedule/<string:id>", methods=["POST"])
 @require_secret
 def api_schedule_reschedule_jobid(id):
     """Endpoint to modify the schedule of a scheduled job.
@@ -137,42 +135,41 @@ def api_schedule_reschedule_jobid(id):
                       should be triggered
     """
     job_kwargs = request.get_json()
-    del job_kwargs['secret']
+    del job_kwargs["secret"]
 
     try:
-        g.resp.data['job'] = g.sc.reschedule_job(id, **job_kwargs)
+        g.resp.data["job"] = g.sc.reschedule_job(id, **job_kwargs)
     except SchedulerClientError as e:
-        g.resp.data['error'] = ('Error rescheduling job ID ({}): {}'
-                                .format(id, e))
+        g.resp.data["error"] = "Error rescheduling job ID ({}): {}".format(id, e)
 
     return g.resp.get_flask_response(current_app)
 
 
-@bp.route('/pause/<string:id>', methods=['POST'])
+@bp.route("/pause/<string:id>", methods=["POST"])
 @require_secret
 def api_schedule_pause_jobid(id):
     try:
-        g.resp.data['job'] = g.sc.pause_scheduled_job(id)
+        g.resp.data["job"] = g.sc.pause_scheduled_job(id)
     except SchedulerClientError as e:
-        g.resp.data['error'] = 'Error pausing job: {}'.format(e)
+        g.resp.data["error"] = "Error pausing job: {}".format(e)
     return g.resp.get_flask_response(current_app)
 
 
-@bp.route('/resume/<string:id>', methods=['POST'])
+@bp.route("/resume/<string:id>", methods=["POST"])
 @require_secret
 def api_schedule_resume_jobid(id):
     try:
-        g.resp.data['job'] = g.sc.resume_scheduled_job(id)
+        g.resp.data["job"] = g.sc.resume_scheduled_job(id)
     except SchedulerClientError as e:
-        g.resp.data['error'] = 'Error resuming job: {}'.format(e)
+        g.resp.data["error"] = "Error resuming job: {}".format(e)
     return g.resp.get_flask_response(current_app)
 
 
-@bp.route('/remove/<string:id>', methods=['POST'])
+@bp.route("/remove/<string:id>", methods=["POST"])
 @require_secret
 def api_schedule_remove_jobid(id):
     try:
-        g.resp.data['job'] = g.sc.remove_scheduled_job(id)
+        g.resp.data["job"] = g.sc.remove_scheduled_job(id)
     except SchedulerClientError as e:
-        g.resp.data['error'] = 'Error removing job: {}'.format(e)
+        g.resp.data["error"] = "Error removing job: {}".format(e)
     return g.resp.get_flask_response(current_app)

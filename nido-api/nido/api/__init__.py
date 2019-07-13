@@ -28,20 +28,21 @@ def require_secret(route):
     """Decorator for API routes to verify that client supplied a secret
     in the request body.
     """
+
     @wraps(route)
     def check_secret(*args, **kwargs):
         req_data = request.get_json()
         # Prepare a JSONResponse in case we need it
         resp = JSONResponse()
 
-        if 'secret' in list(req_data.keys()):
-            if req_data['secret'] == current_app.config['PUBLIC_API_SECRET']:
+        if "secret" in list(req_data.keys()):
+            if req_data["secret"] == current_app.config["PUBLIC_API_SECRET"]:
                 return route(*args, **kwargs)
             else:
-                resp.data['error'] = 'Invalid secret.'
+                resp.data["error"] = "Invalid secret."
                 resp.status = 401
         else:
-            resp.data['error'] = 'JSON in request was invalid.'
+            resp.data["error"] = "JSON in request was invalid."
             resp.status = 400
 
         return resp.get_flask_response()
@@ -59,7 +60,7 @@ class JSONResponse(object):
         response = app.make_response(
             json.dumps(self.data, sort_keys=True, ensure_ascii=False)
         )
-        response.headers['Content-Type'] = 'application/json'
+        response.headers["Content-Type"] = "application/json"
         response.status_code = self.status
         return response
 
@@ -73,6 +74,7 @@ class RegexConverter(BaseConverter):
     Source: https://stackoverflow.com/questions/5870188\
     /does-flask-support-regular-expressions-in-its-url-routing
     """
+
     def __init__(self, url_map, *items):
         super(RegexConverter, self).__init__(url_map)
         self.regex = items[0]

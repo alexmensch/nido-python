@@ -29,29 +29,28 @@ from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from nidod.config import DaemonConfig, Mode
 from libnido.exceptions import DBError
 
-engine = create_engine('sqlite:///{}'.format(DaemonConfig.DB_PATH))
+engine = create_engine("sqlite:///{}".format(DaemonConfig.DB_PATH))
 Base = declarative_base()
 Session = sessionmaker(bind=engine)
 
 
 class _Settings(Base):
-    __tablename__ = 'settings'
+    __tablename__ = "settings"
     id = Column(Integer, primary_key=True)
     set_temp = Column(Float, nullable=False)
     set_mode = Column(Integer, nullable=False)
     celsius = Column(Boolean, nullable=False)
 
     def __repr__(self):
-        return (
-            '<Settings(set_temp={}, set_mode={}, celsius={})>'
-            .format(self.set_temp, Mode(self.set_mode).name, self.celsius)
+        return "<Settings(set_temp={}, set_mode={}, celsius={})>".format(
+            self.set_temp, Mode(self.set_mode).name, self.celsius
         )
 
     def to_dict(self):
         return {
-            'set_temp': self.set_temp,
-            'set_mode': Mode(self.set_mode).name,
-            'celsius': self.celsius
+            "set_temp": self.set_temp,
+            "set_mode": Mode(self.set_mode).name,
+            "celsius": self.celsius,
         }
 
 
@@ -112,15 +111,12 @@ def _init_db(base, engine):
         settings.celsius = False
     finally:
         if not isinstance(settings, _Settings):
-            settings = _Settings(set_temp=21.0,
-                                 set_mode=Mode.Off.value,
-                                 celsius=False)
-        print('Initializing database with default settings: {}'
-              .format(settings))
+            settings = _Settings(set_temp=21.0, set_mode=Mode.Off.value, celsius=False)
+        print("Initializing database with default settings: {}".format(settings))
         session.add(settings)
         session.commit()
     return None
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _init_db(Base, engine)

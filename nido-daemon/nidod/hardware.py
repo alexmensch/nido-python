@@ -21,6 +21,7 @@ from __future__ import division
 from __future__ import unicode_literals
 from __future__ import print_function
 from future import standard_library
+
 standard_library.install_aliases()
 from builtins import *
 from builtins import str
@@ -34,9 +35,10 @@ from libnido import Mode, Status
 from libnido.exceptions import ControllerError, SensorError
 from nidod.thermostat import Thermostat
 
-if 'NIDO_TESTING' in os.environ:
+if "NIDO_TESTING" in os.environ:
     from nidod.lib.testing import FakeGPIO, FakeSensor as BME280
-    GPIO = FakeGPIO(os.environ['NIDO_TESTING_GPIO'])
+
+    GPIO = FakeGPIO(os.environ["NIDO_TESTING_GPIO"])
     BME280_OSAMPLE_8 = None
 else:
     import RPi.GPIO as GPIO
@@ -58,21 +60,22 @@ class Sensor(object):
 
         # Could not connect to sensor
         if self.sensor is None:
-            raise SensorError('Sensor was not detected.')
+            raise SensorError("Sensor was not detected.")
 
         temp_c = self.sensor.read_temperature()
         pressure_mb = self.sensor.read_pressure() / 100
         relative_humidity = self.sensor.read_humidity()
         self._l.debug(
-            'Sensor data: T = {}C | P = {} | RH = {}'
-            .format(temp_c, pressure_mb, relative_humidity)
+            "Sensor data: T = {}C | P = {} | RH = {}".format(
+                temp_c, pressure_mb, relative_humidity
+            )
         )
         conditions = {
-            'temp_c': temp_c,
-            'pressure_mb': pressure_mb,
-            'relative_humidity': relative_humidity
+            "temp_c": temp_c,
+            "pressure_mb": pressure_mb,
+            "relative_humidity": relative_humidity,
         }
-        resp['conditions'] = conditions
+        resp["conditions"] = conditions
 
         return resp
 
@@ -93,43 +96,41 @@ class Controller(object):
         GPIO.setup(self._HEATING, GPIO.OUT)
         GPIO.setup(self._COOLING, GPIO.OUT)
         self._l.debug(
-            'GPIO pins configured: heat = {} | cool = {}'
-            .format(self._HEATING, self._COOLING)
+            "GPIO pins configured: heat = {} | cool = {}".format(
+                self._HEATING, self._COOLING
+            )
         )
 
         return
 
     def get_status(self):
-        if (GPIO.input(self._HEATING) and GPIO.input(self._COOLING)):
-            self._l.error('** Both heating and cooling pins enabled. **')
+        if GPIO.input(self._HEATING) and GPIO.input(self._COOLING):
+            self._l.error("** Both heating and cooling pins enabled. **")
             self.shutdown()
             raise ControllerError(
-                'Both heating and cooling pins were enabled. '
-                'Both pins disabled as a precaution.'
+                "Both heating and cooling pins were enabled. "
+                "Both pins disabled as a precaution."
             )
         elif GPIO.input(self._HEATING):
-            self._l.debug('Get status: {}'.format(Status.Heating.name))
+            self._l.debug("Get status: {}".format(Status.Heating.name))
             return Status.Heating.value
         elif GPIO.input(self._COOLING):
-            self._l.debug('Get state: {}'.format(Status.Cooling.name))
+            self._l.debug("Get state: {}".format(Status.Cooling.name))
             return Status.Cooling.value
         else:
-            self._l.debug('Get state: {}'.format(Status.Off.name))
+            self._l.debug("Get state: {}".format(Status.Off.name))
             return Status.Off.value
 
     def _enable_heating(self, status, temp, set_temp, hysteresis):
         if (temp + hysteresis) < set_temp:
             GPIO.output(self._HEATING, True)
             GPIO.output(self._COOLING, False)
-            self._l.debug(
-                'Enabled HEAT: {} < {}'.format(temp + hysteresis, set_temp)
-            )
+            self._l.debug("Enabled HEAT: {} < {}".format(temp + hysteresis, set_temp))
         elif (temp < set_temp) and (status is Status.Heating):
             GPIO.output(self._HEATING, True)
             GPIO.output(self._COOLING, False)
             self._l.debug(
-                'Enabled HEAT: {} < {} and status = Heating'
-                .format(temp, set_temp)
+                "Enabled HEAT: {} < {} and status = Heating".format(temp, set_temp)
             )
         return
 
@@ -145,30 +146,29 @@ class Controller(object):
     def shutdown(self):
         GPIO.output(self._HEATING, False)
         GPIO.output(self._COOLING, False)
-        self._l.debug('Shut down GPIO pins.')
+        self._l.debug("Shut down GPIO pins.")
         return
 
     def update(self):
         settings = Thermostat.get_settings()
         try:
-            mode = settings['set_mode']
+            mode = settings["set_mode"]
             status = self.get_status()
-            temp = Sensor().get_conditions()['conditions']['temp_c']
-            set_temp = settings['set_temp']
+            temp = Sensor().get_conditions()["conditions"]["temp_c"]
+            set_temp = settings["set_temp"]
             hysteresis = HardwareConfig.HYSTERESIS
         except KeyError as e:
             self.shutdown()
-            raise ControllerError('Error reading Nido configuration: {}'
-                                  .format(e))
+            raise ControllerError("Error reading Nido configuration: {}".format(e))
         except ControllerError:
             self.shutdown()
             raise
 
         if mode == Mode.Off.name:
-            self._l.debug('Mode = Off | Set temp {}C'.format(set_temp))
+            self._l.debug("Mode = Off | Set temp {}C".format(set_temp))
             self.shutdown()
         elif mode == Mode.Heat.name:
-            self._l.debug('Mode = Heat | Set temp {}C'.format(set_temp))
+            self._l.debug("Mode = Heat | Set temp {}C".format(set_temp))
             if temp < set_temp:
                 self._enable_heating(status, temp, set_temp, hysteresis)
             else:

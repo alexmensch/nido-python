@@ -10,8 +10,8 @@ class SchedulerConfig(object):
 
 
 class DaemonConfig(object):
-    DB_PATH = '{}/instance/nido.sqlite'.format(os.environ['NIDO_BASE'])
-    PID_FILE = os.environ['NIDOD_PID_FILE']
+    DB_PATH = "{}/instance/nido.sqlite".format(os.environ["NIDO_BASE"])
+    PID_FILE = os.environ["NIDOD_PID_FILE"]
 
 
 class HardwareConfig(object):
@@ -22,9 +22,9 @@ class HardwareConfig(object):
 
 
 class MQTTConfig(object):
-    HOSTNAME = os.environ['NIDOD_MQTT_HOSTNAME']
-    PORT = os.environ['NIDOD_MQTT_PORT']
+    HOSTNAME = os.environ["NIDOD_MQTT_HOSTNAME"]
+    PORT = os.environ["NIDOD_MQTT_PORT"]
     KEEPALIVE = 60
-    CLIENT_NAME = os.environ['NIDOD_MQTT_CLIENT_NAME']
-    TOPIC_BASE = 'nido/'
+    CLIENT_NAME = os.environ["NIDOD_MQTT_CLIENT_NAME"]
+    TOPIC_BASE = "nido/"
     POLL_INTERVAL = 60

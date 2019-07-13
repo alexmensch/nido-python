@@ -36,6 +36,7 @@ from __future__ import unicode_literals
 from __future__ import division
 from __future__ import absolute_import
 from future import standard_library
+
 standard_library.install_aliases()
 from builtins import *
 from builtins import str
@@ -56,8 +57,15 @@ class Daemon(object):
     Usage: subclass the Daemon class and override the run()
     and quit() methods.
     """
-    def __init__(self, pidfile, workdir, stdin='/dev/null',
-                 stdout='/dev/null', stderr='/dev/null'):
+
+    def __init__(
+        self,
+        pidfile,
+        workdir,
+        stdin="/dev/null",
+        stdout="/dev/null",
+        stderr="/dev/null",
+    ):
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
@@ -79,9 +87,7 @@ class Daemon(object):
                 # exit first parent
                 sys.exit(0)
         except OSError as e:
-            sys.stderr.write(
-                'fork #1 failed: %d (%s)\n' % (e.errno, e.strerror)
-            )
+            sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
             sys.exit(1)
 
         # decouple from parent environment
@@ -96,17 +102,15 @@ class Daemon(object):
                 # exit from second parent
                 sys.exit(0)
         except OSError as e:
-            sys.stderr.write(
-                'fork #2 failed: %d (%s)\n' % (e.errno, e.strerror)
-            )
+            sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
             sys.exit(1)
 
         # redirect standard file descriptors
         sys.stdout.flush()
         sys.stderr.flush()
-        si = open(self.stdin, 'r')
-        so = open(self.stdout, 'a+')
-        se = open(self.stderr, 'a+')
+        si = open(self.stdin, "r")
+        so = open(self.stdout, "a+")
+        se = open(self.stderr, "a+")
         os.dup2(si.fileno(), sys.stdin.fileno())
         os.dup2(so.fileno(), sys.stdout.fileno())
         os.dup2(se.fileno(), sys.stderr.fileno())
@@ -119,7 +123,7 @@ class Daemon(object):
 
         # write pidfile
         pid = str(os.getpid())
-        with open(self.pidfile, 'w+') as f:
+        with open(self.pidfile, "w+") as f:
             f.write("%s\n" % pid)
 
     def onstop(self):
@@ -132,18 +136,18 @@ class Daemon(object):
         """
         # Check for a pidfile to see if the daemon already runs
         try:
-            with open(self.pidfile, 'r') as pf:
+            with open(self.pidfile, "r") as pf:
                 pid = int(pf.read().strip())
         except IOError:
             pid = None
 
         if pid:
-            message = 'pidfile %s already exists. Daemon already running?\n'
+            message = "pidfile %s already exists. Daemon already running?\n"
             sys.stderr.write(message % self.pidfile)
             sys.exit(1)
 
         # Start the daemon
-        self._l.info('Starting Nido daemon')
+        self._l.info("Starting Nido daemon")
         self.daemonize()
         self.run()
 
@@ -153,13 +157,13 @@ class Daemon(object):
         """
         # Get the pid from the pidfile
         try:
-            with open(self.pidfile, 'r') as pf:
+            with open(self.pidfile, "r") as pf:
                 pid = int(pf.read().strip())
         except IOError:
             pid = None
 
         if not pid:
-            message = 'pidfile %s does not exist. Daemon not running?\n'
+            message = "pidfile %s does not exist. Daemon not running?\n"
             sys.stderr.write(message % self.pidfile)
             return None  # not an error in a restart
 
@@ -170,7 +174,7 @@ class Daemon(object):
                 time.sleep(0.1)
         except OSError as err:
             err = str(err)
-            if err.find('No such process') > 0:
+            if err.find("No such process") > 0:
                 if os.path.exists(self.pidfile):
                     os.remove(self.pidfile)
             else:

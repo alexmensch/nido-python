@@ -21,6 +21,7 @@ from __future__ import unicode_literals
 from __future__ import print_function
 from __future__ import division
 from future import standard_library
+
 standard_library.install_aliases()
 from builtins import *
 
@@ -54,10 +55,8 @@ class NidoDaemonService(rpyc.Service):
     def modify_job(self, job_id, jobstore=None, **changes):
         return self._scheduler.modify_job(job_id, jobstore, **changes)
 
-    def reschedule_job(self, job_id, jobstore=None, trigger=None,
-                       **trigger_args):
-        return self._scheduler.reschedule_job(job_id, jobstore, trigger,
-                                              **trigger_args)
+    def reschedule_job(self, job_id, jobstore=None, trigger=None, **trigger_args):
+        return self._scheduler.reschedule_job(job_id, jobstore, trigger, **trigger_args)
 
     def pause_job(self, job_id, jobstore=None):
         return self._scheduler.pause_job(job_id, jobstore)
@@ -81,9 +80,9 @@ class NidoDaemonService(rpyc.Service):
     @staticmethod
     def set_settings(set_temp=None, set_mode=None, celsius=None):
         try:
-            Thermostat.set_settings(set_temp=set_temp,
-                                    set_mode=set_mode,
-                                    celsius=celsius)
+            Thermostat.set_settings(
+                set_temp=set_temp, set_mode=set_mode, celsius=celsius
+            )
         except ThermostatError:
             raise
         else:

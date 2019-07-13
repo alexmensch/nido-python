@@ -43,10 +43,10 @@ def reverseByteOrder(data):
     value.
     """
     # Courtesy Vishal Sapre
-    byteCount = len(hex(data)[2:].replace('L', '')[::2])
+    byteCount = len(hex(data)[2:].replace("L", "")[::2])
     val = 0
     for i in range(byteCount):
-        val = (val << 8) | (data & 0xff)
+        val = (val << 8) | (data & 0xFF)
         data >>= 8
     return val
 
@@ -70,7 +70,7 @@ def get_default_bus():
         # and P9_20).
         return 1
     else:
-        raise RuntimeError('Could not determine default I2C bus for platform.')
+        raise RuntimeError("Could not determine default I2C bus for platform.")
 
 
 def get_i2c_device(address, busnum=None, **kwargs):
@@ -99,12 +99,10 @@ def require_repeated_start():
         # BCM2708 driver sysfs tree can be changed to enable I2C
         # repeated starts.
         subprocess.check_call(
-            'chmod 666 /sys/module/i2c_bcm2708/parameters/combined',
-            shell=True
+            "chmod 666 /sys/module/i2c_bcm2708/parameters/combined", shell=True
         )
         subprocess.check_call(
-            'echo -n 1 > /sys/module/i2c_bcm2708/parameters/combined',
-            shell=True
+            "echo -n 1 > /sys/module/i2c_bcm2708/parameters/combined", shell=True
         )
     # Other platforms are a no-op because they (presumably) have the
     # correct behavior and send repeated starts.
@@ -115,6 +113,7 @@ class Device(object):
     library. Allows reading and writing 8-bit, 16-bit, and byte array
     values to registers on the device.
     """
+
     def __init__(self, address, busnum):
         """Create an instance of the I2C device at the specified address
         on the specified I2C bus number.
@@ -122,8 +121,7 @@ class Device(object):
         self._address = address
         self._bus = busnum
         self._logger = logging.getLogger(
-            'Adafruit_I2C.Device.Bus.{0}.Address.{1:#0X}'
-            .format(busnum, address)
+            "Adafruit_I2C.Device.Bus.{0}.Address.{1:#0X}".format(busnum, address)
         )
 
     def writeRaw8(self, value):
@@ -147,7 +145,9 @@ class Device(object):
             bus.write_word_data(self._address, register, value)
         self._logger.debug(
             "Wrote 0x%04X to register pair 0x%02X, 0x%02X",
-            value, register, register + 1
+            value,
+            register,
+            register + 1,
         )
 
     def writeList(self, register, data):
@@ -177,10 +177,7 @@ class Device(object):
         """Read an unsigned byte from the specified register."""
         with SMBusWrapper(self._bus) as bus:
             result = bus.read_byte_data(self._address, register) & 0xFF
-        self._logger.debug(
-            "Read 0x%02X from register 0x%02X",
-            result, register
-        )
+        self._logger.debug("Read 0x%02X from register 0x%02X", result, register)
         return result
 
     def readS8(self, register):
@@ -199,7 +196,9 @@ class Device(object):
             result = bus.read_word_data(self._address, register) & 0xFFFF
         self._logger.debug(
             "Read 0x%04X from register pair 0x%02X, 0x%02X",
-            result, register, register + 1
+            result,
+            register,
+            register + 1,
         )
         # Swap bytes if using big endian because read_word_data assumes little
         # endian on ARM (little endian) systems.

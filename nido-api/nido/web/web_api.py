@@ -26,33 +26,31 @@ from nido.web import LocalWeather, validate_json_req
 from nido.api import JSONResponse
 from nidod.lib.rpc.client import ThermostatClient, ThermostatClientError
 
-bp = Blueprint('web_api', __name__)
+bp = Blueprint("web_api", __name__)
 
 
 @bp.before_app_request
 def json_response():
     g.resp = JSONResponse()
     g.tc = ThermostatClient(
-        current_app.config['RPC_HOST'],
-        current_app.config['RPC_PORT'],
-        json=True
+        current_app.config["RPC_HOST"], current_app.config["RPC_PORT"], json=True
     )
     return None
 
 
-@bp.route('/get_state', methods=['POST'])
+@bp.route("/get_state", methods=["POST"])
 @require_session
 def get_state():
     try:
         g.resp.data = g.tc.get_state()
     except ThermostatClientError as e:
-        g.resp.data['error'] = 'Error getting thermostat state: {}'.format(e)
+        g.resp.data["error"] = "Error getting thermostat state: {}".format(e)
         g.resp.status = 400
     finally:
         return g.resp.get_flask_response(current_app)
 
 
-@bp.route('/get_weather', methods=['POST'])
+@bp.route("/get_weather", methods=["POST"])
 @require_session
 def get_weather():
     """
@@ -65,46 +63,42 @@ def get_weather():
           Needs to be a serializable object (see Flask documentation).
     """
     g.resp.data = LocalWeather(
-        current_app.config['WUNDERGROUND_API_KEY']
+        current_app.config["WUNDERGROUND_API_KEY"]
     ).get_conditions()
     return g.resp.get_flask_response(current_app)
 
 
-@bp.route('/get_config', methods=['POST'])
+@bp.route("/get_config", methods=["POST"])
 @require_session
 def get_config():
     try:
-        g.resp.data['config'] = g.tc.get_settings()
+        g.resp.data["config"] = g.tc.get_settings()
     except ThermostatClientError as e:
-        g.resp.data['error'] = 'Error getting configuration: {}'.format(e)
+        g.resp.data["error"] = "Error getting configuration: {}".format(e)
         g.resp.status = 400
     finally:
         return g.resp.get_flask_response(current_app)
 
 
-@bp.route('/set_config', methods=['POST'])
+@bp.route("/set_config", methods=["POST"])
 @require_session
 def set_config():
     new_settings = request.get_json()
 
     # Expect to receive a json dict with
     # one or more of the following pairs
-    validation = {
-        'set_temp': Number,
-        'set_mode': basestring,
-        'celsius': bool
-    }
+    validation = {"set_temp": Number, "set_mode": basestring, "celsius": bool}
 
     if validate_json_req(new_settings, validation):
         try:
-            g.resp.data['config'] = g.tc.set_settings(**new_settings)
+            g.resp.data["config"] = g.tc.set_settings(**new_settings)
         except ThermostatClientError as e:
-            g.resp.data['error'] = 'Error updating configuration: {}'.format(e)
+            g.resp.data["error"] = "Error updating configuration: {}".format(e)
             g.resp.status = 400
         else:
-            g.resp.data['message'] = 'Configuration updated successfully.'
+            g.resp.data["message"] = "Configuration updated successfully."
     else:
-        g.resp.data['error'] = 'JSON in request was invalid.'
+        g.resp.data["error"] = "JSON in request was invalid."
         g.resp.status = 400
 
     return g.resp.get_flask_response(current_app)

@@ -3,6 +3,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 from future import standard_library
+
 standard_library.install_aliases()
 from builtins import *
 from builtins import object
@@ -45,12 +46,12 @@ class FakeGPIO(object):
         return None
 
     def _get_pins(self):
-        with open(self._state, 'r') as f:
+        with open(self._state, "r") as f:
             self._pins = yaml.safe_load(f)
         return None
 
     def _write(self):
-        with open(self._state, 'w') as f:
+        with open(self._state, "w") as f:
             yaml.dump(self._pins, f, default_flow_style=False, indent=4)
         return None
 

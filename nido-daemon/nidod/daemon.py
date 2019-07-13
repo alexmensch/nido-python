@@ -21,6 +21,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 from future import standard_library
+
 standard_library.install_aliases()
 from builtins import *
 
@@ -41,48 +42,45 @@ from nidod.rpc.server import NidoDaemonService
 
 class NidoDaemon(Daemon):
     def run(self):
-        self._l.debug('Starting run loop for Nido daemon')
+        self._l.debug("Starting run loop for Nido daemon")
         self.controller = Controller()
 
-        self.MQTTclient = mqtt.Client(
-            MQTTConfig.CLIENT_NAME,
-            clean_session=False
-        )
+        self.MQTTclient = mqtt.Client(MQTTConfig.CLIENT_NAME, clean_session=False)
         self.MQTTclient.enable_logger()
         self.MQTTclient.connect_async(
             MQTTConfig.HOSTNAME,
             port=int(MQTTConfig.PORT),
-            keepalive=MQTTConfig.KEEPALIVE
+            keepalive=MQTTConfig.KEEPALIVE,
         )
 
         self.scheduler = BackgroundScheduler()
         jobstores = {
-            'default': {'type': 'memory'},
-            'schedule': SQLAlchemyJobStore(
-                url='sqlite:///{}'.format(DaemonConfig.DB_PATH)
-            )
+            "default": {"type": "memory"},
+            "schedule": SQLAlchemyJobStore(
+                url="sqlite:///{}".format(DaemonConfig.DB_PATH)
+            ),
         }
-        job_defaults = {'coalesce': True, 'misfire_grace_time': 10}
-        self.scheduler.configure(jobstores=jobstores,
-                                 job_defaults=job_defaults)
-        self.scheduler.add_job(NidoDaemonService.wakeup, name='Poll')
+        job_defaults = {"coalesce": True, "misfire_grace_time": 10}
+        self.scheduler.configure(jobstores=jobstores, job_defaults=job_defaults)
+        self.scheduler.add_job(NidoDaemonService.wakeup, name="Poll")
         self.scheduler.add_job(
-            NidoDaemonService.wakeup, trigger='interval',
-            seconds=SchedulerConfig.POLL_INTERVAL, name='Poll'
+            NidoDaemonService.wakeup,
+            trigger="interval",
+            seconds=SchedulerConfig.POLL_INTERVAL,
+            name="Poll",
         )
         self.scheduler.add_job(
-            NidoDaemonService.log_data, args=[self.MQTTclient],
-            trigger='interval', seconds=MQTTConfig.POLL_INTERVAL,
-            name='DataLogger'
+            NidoDaemonService.log_data,
+            args=[self.MQTTclient],
+            trigger="interval",
+            seconds=MQTTConfig.POLL_INTERVAL,
+            name="DataLogger",
         )
 
         self.RPCserver = ThreadedServer(
             NidoDaemonService(self.scheduler),
-            port=int(os.environ['NIDOD_RPC_PORT']),
-            protocol_config={
-                'allow_public_attrs': True,
-                'allow_pickle': True
-            }
+            port=int(os.environ["NIDOD_RPC_PORT"]),
+            protocol_config={"allow_public_attrs": True, "allow_pickle": True},
         )
 
         self.MQTTclient.loop_start()
@@ -94,28 +92,26 @@ class NidoDaemon(Daemon):
         self.RPCserver.close()
         self.scheduler.shutdown()
         self.MQTTclient.disconnect()
-        self._l.info('Nido daemon shutdown')
-        self._l.info('********************')
+        self._l.info("Nido daemon shutdown")
+        self._l.info("********************")
         return
 
 
-if __name__ == '__main__':
-    pid_file = os.environ['NIDOD_PID_FILE']
-    work_dir = os.environ['NIDOD_WORK_DIR']
-    log_file = os.environ['NIDOD_LOG_FILE']
+if __name__ == "__main__":
+    pid_file = os.environ["NIDOD_PID_FILE"]
+    work_dir = os.environ["NIDOD_WORK_DIR"]
+    log_file = os.environ["NIDOD_LOG_FILE"]
 
     handler = logging.handlers.TimedRotatingFileHandler(
-        log_file,
-        when='midnight',
-        backupCount=7
+        log_file, when="midnight", backupCount=7
     )
     formatter = logging.Formatter(
-        fmt='%(asctime)s [%(levelname)s] %(name)s | %(message)s',
-        datefmt='%d/%m/%Y %H:%M:%S'
+        fmt="%(asctime)s [%(levelname)s] %(name)s | %(message)s",
+        datefmt="%d/%m/%Y %H:%M:%S",
     )
     handler.setFormatter(formatter)
     root = logging.getLogger()
-    if 'NIDO_DEBUG' in os.environ:
+    if "NIDO_DEBUG" in os.environ:
         root.setLevel(logging.DEBUG)
     else:
         root.setLevel(logging.INFO)
@@ -123,9 +119,9 @@ if __name__ == '__main__':
 
     daemon = NidoDaemon(pid_file, work_dir, stderr=log_file, stdout=log_file)
 
-    if 'start' == sys.argv[1]:
+    if "start" == sys.argv[1]:
         daemon.start()
-    elif 'stop' == sys.argv[1]:
+    elif "stop" == sys.argv[1]:
         daemon.stop()
-    elif 'restart' == sys.argv[1]:
+    elif "restart" == sys.argv[1]:
         daemon.restart()

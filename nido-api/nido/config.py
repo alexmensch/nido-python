@@ -4,15 +4,15 @@ import os
 
 
 class FlaskConfig(object):
-    ENV = 'production'
+    ENV = "production"
     DEBUG = False
     TESTING = False
-    RPC_HOST = os.environ['NIDOD_RPC_HOST']
-    RPC_PORT = int(os.environ['NIDOD_RPC_PORT'])
+    RPC_HOST = os.environ["NIDOD_RPC_HOST"]
+    RPC_PORT = int(os.environ["NIDOD_RPC_PORT"])
 
 
 class DevelopmentConfig(FlaskConfig):
-    ENV = 'development'
+    ENV = "development"
     DEBUG = True
 
 
