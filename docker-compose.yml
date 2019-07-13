@@ -1,12 +1,21 @@
-version: "3"
+version: "3.4"
 services:
   nido-api:
-    build: ./nido-api
+    build:
+      context: .
+      target: nido-api
     ports:
       - "80:80"
   nido-daemon:
-    build: ./nido-daemon
+    build:
+      context: .
+      target: nido-daemon
+    environment:
+      - NIDO_TESTING=""
+      - NIDO_TESTING_GPIO=/tmp/gpio_pins.yaml
   mosquitto:
-    image: eclipse-mosquitto
+    build:
+      context: .
+      target: nido-mqtt
     ports:
       - "1883:1883"

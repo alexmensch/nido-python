@@ -19,7 +19,8 @@
 from flask import Blueprint, current_app, g
 
 from nido.api import require_secret, JSONResponse
-from nidod.lib.rpc.client import ThermostatClient, ThermostatClientError
+from libnido.rpc.client import ThermostatClient
+from libnido.exceptions import ThermostatClientError
 
 bp = Blueprint("api_local", __name__)
 

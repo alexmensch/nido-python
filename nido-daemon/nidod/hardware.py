@@ -36,7 +36,7 @@ from libnido.exceptions import ControllerError, SensorError
 from nidod.thermostat import Thermostat
 
 if "NIDO_TESTING" in os.environ:
-    from nidod.lib.testing import FakeGPIO, FakeSensor as BME280
+    from libnido.testing import FakeGPIO, FakeSensor as BME280
 
     GPIO = FakeGPIO(os.environ["NIDO_TESTING_GPIO"])
     BME280_OSAMPLE_8 = None

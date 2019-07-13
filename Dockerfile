@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
 RUN pip3 install pip wheel setuptools --upgrade
 
 
-FROM arm32v6/python:3-alpine AS nido-api
+FROM arm32v6/python:3.5-alpine AS nido-api
 
 VOLUME /app/instance
 
@@ -53,13 +53,16 @@ ENV NIDO_BASE /app
 ENV NIDOD_PID_FILE /tmp/nido.pid
 ENV NIDOD_WORK_DIR /tmp
 ENV NIDOD_LOG_FILE /app/log/nidod.log
+ENV NIDOD_RPC_PORT 49152
 ENV NIDOD_MQTT_CLIENT_NAME Nido
-ENV NIDOD_MQTT_HOSTNAME mqtt
+ENV NIDOD_MQTT_HOSTNAME mosquitto
 ENV NIDOD_MQTT_PORT 1883
+
+RUN python3 -m nidod.db
 
 EXPOSE 49152
 
-ENTRYPOINT ["python3", "daemon.py", "start"]
+ENTRYPOINT ["python3", "-m", "nidod.daemon", "start"]
 
 
 FROM arm32v6/eclipse-mosquitto AS nido-mqtt

@@ -24,7 +24,8 @@ from flask import Blueprint, current_app, g, request
 from nido.auth import require_session
 from nido.web import LocalWeather, validate_json_req
 from nido.api import JSONResponse
-from nidod.lib.rpc.client import ThermostatClient, ThermostatClientError
+from libnido.rpc.client import ThermostatClient
+from libnido.exceptions import ThermostatClientError
 
 bp = Blueprint("web_api", __name__)
 
