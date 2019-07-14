@@ -20,6 +20,7 @@ package-lock.json
 # Homebridge
 homebridge/*
 !homebridge/config.json
+!homebridge/startup.sh
 
 # Database
 nido.sqlite
