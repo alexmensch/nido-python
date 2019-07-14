@@ -51,8 +51,6 @@ RUN pip3 install -r requirements.txt --find-links /wheelhouse
 
 ENV NIDO_BASE /app
 ENV NIDO_TESTING_GPIO=/tmp/gpio_pins.yaml
-ENV NIDOD_PID_FILE /tmp/nido.pid
-ENV NIDOD_WORK_DIR /tmp
 ENV NIDOD_LOG_FILE /app/log/nidod.log
 ENV NIDOD_RPC_PORT 49152
 ENV NIDOD_MQTT_CLIENT_NAME Nido
