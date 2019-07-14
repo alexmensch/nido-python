@@ -53,7 +53,7 @@ def api_set_mode(mode):
 
 
 @bp.route(
-    '/set/temp/<regex("(([0-9]*)(\.([0-9]+))?)"):temp>' '/<regex("[cCfF]"):scale>',
+    '/set/temp/<regex("(([0-9]*)(\.([0-9]+))?)"):temp>/<regex("[cCfF]"):scale>',
     methods=["POST"],
 )
 @require_secret
