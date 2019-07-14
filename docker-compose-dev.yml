@@ -10,7 +10,7 @@ services:
       - NIDOD_RPC_HOST=nido-daemon
       - NIDOD_MQTT_HOSTNAME=mosquitto
       - FLASK_APP=nido
-      - FLASK_RUN_SERVER=0.0.0.0
+      - FLASK_RUN_HOST=0.0.0.0
       - FLASK_RUN_PORT=80
       - FLASK_ENV=development
       - FLASK_DEBUG=TRUE
