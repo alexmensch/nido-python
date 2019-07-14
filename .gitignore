@@ -17,6 +17,10 @@ npm-debug.log
 .module-cache
 package-lock.json
 
+# Homebridge
+homebridge/*
+!homebridge/config.json
+
 # Database
 nido.sqlite
 
