@@ -19,6 +19,7 @@ package-lock.json
 
 # Database
 nido.sqlite
+log/
 
 # Webpack'd JS
 nido-api/nido/static/js/nido.js

@@ -3,6 +3,7 @@ services:
   nido-api:
     build:
       context: .
+      dockerfile: Dockerfile-dev
       target: nido-api
     ports:
       - "80:80"
@@ -23,6 +24,7 @@ services:
   nido-daemon:
     build:
       context: .
+      dockerfile: Dockerfile-dev
       target: nido-daemon
     environment:
       - NIDO_TESTING=""
@@ -32,6 +34,7 @@ services:
   mosquitto:
     build:
       context: .
+      dockerfile: Dockerfile-dev
       target: nido-mqtt
     ports:
       - "1883:1883"

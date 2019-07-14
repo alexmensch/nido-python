@@ -45,7 +45,7 @@ def require_secret(route):
             resp.data["error"] = "JSON in request was invalid."
             resp.status = 400
 
-        return resp.get_flask_response()
+        return resp.get_flask_response(current_app)
 
     return check_secret
 

@@ -11,7 +11,6 @@ class SchedulerConfig(object):
 
 class DaemonConfig(object):
     DB_PATH = "{}/instance/nido.sqlite".format(os.environ["NIDO_BASE"])
-    PID_FILE = os.environ["NIDOD_PID_FILE"]
 
 
 class HardwareConfig(object):
