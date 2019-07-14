@@ -12,8 +12,6 @@ RUN pip3 install pip wheel setuptools --upgrade
 
 FROM arm32v6/python:3.5-alpine AS nido-api
 
-VOLUME /app/instance
-
 RUN pip install pip wheel setuptools --upgrade
 
 COPY ./nido-lib /nido-lib
@@ -29,15 +27,14 @@ RUN pip install -r requirements.txt --find-links /wheelhouse
 ENV NIDOD_RPC_HOST nido-daemon
 ENV NIDOD_RPC_PORT 49152
 
+VOLUME /app/instance
+
 EXPOSE 80
 
 ENTRYPOINT ["gunicorn", "-b 0.0.0.0:80", "nido:create_app()"]
 
 
 FROM raspbian-base AS nido-daemon
-
-VOLUME /app/instance
-VOLUME /app/log
 
 COPY ./nido-lib /nido-lib
 WORKDIR /nido-lib
@@ -57,11 +54,12 @@ ENV NIDOD_MQTT_CLIENT_NAME Nido
 ENV NIDOD_MQTT_HOSTNAME mosquitto
 ENV NIDOD_MQTT_PORT 1883
 
-RUN python3 -m nidod.db
+VOLUME /app/instance
+VOLUME /app/log
 
 EXPOSE 49152
 
-ENTRYPOINT ["python3", "-m", "nidod.controller"]
+ENTRYPOINT ["python3", "-m", "nidod.supervisor"]
 
 
 FROM arm32v6/eclipse-mosquitto AS nido-mqtt

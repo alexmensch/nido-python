@@ -90,7 +90,7 @@ def set_settings(set_temp=None, set_mode=None, celsius=None):
     return None
 
 
-def _init_db(base, engine):
+def _init_db(base=Base, engine=engine):
     session = Session()
     query = session.query(_Settings)
     settings = None
@@ -116,7 +116,3 @@ def _init_db(base, engine):
         session.add(settings)
         session.commit()
     return None
-
-
-if __name__ == "__main__":
-    _init_db(Base, engine)

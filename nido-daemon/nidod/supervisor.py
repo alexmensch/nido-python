@@ -38,6 +38,7 @@ from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from nidod.config import SchedulerConfig, DaemonConfig, MQTTConfig
 from nidod.hardware import Controller
 from nidod.rpc.server import NidoDaemonService
+from nidod import db
 
 
 class Supervisor(object):
@@ -120,6 +121,9 @@ if __name__ == "__main__":
     else:
         root.setLevel(logging.INFO)
     root.addHandler(handler)
+
+    if not os.path.exists(DaemonConfig.DB_PATH):
+        db._init_db()
 
     supervisor = Supervisor()
     supervisor.run()
