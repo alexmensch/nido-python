@@ -1,5 +1,4 @@
 APScheduler==3.5.1
-future==0.16.0
 PyYAML==3.12
 rpyc==3.4.4
 

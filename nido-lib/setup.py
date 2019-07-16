@@ -38,5 +38,5 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    install_requires=["APScheduler", "future", "PyYAML", "rpyc"],
+    install_requires=["APScheduler", "PyYAML", "rpyc"],
 )

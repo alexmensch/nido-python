@@ -16,10 +16,6 @@
 #   along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 
-from builtins import *
-from builtins import str
-from builtins import object
-
 from contextlib import contextmanager
 import logging
 

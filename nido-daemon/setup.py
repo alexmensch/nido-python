@@ -40,7 +40,6 @@ setup(
     zip_safe=False,
     install_requires=[
         "APScheduler",
-        "future",
         "paho-mqtt",
         "RPi.GPIO",
         "rpyc",

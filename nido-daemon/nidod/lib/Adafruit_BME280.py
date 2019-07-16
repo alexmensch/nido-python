@@ -29,10 +29,6 @@
 # support.
 #
 
-from __future__ import absolute_import
-from __future__ import division
-from builtins import object
-
 import logging
 import time
 

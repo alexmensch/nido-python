@@ -42,7 +42,6 @@ setup(
         "APScheduler",
         "enum34",
         "flask",
-        "future",
         "gunicorn",
         "requests",
         "rpyc",
