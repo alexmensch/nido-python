@@ -6,13 +6,7 @@
 ####
 
 # Standard Flask config values
-SECRET_KEY = 'your-secret-key'
+SECRET_KEY = "your-secret-key'
 
-# Nido config values
-USERNAME = 'username'
-PASSWORD = 'password'
-PUBLIC_API_SECRET = 'your-secret'
-
-# 3rd party APIs
-WUNDERGROUND_API_KEY = 'your-api-key'
-GOOGLE_API_KEY = 'your-api-key'
+# Nido API secret key
+PUBLIC_API_SECRET = "your-secret"
