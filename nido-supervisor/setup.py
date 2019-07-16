@@ -17,9 +17,15 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 
 from setuptools import find_packages, setup
+import platform
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
+
+install_requires = ["APScheduler", "paho-mqtt", "rpyc", "smbus2", "SQLAlchemy"]
+
+if platform.machine() == "armv6l":
+    install_requires.append("RPi.GPIO")
 
 setup(
     name="nidod",
@@ -32,18 +38,11 @@ setup(
     url="https://github.com/alexmensch/nido",
     classifiers=[
         "Development Status :: 4 - Beta",
-        "License :: OSI Approved :: GNU General Public License v3" " or later (GPLv3+)",
+        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
         "Programming Language :: Python :: 3.5",
     ],
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    install_requires=[
-        "APScheduler",
-        "paho-mqtt",
-        "RPi.GPIO",
-        "rpyc",
-        "smbus2",
-        "SQLAlchemy",
-    ],
+    install_requires=install_requires,
 )

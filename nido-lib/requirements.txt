@@ -1,4 +1,4 @@
-APScheduler==3.5.1
+APScheduler==3.6.0
 PyYAML==3.12
 rpyc==3.4.4
 

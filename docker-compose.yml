@@ -3,19 +3,18 @@ services:
   nido-api:
     build:
       context: .
-      dockerfile: Dockerfile-dev
       target: nido-api
     ports:
       - "80:80"
     environment:
-      - NIDOD_RPC_HOST=nido-supervisor
-      - NIDOD_MQTT_HOSTNAME=mosquitto
       - FLASK_APP=nido
+      - FLASK_DEBUG=TRUE
+      - FLASK_ENV=development
       - FLASK_RUN_HOST=0.0.0.0
       - FLASK_RUN_PORT=80
-      - FLASK_ENV=development
-      - FLASK_DEBUG=TRUE
       - NIDO_DEBUG=""
+      - NIDOD_RPC_HOST=nido-supervisor
+      - NIDOD_MQTT_HOSTNAME=mosquitto
     volumes:
       - ./nido-api/instance:/app/instance
     entrypoint:
@@ -25,15 +24,13 @@ services:
   nido-supervisor:
     build:
       context: .
-      dockerfile: Dockerfile-dev
       target: nido-supervisor
     volumes:
       - ./nido-supervisor/instance:/app/instance
       - ./nido-supervisor/log:/app/log
   mosquitto:
     build:
-      context: .
-      dockerfile: Dockerfile-dev
+      context: ./mqtt
       target: nido-mqtt
     ports:
       - "1883:1883"
