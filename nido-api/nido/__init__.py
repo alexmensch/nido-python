@@ -27,7 +27,7 @@ from builtins import *
 
 import os
 import logging
-from flask import Flask, render_template
+from flask import Flask
 
 handler = logging.StreamHandler()
 formatter = logging.Formatter(
@@ -62,20 +62,9 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    @app.route("/")
-    def render_ui():
-        """The / route only serves to return the React-based UI."""
-        return render_template(
-            "index.html", google_api_key=app.config["GOOGLE_API_KEY"]
-        )
-
-    from nido import auth
-    from nido.web import web_api
     from nido.api import thermostat, schedule, RegexConverter
 
     app.url_map.converters["regex"] = RegexConverter
-    app.register_blueprint(auth.bp)
-    app.register_blueprint(web_api.bp)
     app.register_blueprint(thermostat.bp, url_prefix="/api")
     app.register_blueprint(schedule.bp, url_prefix="/api/schedule")
 

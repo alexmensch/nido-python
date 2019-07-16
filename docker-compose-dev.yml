@@ -15,6 +15,7 @@ services:
       - FLASK_RUN_PORT=80
       - FLASK_ENV=development
       - FLASK_DEBUG=TRUE
+      - NIDO_DEBUG=""
     volumes:
       - ./nido-api/instance:/app/instance
     entrypoint:
@@ -36,3 +37,14 @@ services:
       target: nido-mqtt
     ports:
       - "1883:1883"
+  homebridge:
+    image: oznu/homebridge:latest
+    restart: always
+    volumes:
+      - ./homebridge:/homebridge
+    environment:
+      - TZ=America/Los_Angeles
+      - HOMEBRIDGE_CONFIG_UI=1
+      - HOMEBRIDGE_CONFIG_UI_PORT=8080
+    ports:
+      - "8080:8080"
