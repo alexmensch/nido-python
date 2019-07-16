@@ -2,7 +2,7 @@ APScheduler==3.6.0
 libnido
 paho-mqtt==1.3.1
 RPi.GPIO==0.6.1; platform_machine == 'armv6l'
-rpyc==3.4.4
+rpyc==4.0.2
 smbus2==0.2.0
 SQLAlchemy==1.3.0
 
