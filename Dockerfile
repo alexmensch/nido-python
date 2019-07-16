@@ -26,7 +26,7 @@ VOLUME /app/instance
 
 RUN pip install -r requirements.txt --find-links /wheelhouse
 
-ENV NIDOD_RPC_HOST nido-daemon
+ENV NIDOD_RPC_HOST nido-supervisor
 ENV NIDOD_RPC_PORT 49152
 
 EXPOSE 80
@@ -34,14 +34,14 @@ EXPOSE 80
 ENTRYPOINT ["gunicorn", "-b 0.0.0.0:80", "nido:create_app()"]
 
 
-FROM raspbian-base AS nido-daemon
+FROM raspbian-base AS nido-supervisor
 
 COPY ./nido-lib /nido-lib
 WORKDIR /nido-lib
 
 RUN pip3 wheel --wheel-dir=/wheelhouse -r requirements.txt
 
-COPY ./nido-daemon /app
+COPY ./nido-supervisor /app
 WORKDIR /app
 
 RUN pip3 install -r requirements.txt --find-links /wheelhouse

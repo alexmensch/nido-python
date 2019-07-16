@@ -8,7 +8,7 @@ services:
     ports:
       - "80:80"
     environment:
-      - NIDOD_RPC_HOST=nido-daemon
+      - NIDOD_RPC_HOST=nido-supervisor
       - NIDOD_MQTT_HOSTNAME=mosquitto
       - FLASK_APP=nido
       - FLASK_RUN_HOST=0.0.0.0
@@ -22,14 +22,14 @@ services:
       - flask
       - run
       - --without-threads
-  nido-daemon:
+  nido-supervisor:
     build:
       context: .
       dockerfile: Dockerfile-dev
-      target: nido-daemon
+      target: nido-supervisor
     volumes:
-      - ./nido-daemon/instance:/app/instance
-      - ./nido-daemon/log:/app/log
+      - ./nido-supervisor/instance:/app/instance
+      - ./nido-supervisor/log:/app/log
   mosquitto:
     build:
       context: .
