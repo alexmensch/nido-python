@@ -22,12 +22,12 @@ RUN pip wheel --wheel-dir=/wheelhouse -r requirements.txt
 COPY ./nido-api /app
 WORKDIR /app
 
+VOLUME /app/instance
+
 RUN pip install -r requirements.txt --find-links /wheelhouse
 
 ENV NIDOD_RPC_HOST nido-daemon
 ENV NIDOD_RPC_PORT 49152
-
-VOLUME /app/instance
 
 EXPOSE 80
 
@@ -48,6 +48,7 @@ RUN pip3 install -r requirements.txt --find-links /wheelhouse
 
 ENV NIDO_BASE /app
 ENV NIDO_TESTING_GPIO=/tmp/gpio_pins.yaml
+ENV NIDO_TESTING=""
 ENV NIDOD_LOG_FILE /app/log/nidod.log
 ENV NIDOD_RPC_PORT 49152
 ENV NIDOD_MQTT_CLIENT_NAME Nido
