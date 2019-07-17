@@ -29,7 +29,7 @@ bp = Blueprint("api_local", __name__)
 def json_response():
     g.resp = JSONResponse()
     g.tc = ThermostatClient(
-        current_app.config["RPC_HOST"], current_app.config["RPC_PORT"], json=True
+        current_app.config["RPC_HOST"], current_app.config["RPC_PORT"]
     )
     return None
 

@@ -75,7 +75,7 @@ class Supervisor(object):
         self.RPCserver = ThreadedServer(
             NidoDaemonService(self.scheduler),
             port=int(os.environ["NIDOD_RPC_PORT"]),
-            protocol_config={"allow_public_attrs": True, "allow_pickle": True},
+            protocol_config={"allow_all_attrs": True, "allow_public_attrs": True, "allow_pickle": True, "instantiate_custom_exceptions": True},
         )
 
         atexit.register(self.quit)

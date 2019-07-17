@@ -17,6 +17,7 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 
 import yaml
+from os import path
 
 
 class FakeGPIO(object):
@@ -25,7 +26,6 @@ class FakeGPIO(object):
         self.BCM = None
         self.OUT = None
         self._state = state_file
-        self._write()
         return None
 
     def setwarnings(self, bool):
@@ -36,7 +36,7 @@ class FakeGPIO(object):
 
     def setup(self, pin, mode):
         self._get_pins()
-        if self._pins is None or pin not in self._pins:
+        if not self._pins or pin not in self._pins:
             self._set_pin(pin, False)
         return None
 
@@ -54,8 +54,9 @@ class FakeGPIO(object):
         return None
 
     def _get_pins(self):
-        with open(self._state, "r") as f:
-            self._pins = yaml.safe_load(f)
+        if path.exists(self._state):
+            with open(self._state, "r") as f:
+                self._pins = yaml.safe_load(f)
         return None
 
     def _write(self):

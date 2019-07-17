@@ -21,9 +21,6 @@ import logging
 
 import rpyc
 from rpyc.utils.classic import obtain
-from apscheduler.triggers.cron import CronTrigger
-from apscheduler.triggers.interval import IntervalTrigger
-from apscheduler.triggers.date import DateTrigger
 from apscheduler.jobstores.base import JobLookupError, ConflictingIdError
 
 from libnido.exceptions import (
@@ -37,8 +34,7 @@ from libnido import Status
 
 
 class NidoDaemonRPCClient(object):
-    def __init__(self, host, port, json=False):
-        self._json = json
+    def __init__(self, host, port):
         self._host = host
         self._port = port
         self._l = logging.getLogger(__name__)
@@ -52,6 +48,7 @@ class NidoDaemonRPCClient(object):
             self._host,
             self._port,
             config={
+                "allow_all_attrs": True,
                 "allow_public_attrs": True,
                 "instantiate_custom_exceptions": True,
                 "allow_pickle": True,
@@ -75,6 +72,7 @@ class NidoDaemonRPCClient(object):
         except (JobLookupError, ConflictingIdError) as e:
             raise SchedulerClientError(e)
         finally:
+            pass
             self._disconnect()
         return None
 
@@ -127,14 +125,9 @@ class SchedulerClient(NidoDaemonRPCClient):
     jobs.
     """
 
-    def process_jobs(self, jobs):
-        if self._json:
-            return self._jsonify_jobs(jobs)
-        return jobs
-
-    def get_scheduled_jobs(self, jobstore=None):
+    def get_scheduled_jobs(self, callback, jobstore=None):
         with self._rpc_session():
-            self.r.get_jobs(self.process_jobs, jobstore=jobstore)
+            self.r.get_jobs(callback, jobstore=jobstore)
 
     def get_scheduled_job(self, job_id):
         with self._rpc_session():
@@ -214,75 +207,13 @@ class SchedulerClient(NidoDaemonRPCClient):
     def remove_scheduled_job(self, job_id):
         with self._rpc_session():
             self.r.remove_job(job_id)
-            if self._json:
-                return {
-                    "message": "Job removed successfully.",
-                    "id": "{}".format(job_id),
-                }
-        return None
-
-    def _return_job(self, job):
-        if self._json:
-            return self._jsonify_job(job)
-        return job
-
-    def _jsonify_job(self, j):
-        if j is None:
-            raise SchedulerClientError("No job exists with that ID.")
-        if isinstance(j.trigger, DateTrigger):
-            trigger = {"timezone": str(j.trigger.run_date.tzinfo)}
-        else:
-            trigger_start_date = (
-                j.trigger.start_date.strftime("%m/%d/%Y %H:%M:%S")
-                if j.trigger.start_date
-                else None
-            )
-            trigger_end_date = (
-                j.trigger.end_date.strftime("%m/%d/%Y %H:%M:%S")
-                if j.trigger.end_date
-                else None
-            )
-            trigger = {
-                "start_date": trigger_start_date,
-                "end_date": trigger_end_date,
-                "timezone": str(j.trigger.timezone),
+            return {
+                "message": "Job removed successfully.",
+                "id": "{}".format(job_id),
             }
 
-        if isinstance(j.trigger, CronTrigger):
-            trigger["cron"] = {}
-            for f in j.trigger.fields:
-                trigger["cron"][f.name] = str(f)
-        elif isinstance(j.trigger, IntervalTrigger):
-            trigger_interval = str(j.trigger.interval) if j.trigger.interval else None
-            trigger["interval"] = trigger_interval
-        elif isinstance(j.trigger, DateTrigger):
-            trigger["run_date"] = j.trigger.run_date.strftime("%m/%d/%Y %H:%M:%S")
-        else:
-            raise SchedulerClientError(
-                "Unknown trigger type: {}".format(type(j.trigger))
-            )
-
-        job = {
-            "id": j.id,
-            "name": j.name,
-            "args": j.args,
-            "next_run_time": (
-                j.next_run_time.strftime("%m/%d/%Y %H:%M:%S")
-                if j.next_run_time
-                else None
-            ),
-            "trigger": trigger,
-        }
-
-        return job
-
-    def _jsonify_jobs(self, jobs):
-        job_list = []
-        for j in jobs:
-            if j is None:
-                continue
-            job_list.append(self._jsonify_job(j))
-        return job_list
+    def _return_job(self, job):
+        return self._jsonify_job(job)
 
     def _parse_mode_settings(self, type, mode=None, temp=None, scale=None):
         if type == "mode":

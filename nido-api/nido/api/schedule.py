@@ -29,7 +29,7 @@ bp = Blueprint("api_rpc", __name__)
 def json_response():
     g.resp = JSONResponse()
     g.sc = SchedulerClient(
-        current_app.config["RPC_HOST"], current_app.config["RPC_PORT"], json=True
+        current_app.config["RPC_HOST"], current_app.config["RPC_PORT"]
     )
     return None
 
@@ -38,7 +38,7 @@ def json_response():
 @require_secret
 def api_schedule_get_all():
     """Endpoint that returns all jobs in the scheduler."""
-    g.resp.data["jobs"] = g.sc.get_scheduled_jobs()
+    g.sc.get_scheduled_jobs(g.resp.process_jobs)
     return g.resp.get_flask_response(current_app)
 
 
