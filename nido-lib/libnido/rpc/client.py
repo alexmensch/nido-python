@@ -159,7 +159,7 @@ class SchedulerClient(NidoDaemonRPCClient):
         self._check_cron_parameters(day_of_week=day_of_week, hour=hour, minute=minute)
         with self._rpc_session():
             job = self.r.add_job(
-                "nidod.lib.rpc.server:NidoDaemonService.{}".format(func),
+                "libnido.rpc.server:NidoDaemonService.{}".format(func),
                 args=args,
                 name=name,
                 jobstore="schedule",
@@ -179,7 +179,7 @@ class SchedulerClient(NidoDaemonRPCClient):
         with self._rpc_session():
             job = self.r.modify_job(
                 job_id,
-                func="nidod.lib.rpc.server:NidoDaemonService.{}".format(func),
+                func="libnido.rpc.server:NidoDaemonService.{}".format(func),
                 args=args,
                 name=name,
             )

@@ -27,7 +27,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from nidod.config import SchedulerConfig, DaemonConfig, MQTTConfig
 from nidod.hardware import Controller
-from nidod.rpc.server import NidoDaemonService
+from libnido.rpc.server import NidoDaemonService
 from nidod import db
 
 
