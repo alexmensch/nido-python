@@ -22,7 +22,14 @@ import platform
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-install_requires = ["APScheduler", "paho-mqtt", "rpyc", "smbus2", "SQLAlchemy"]
+install_requires = [
+    "APScheduler",
+    "paho-mqtt",
+    "PyYAML",
+    "rpyc",
+    "smbus2",
+    "SQLAlchemy",
+]
 
 if platform.machine() == "armv6l":
     install_requires.append("RPi.GPIO")
