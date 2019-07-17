@@ -36,7 +36,7 @@ class FakeGPIO(object):
 
     def setup(self, pin, mode):
         self._get_pins()
-        if pin not in self._pins:
+        if self._pins is None or pin not in self._pins:
             self._set_pin(pin, False)
         return None
 
