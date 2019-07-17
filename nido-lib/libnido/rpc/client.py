@@ -127,13 +127,14 @@ class SchedulerClient(NidoDaemonRPCClient):
     jobs.
     """
 
-    def get_scheduled_jobs(self, jobstore=None):
-        with self._rpc_session():
-            jobs = self.r.get_jobs(jobstore=jobstore)
-            jobs = obtain(jobs)
+    def process_jobs(self, jobs):
         if self._json:
             return self._jsonify_jobs(jobs)
         return jobs
+
+    def get_scheduled_jobs(self, jobstore=None):
+        with self._rpc_session():
+            self.r.get_jobs(self.process_jobs, jobstore=jobstore)
 
     def get_scheduled_job(self, job_id):
         with self._rpc_session():

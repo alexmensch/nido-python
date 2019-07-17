@@ -17,6 +17,7 @@ services:
       - NIDOD_MQTT_HOSTNAME=mosquitto
     volumes:
       - ./nido-api/instance:/app/instance
+      - ./nido-api/nido:/app/nido
     entrypoint:
       - flask
       - run
@@ -28,6 +29,7 @@ services:
     volumes:
       - ./nido-supervisor/instance:/app/instance
       - ./nido-supervisor/log:/app/log
+      - ./nido-supervisor/nidod:/app/nidod
   mosquitto:
     build:
       context: ./mqtt

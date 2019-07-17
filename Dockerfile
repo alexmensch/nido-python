@@ -1,4 +1,4 @@
-FROM python:3.5-alpine AS nido-base
+FROM python:3.7-alpine AS nido-base
 
 RUN apk add tzdata \
     && cp /usr/share/zoneinfo/America/Los_Angeles /etc/localtime \
