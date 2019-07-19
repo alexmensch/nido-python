@@ -15,7 +15,7 @@ config/homebridge/*
 !config/homebridge/startup.sh
 
 # Database
-nido.sqlite
+instance/
 log/
 
 # Web server configuration
