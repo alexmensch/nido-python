@@ -8,14 +8,6 @@ __pycache__/
 
 venv/
 *.egg-info/
-build/
-dist/
-wheelhouse/
-
-node_modules/
-npm-debug.log
-.module-cache
-package-lock.json
 
 # Homebridge
 homebridge/*
@@ -26,10 +18,5 @@ homebridge/*
 nido.sqlite
 log/
 
-# Webpack'd JS
-nido-api/nido/static/js/nido.js
-nido-api/nido/static/js/nido.js.map
-
-nohup.out
-
+# Web server configuration
 private-config.py
