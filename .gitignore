@@ -10,9 +10,9 @@ venv/
 *.egg-info/
 
 # Homebridge
-homebridge/*
-!homebridge/config.json
-!homebridge/startup.sh
+config/homebridge/*
+!config/homebridge/config.json
+!config/homebridge/startup.sh
 
 # Database
 nido.sqlite

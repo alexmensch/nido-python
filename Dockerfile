@@ -49,3 +49,9 @@ ENV NIDOD_MQTT_PORT=1883
 EXPOSE 49152
 
 ENTRYPOINT ["python3", "-m", "nido.supervisor"]
+
+
+
+FROM eclipse-mosquitto AS nido-mqtt
+
+COPY ./config/mosquitto.conf /mosquitto/config/mosquitto.conf
