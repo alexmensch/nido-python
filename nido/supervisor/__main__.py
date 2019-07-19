@@ -25,10 +25,10 @@ import paho.mqtt.client as mqtt
 from rpyc.utils.server import ThreadedServer
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
-from nidod.config import SchedulerConfig, DaemonConfig, MQTTConfig
-from nidod.hardware import Controller
-from libnido.rpc.server import NidoDaemonService
-from nidod import db
+from nido.supervisor.config import SchedulerConfig, DaemonConfig, MQTTConfig
+from nido.supervisor.hardware import Controller
+from nido.lib.rpc.server import NidoDaemonService
+from nido.supervisor import db
 
 
 class Supervisor(object):
@@ -75,7 +75,12 @@ class Supervisor(object):
         self.RPCserver = ThreadedServer(
             NidoDaemonService(self.scheduler),
             port=int(os.environ["NIDOD_RPC_PORT"]),
-            protocol_config={"allow_all_attrs": True, "allow_public_attrs": True, "allow_pickle": True, "instantiate_custom_exceptions": True},
+            protocol_config={
+                "allow_all_attrs": True,
+                "allow_public_attrs": True,
+                "allow_pickle": True,
+                "instantiate_custom_exceptions": True,
+            },
         )
 
         atexit.register(self.quit)

@@ -18,10 +18,10 @@
 
 import logging
 
-from nidod import db
-from nidod.config import HardwareConfig
-from libnido import Mode
-from libnido.exceptions import ThermostatError, DBError
+from nido.supervisor import db
+from nido.supervisor.config import HardwareConfig
+from nido.lib import Mode
+from nido.lib.exceptions import ThermostatError, DBError
 
 logger = logging.getLogger(__name__)
 

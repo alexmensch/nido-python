@@ -19,9 +19,9 @@
 from datetime import datetime
 import logging
 
-from nidod.hardware import Sensor, Controller
-from nidod.config import MQTTConfig
-from nidod import db
+from nido.supervisor.hardware import Sensor, Controller
+from nido.supervisor.config import MQTTConfig
+from nido.supervisor import db
 
 
 class DataLogger(object):

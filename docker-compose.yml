@@ -7,7 +7,7 @@ services:
     ports:
       - "80:80"
     environment:
-      - FLASK_APP=nido
+      - FLASK_APP=nido.web
       - FLASK_DEBUG=TRUE
       - FLASK_ENV=development
       - FLASK_RUN_HOST=0.0.0.0
@@ -16,8 +16,8 @@ services:
       - NIDOD_RPC_HOST=nido-supervisor
       - NIDOD_MQTT_HOSTNAME=mosquitto
     volumes:
-      - ./nido-api/instance:/app/instance
-      - ./nido-api/nido:/app/nido
+      - ./config:/app/instance
+      - ./nido:/app/nido
     entrypoint:
       - flask
       - run
@@ -27,9 +27,9 @@ services:
       context: .
       target: nido-supervisor
     volumes:
-      - ./nido-supervisor/instance:/app/instance
-      - ./nido-supervisor/log:/app/log
-      - ./nido-supervisor/nidod:/app/nidod
+      - ./instance:/app/instance
+      - ./log:/app/log
+      - ./nido:/app/nido
   mosquitto:
     build:
       context: ./mqtt

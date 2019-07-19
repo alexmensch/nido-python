@@ -30,7 +30,7 @@
 import logging
 import subprocess
 from smbus2 import SMBusWrapper
-from . import Platform
+from nido.lib.Adafruit_GPIO import Platform
 
 
 def reverseByteOrder(data):

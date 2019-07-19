@@ -16,7 +16,6 @@
 #   along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 from copy import copy
 from functools import wraps
 from flask import current_app, request
@@ -27,7 +26,7 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.date import DateTrigger
 
-from libnido.exceptions import SchedulerClientError
+from nido.lib.exceptions import SchedulerClientError
 
 
 def require_secret(route):

@@ -19,19 +19,19 @@
 import os
 import logging
 
-from nidod.config import HardwareConfig, DaemonConfig
-from libnido import Mode, Status
-from libnido.exceptions import ControllerError, SensorError
-from nidod.thermostat import Thermostat
+from nido.supervisor.config import HardwareConfig, DaemonConfig
+from nido.lib import Mode, Status
+from nido.lib.exceptions import ControllerError, SensorError
+from nido.supervisor.thermostat import Thermostat
 
 if "NIDO_TESTING" in os.environ:
-    from nidod.testing import FakeGPIO, FakeSensor as BME280
+    from nido.supervisor.testing import FakeGPIO, FakeSensor as BME280
 
     GPIO = FakeGPIO(os.environ["NIDO_TESTING_GPIO"])
     BME280_OSAMPLE_8 = None
 else:
     import RPi.GPIO as GPIO
-    from nidod.lib.Adafruit_BME280 import BME280, BME280_OSAMPLE_8
+    from nido.lib.Adafruit_BME280 import BME280, BME280_OSAMPLE_8
 
 
 class Sensor(object):

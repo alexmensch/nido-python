@@ -35,13 +35,13 @@ root.addHandler(handler)
 
 
 def create_app(test_config=None):
-    app = Flask("nido", instance_relative_config=True)
+    app = Flask("nido.web", instance_relative_config=True)
 
     if test_config is None:
         if "NIDO_DEBUG" in os.environ:
-            config_object = "nido.config.DevelopmentConfig"
+            config_object = "nido.web.config.DevelopmentConfig"
         else:
-            config_object = "nido.config.ProductionConfig"
+            config_object = "nido.web.config.ProductionConfig"
         app.config.from_object(config_object)
     else:
         app.config.from_mapping(test_config)
@@ -53,7 +53,7 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    from nido.api import thermostat, schedule, RegexConverter
+    from nido.web.api import thermostat, schedule, RegexConverter
 
     app.url_map.converters["regex"] = RegexConverter
     app.register_blueprint(thermostat.bp, url_prefix="/api")

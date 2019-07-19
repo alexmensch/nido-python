@@ -18,7 +18,7 @@
 
 import os
 
-from libnido import Mode
+from nido.lib import Mode
 
 
 class SchedulerConfig(object):

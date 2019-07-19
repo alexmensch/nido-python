@@ -24,7 +24,10 @@ with open("README.md", "r") as fh:
 
 install_requires = [
     "APScheduler",
+    "flask",
+    "gunicorn",
     "paho-mqtt",
+    "requests",
     "PyYAML",
     "rpyc",
     "smbus2",
@@ -35,18 +38,18 @@ if platform.machine() == "armv6l":
     install_requires.append("RPi.GPIO")
 
 setup(
-    name="nidod",
-    version="0.4.0",
+    name="nido",
+    version="1.0.0",
     author="Alex Marshall",
     author_email="alex@moveolabs.com",
-    description="Daemon for Nido, a Raspberry Pi-based home thermostat",
+    description="Nido, a Raspberry Pi-based home thermostat",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/alexmensch/nido",
     classifiers=[
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
-        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.7",
     ],
     packages=find_packages(),
     include_package_data=True,

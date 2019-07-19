@@ -17,10 +17,10 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 
 import rpyc
-from nidod.hardware import Controller, Sensor
-from nidod.thermostat import Thermostat
-from libnido.exceptions import ThermostatError
-from nidod.datalogger import MQTTDataLogger
+from nido.supervisor.hardware import Controller, Sensor
+from nido.supervisor.thermostat import Thermostat
+from nido.lib.exceptions import ThermostatError
+from nido.supervisor.datalogger import MQTTDataLogger
 
 
 class NidoDaemonService(rpyc.Service):

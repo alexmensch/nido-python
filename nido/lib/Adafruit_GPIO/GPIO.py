@@ -26,7 +26,7 @@
 # support.
 #
 
-from . import Platform
+from nido.lib.Adafruit_GPIO import Platform
 
 
 OUT = 0

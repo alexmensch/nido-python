@@ -23,14 +23,14 @@ import rpyc
 from rpyc.utils.classic import obtain
 from apscheduler.jobstores.base import JobLookupError, ConflictingIdError
 
-from libnido.exceptions import (
+from nido.lib.exceptions import (
     SchedulerClientError,
     ThermostatClientError,
     ControllerError,
     ThermostatError,
     SensorError,
 )
-from libnido import Status
+from nido.lib import Status
 
 
 class NidoDaemonRPCClient(object):
@@ -152,7 +152,7 @@ class SchedulerClient(NidoDaemonRPCClient):
         self._check_cron_parameters(day_of_week=day_of_week, hour=hour, minute=minute)
         with self._rpc_session():
             job = self.r.add_job(
-                "libnido.rpc.server:NidoDaemonService.{}".format(func),
+                "nido.lib.rpc.server:NidoDaemonService.{}".format(func),
                 args=args,
                 name=name,
                 jobstore="schedule",
@@ -172,7 +172,7 @@ class SchedulerClient(NidoDaemonRPCClient):
         with self._rpc_session():
             job = self.r.modify_job(
                 job_id,
-                func="libnido.rpc.server:NidoDaemonService.{}".format(func),
+                func="nido.lib.rpc.server:NidoDaemonService.{}".format(func),
                 args=args,
                 name=name,
             )
@@ -207,10 +207,7 @@ class SchedulerClient(NidoDaemonRPCClient):
     def remove_scheduled_job(self, job_id):
         with self._rpc_session():
             self.r.remove_job(job_id)
-            return {
-                "message": "Job removed successfully.",
-                "id": "{}".format(job_id),
-            }
+            return {"message": "Job removed successfully.", "id": "{}".format(job_id)}
 
     def _return_job(self, job):
         return self._jsonify_job(job)

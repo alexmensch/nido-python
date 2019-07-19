@@ -24,9 +24,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
-from nidod.config import DaemonConfig
-from libnido import Mode
-from libnido.exceptions import DBError
+from nido.supervisor.config import DaemonConfig
+from nido.lib import Mode
+from nido.lib.exceptions import DBError
 
 engine = create_engine("sqlite:///{}".format(DaemonConfig.DB_PATH))
 Base = declarative_base()
