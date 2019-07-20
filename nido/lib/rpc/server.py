@@ -17,6 +17,7 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 
 import rpyc
+
 from nido.supervisor.hardware import Controller, Sensor
 from nido.supervisor.thermostat import Thermostat
 from nido.lib.exceptions import ThermostatError
@@ -40,31 +41,46 @@ class NidoDaemonService(rpyc.Service):
     def __call__(self, conn):
         return self.__class__(self._scheduler)
 
-    def add_job(self, func, *args, **kwargs):
-        return self._scheduler.add_job(func, *args, **kwargs)
+    def add_job(self, callback, func, *args, **kwargs):
+        job = self._scheduler.add_job(func, *args, **kwargs)
+        callback(job)
+        return None
 
-    def modify_job(self, job_id, jobstore=None, **changes):
-        return self._scheduler.modify_job(job_id, jobstore, **changes)
+    def modify_job(self, callback, job_id, jobstore=None, **changes):
+        job = self._scheduler.modify_job(job_id, jobstore, **changes)
+        callback(job)
+        return None
 
-    def reschedule_job(self, job_id, jobstore=None, trigger=None, **trigger_args):
-        return self._scheduler.reschedule_job(job_id, jobstore, trigger, **trigger_args)
+    def reschedule_job(
+        self, callback, job_id, jobstore=None, trigger=None, **trigger_args
+    ):
+        job = self._scheduler.reschedule_job(job_id, jobstore, trigger, **trigger_args)
+        callback(job)
+        return None
 
-    def pause_job(self, job_id, jobstore=None):
-        return self._scheduler.pause_job(job_id, jobstore)
+    def pause_job(self, callback, job_id, jobstore=None):
+        job = self._scheduler.pause_job(job_id, jobstore)
+        callback(job)
+        return None
 
-    def resume_job(self, job_id, jobstore=None):
-        return self._scheduler.resume_job(job_id, jobstore)
+    def resume_job(self, callback, job_id, jobstore=None):
+        job = self._scheduler.resume_job(job_id, jobstore)
+        callback(job)
+        return None
 
     def remove_job(self, job_id, jobstore=None):
         self._scheduler.remove_job(job_id, jobstore)
+        return None
 
     def get_job(self, callback, job_id):
         job = self._scheduler.get_job(job_id)
         callback(job)
+        return None
 
     def get_jobs(self, callback, jobstore=None):
         jobs = self._scheduler.get_jobs(jobstore)
         callback(jobs)
+        return None
 
     @staticmethod
     def get_settings():

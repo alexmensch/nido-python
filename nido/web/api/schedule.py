@@ -79,7 +79,7 @@ def api_schedule_add_job(type):
 
     if type.lower() == "mode" or type.lower() == "temp":
         try:
-            g.resp.data["job"] = g.sc.add_scheduled_job(type, **job_kwargs)
+            g.sc.add_scheduled_job(g.resp.process_jobs, type, **job_kwargs)
         except SchedulerClientError as e:
             g.resp.data["error"] = "Error adding job: {}".format(e)
     else:
@@ -110,11 +110,11 @@ def api_schedule_modify_jobid(id):
     del job_kwargs["secret"]
 
     try:
-        g.resp.data["job"] = g.sc.modify_scheduled_job(id, **job_kwargs)
+        g.sc.modify_scheduled_job(g.resp.process_jobs, id, **job_kwargs)
     except SchedulerClientError as e:
         g.resp.data["error"] = "Error modifying job ID ({}): {}".format(id, e)
-
-    return g.resp.get_flask_response(current_app)
+    finally:
+        return g.resp.get_flask_response(current_app)
 
 
 @bp.route("/reschedule/<string:id>", methods=["POST"])
@@ -138,38 +138,48 @@ def api_schedule_reschedule_jobid(id):
     del job_kwargs["secret"]
 
     try:
-        g.resp.data["job"] = g.sc.reschedule_job(id, **job_kwargs)
+        g.sc.reschedule_job(g.resp.process_jobs, id, **job_kwargs)
     except SchedulerClientError as e:
         g.resp.data["error"] = "Error rescheduling job ID ({}): {}".format(id, e)
-
-    return g.resp.get_flask_response(current_app)
+    finally:
+        return g.resp.get_flask_response(current_app)
 
 
 @bp.route("/pause/<string:id>", methods=["POST"])
 @require_secret
 def api_schedule_pause_jobid(id):
     try:
-        g.resp.data["job"] = g.sc.pause_scheduled_job(id)
+        g.sc.pause_scheduled_job(g.resp.process_jobs, id)
     except SchedulerClientError as e:
         g.resp.data["error"] = "Error pausing job: {}".format(e)
-    return g.resp.get_flask_response(current_app)
+    finally:
+        return g.resp.get_flask_response(current_app)
 
 
 @bp.route("/resume/<string:id>", methods=["POST"])
 @require_secret
 def api_schedule_resume_jobid(id):
     try:
-        g.resp.data["job"] = g.sc.resume_scheduled_job(id)
+        g.sc.resume_scheduled_job(g.resp.process_jobs, id)
     except SchedulerClientError as e:
         g.resp.data["error"] = "Error resuming job: {}".format(e)
-    return g.resp.get_flask_response(current_app)
+    else:
+        if g.resp.data == {}:
+            g.resp.data["job"] = {"id": "{}".format(id)}
+            g.resp.data["message"] = "The job would not have triggered again and has been deleted."
+    finally:
+        return g.resp.get_flask_response(current_app)
 
 
 @bp.route("/remove/<string:id>", methods=["POST"])
 @require_secret
 def api_schedule_remove_jobid(id):
     try:
-        g.resp.data["job"] = g.sc.remove_scheduled_job(id)
+        g.sc.remove_scheduled_job(id)
     except SchedulerClientError as e:
         g.resp.data["error"] = "Error removing job: {}".format(e)
-    return g.resp.get_flask_response(current_app)
+    else:
+        g.resp.data["job"] = {"id": "{}".format(id)}
+        g.resp.data["message"] = "Job removed successfully."
+    finally:
+        return g.resp.get_flask_response(current_app)

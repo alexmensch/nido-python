@@ -128,13 +128,16 @@ class SchedulerClient(NidoDaemonRPCClient):
     def get_scheduled_jobs(self, callback, jobstore=None):
         with self._rpc_session():
             self.r.get_jobs(callback, jobstore=jobstore)
+        return None
 
     def get_scheduled_job(self, callback, job_id):
         with self._rpc_session():
             self.r.get_job(callback, job_id)
+        return None
 
     def add_scheduled_job(
         self,
+        callback,
         type,
         day_of_week=None,
         hour=None,
@@ -149,7 +152,8 @@ class SchedulerClient(NidoDaemonRPCClient):
         )
         self._check_cron_parameters(day_of_week=day_of_week, hour=hour, minute=minute)
         with self._rpc_session():
-            job = self.r.add_job(
+            self.r.add_job(
+                callback,
                 "nido.lib.rpc.server:NidoDaemonService.{}".format(func),
                 args=args,
                 name=name,
@@ -160,55 +164,53 @@ class SchedulerClient(NidoDaemonRPCClient):
                 hour=hour,
                 minute=minute,
             )
-            job = obtain(job)
-        return self._return_job(job)
+        return None
 
-    def modify_scheduled_job(self, job_id, type=None, mode=None, temp=None, scale=None):
+    def modify_scheduled_job(
+        self, callback, job_id, type=None, mode=None, temp=None, scale=None
+    ):
         func, args, name = self._parse_mode_settings(
             type, mode=mode, temp=temp, scale=scale
         )
         with self._rpc_session():
-            job = self.r.modify_job(
+            self.r.modify_job(
+                callback,
                 job_id,
                 func="nido.lib.rpc.server:NidoDaemonService.{}".format(func),
                 args=args,
                 name=name,
             )
-            job = obtain(job)
-        return self._return_job(job)
+        return None
 
-    def reschedule_job(self, job_id, day_of_week=None, hour=None, minute=None):
+    def reschedule_job(
+        self, callback, job_id, day_of_week=None, hour=None, minute=None
+    ):
         self._check_cron_parameters(day_of_week=day_of_week, hour=hour, minute=minute)
         with self._rpc_session():
-            job = self.r.reschedule_job(
+            self.r.reschedule_job(
+                callback,
                 job_id,
                 trigger="cron",
                 day_of_week=day_of_week,
                 hour=hour,
                 minute=minute,
             )
-            job = obtain(job)
-        return self._return_job(job)
+        return None
 
-    def pause_scheduled_job(self, job_id):
+    def pause_scheduled_job(self, callback, job_id):
         with self._rpc_session():
-            job = self.r.pause_job(job_id)
-            job = obtain(job)
-        return self._return_job(job)
+            self.r.pause_job(callback, job_id)
+        return None
 
-    def resume_scheduled_job(self, job_id):
+    def resume_scheduled_job(self, callback, job_id):
         with self._rpc_session():
-            job = self.r.resume_job(job_id)
-            job = obtain(job)
-        return self._return_job(job)
+            self.r.resume_job(callback, job_id)
+        return None
 
     def remove_scheduled_job(self, job_id):
         with self._rpc_session():
             self.r.remove_job(job_id)
-            return {"message": "Job removed successfully.", "id": "{}".format(job_id)}
-
-    def _return_job(self, job):
-        return self._jsonify_job(job)
+        return None
 
     def _parse_mode_settings(self, type, mode=None, temp=None, scale=None):
         if type == "mode":
