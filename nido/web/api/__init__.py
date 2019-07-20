@@ -16,7 +16,6 @@
 #   along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 
-from copy import copy
 from functools import wraps
 from flask import current_app, request
 from werkzeug.routing import BaseConverter
@@ -70,6 +69,9 @@ class JSONResponse(object):
         return response
 
     def process_jobs(self, jobs):
+        """This method is only passed as a callback reference to
+        nido.lib.rpc.client.SchedulerClient.
+        """
         self.data["jobs"] = self._jsonify_jobs(jobs)
         return None
 
@@ -82,6 +84,20 @@ class JSONResponse(object):
         return job_list
 
     def _jsonify_job(self, j):
+        """Converts apscheduler.job.Job object to a JSON representation.
+
+        The 'trigger' representation varies depending on the trigger object that was
+        assigned to the job. Should be one of:
+            apscheduler.triggers.cron.CronTrigger
+            apscheduler.triggers.date.DateTrigger
+            apscheduler.triggers.interval.IntervalTrigger
+
+        The 'misfire_grace_time' key represents the time in seconds of how long the
+        job's execution is allowed to be late.
+
+        Full API documentation is available here:
+        https://apscheduler.readthedocs.io/en/v3.6.0/py-modindex.html
+        """
         if j is None:
             raise SchedulerClientError("No job exists with that ID.")
         if isinstance(j.trigger, DateTrigger):
@@ -118,11 +134,11 @@ class JSONResponse(object):
             )
 
         job = {
-            "id": copy(j.id),
-            "name": copy(j.name),
-            "args": copy(str(j.args)),
+            "id": str(j.id),
+            "name": str(j.name),
+            "misfire_grace_time": str(j.misfire_grace_time),
             "next_run_time": (
-                copy(j.next_run_time).strftime("%m/%d/%Y %H:%M:%S")
+                j.next_run_time.strftime("%m/%d/%Y %H:%M:%S")
                 if j.next_run_time
                 else None
             ),
@@ -132,10 +148,6 @@ class JSONResponse(object):
         return job
 
 
-# Custom URL converter to allow use of regex
-# Source: https://stackoverflow.com/questions/5870188 \
-# /does-flask-support-regular-expressions-in-its-url-routing
-#
 class RegexConverter(BaseConverter):
     """Custom URL converter to allow use of regular expressions.
     Source: https://stackoverflow.com/questions/5870188\

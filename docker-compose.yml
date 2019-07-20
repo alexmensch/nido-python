@@ -26,6 +26,10 @@ services:
     build:
       context: .
       target: nido-supervisor
+    environment:
+      - NIDO_TESTING_GPIO=/tmp/gpio_pins.yaml
+      - NIDO_TESTING=""
+      - NIDOD_MQTT_HOSTNAME=mosquitto
     volumes:
       - ./instance:/app/instance
       - ./log:/app/log
