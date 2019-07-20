@@ -129,11 +129,9 @@ class SchedulerClient(NidoDaemonRPCClient):
         with self._rpc_session():
             self.r.get_jobs(callback, jobstore=jobstore)
 
-    def get_scheduled_job(self, job_id):
+    def get_scheduled_job(self, callback, job_id):
         with self._rpc_session():
-            job = self.r.get_job(job_id)
-            job = obtain(job)
-        return self._return_job(job)
+            self.r.get_job(callback, job_id)
 
     def add_scheduled_job(
         self,

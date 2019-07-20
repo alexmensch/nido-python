@@ -21,6 +21,7 @@ from flask import current_app, request
 from werkzeug.routing import BaseConverter
 import json
 
+from apscheduler.job import Job
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.date import DateTrigger
@@ -72,16 +73,18 @@ class JSONResponse(object):
         """This method is only passed as a callback reference to
         nido.lib.rpc.client.SchedulerClient.
         """
-        self.data["jobs"] = self._jsonify_jobs(jobs)
+        if isinstance(jobs, Job):
+            self.data["job"] = self._jsonify_job(jobs)
+        elif isinstance(jobs, list):
+            job_list = []
+            for j in jobs:
+                if j is None:
+                    continue
+                job_list.append(self._jsonify_job(j))
+            self.data["jobs"] = job_list
+        else:
+            self.data = {}
         return None
-
-    def _jsonify_jobs(self, jobs):
-        job_list = []
-        for j in jobs:
-            if j is None:
-                continue
-            job_list.append(self._jsonify_job(j))
-        return job_list
 
     def _jsonify_job(self, j):
         """Converts apscheduler.job.Job object to a JSON representation.

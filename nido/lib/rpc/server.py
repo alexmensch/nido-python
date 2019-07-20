@@ -58,11 +58,13 @@ class NidoDaemonService(rpyc.Service):
     def remove_job(self, job_id, jobstore=None):
         self._scheduler.remove_job(job_id, jobstore)
 
-    def get_job(self, job_id):
-        return self._scheduler.get_job(job_id)
+    def get_job(self, callback, job_id):
+        job = self._scheduler.get_job(job_id)
+        callback(job)
 
     def get_jobs(self, callback, jobstore=None):
-        callback(self._scheduler.get_jobs(jobstore))
+        jobs = self._scheduler.get_jobs(jobstore)
+        callback(jobs)
 
     @staticmethod
     def get_settings():
