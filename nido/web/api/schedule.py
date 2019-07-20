@@ -166,7 +166,9 @@ def api_schedule_resume_jobid(id):
     else:
         if g.resp.data == {}:
             g.resp.data["job"] = {"id": "{}".format(id)}
-            g.resp.data["message"] = "The job would not have triggered again and has been deleted."
+            g.resp.data[
+                "message"
+            ] = "The job would not have triggered again and has been deleted."
     finally:
         return g.resp.get_flask_response(current_app)
 
