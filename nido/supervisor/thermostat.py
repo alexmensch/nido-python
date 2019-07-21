@@ -58,7 +58,6 @@ class Thermostat(object):
         if scale.upper() == "C":
             return self.set_settings(set_temp=temp)
         elif scale.upper() == "F":
-            # The following conversion duplicates the logic in nido.js
             celsius_temp = (temp - 32) * 5 / 9
             celsius_temp = round(celsius_temp * 10) / 10
             celsius_temp = float("{0:.1f}".format(celsius_temp))

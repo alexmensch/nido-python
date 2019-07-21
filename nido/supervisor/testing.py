@@ -57,6 +57,8 @@ class FakeGPIO(object):
         if path.exists(self._state):
             with open(self._state, "r") as f:
                 self._pins = yaml.safe_load(f)
+                if self._pins is None:
+                    self._pins = {}
         return None
 
     def _write(self):
