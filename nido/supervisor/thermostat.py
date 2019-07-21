@@ -50,6 +50,15 @@ class Thermostat(object):
         except DBError as e:
             raise ThermostatError(e)
 
+    @staticmethod
+    def get_set_temp():
+        try:
+            settings = db.get_settings()
+        except DBError as e:
+            raise ThermostatError(e)
+        else:
+            return settings["set_temp"]
+
     def set_temp(self, temp, scale):
         if scale.upper() == "C":
             return self.set_settings(set_temp=temp)

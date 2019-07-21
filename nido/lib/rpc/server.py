@@ -112,6 +112,15 @@ class NidoDaemonService(rpyc.Service):
         return None
 
     @staticmethod
+    def get_set_temp():
+        try:
+            set_temp = Thermostat.get_set_temp()
+        except ThermostatError:
+            raise
+        else:
+            return set_temp
+
+    @staticmethod
     def set_temp(temp, scale):
         try:
             Thermostat().set_temp(temp, scale)

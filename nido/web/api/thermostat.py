@@ -102,12 +102,12 @@ def api_set_temp_units(units):
     return g.resp.get_flask_response(current_app)
 
 
-@bp.route("/get/temp", methods=["POST"])
+@bp.route("/get/temp/target", methods=["POST"])
 @require_secret
-def api_get_temp():
+def api_get_set_temp():
     """Endpoint to get the current temperature. Always returned in Celsius."""
     try:
-        g.resp.data["temp"] = {"celsius": g.tc.get_temp()}
+        g.resp.data["temp"] = {"celsius": g.tc.get_set_temp()}
     except ThermostatClientError as e:
         g.resp.data["error"] = "Error getting temperature from sensor: {}".format(e)
         g.resp.status = 400
@@ -116,11 +116,11 @@ def api_get_temp():
 
 
 @bp.route(
-    '/set/temp/<regex("(([0-9]*)(\.([0-9]+))?)"):temp>/<regex("[cCfF]"):scale>',
+    '/set/temp/target/<regex("(([0-9]*)(\.([0-9]+))?)"):temp>/<regex("[cCfF]"):scale>',
     methods=["POST"],
 )
 @require_secret
-def api_set_temp(temp, scale):
+def api_set_set_temp(temp, scale):
     """Endpoint to accept a new set temperature in either
     Celsius or Fahrenheit.
 

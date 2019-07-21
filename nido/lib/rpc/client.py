@@ -99,11 +99,10 @@ class ThermostatClient(NidoDaemonRPCClient):
         with self._rpc_session():
             self.r.set_temp_units(units)
 
-    def get_temp(self):
+    def get_set_temp(self):
         with self._rpc_session():
-            sensor_data = self.r.get_sensor_data()
-            temp = float(sensor_data["conditions"]["temp_c"])
-        return temp
+            set_temp = self.r.get_set_temp()
+        return float(set_temp)
 
     def set_temp(self, temp, scale):
         with self._rpc_session():

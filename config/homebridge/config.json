@@ -1,14 +1,35 @@
 {
     "bridge": {
         "name": "Homebridge",
-        "username": "CC:22:3D:E3:CE:30",
+        "username": "4D:45:4E:53:43:48",
         "port": 51826,
-        "pin": "031-45-154"
+        "pin": "948-12-494"
     },
 
-    "description": "This is an example configuration file. You can use this as a template for creating your own configuration file containing devices you actually own.",
+    "description": "Configuration file for Nido thermostat.",
 
     "accessories": [
+        {
+            "accessory": "NidoThermostat",
+            "name": "Nido",
+            "baseAPIUrl", "http://nido-api/api",
+            "getCHCSUrl", "/get/state",
+            "getTHCSUrl", "/get/mode",
+            "setTHCSUrl", "/set/mode/",
+            "getCTUrl", "/get/conditions",
+            "getTTUrl", "/get/temp/target",
+            "setTTUrl", "/set/temp/target/",
+            "getTDUUrl", "/get/temp/display_units",
+            "setTDUUrl", "/set/temp/display_units/",
+            "getCRHUrl", "/get/conditions",
+
+            "secret", "your-secret",
+            "modemapping", {
+                "0": "Off",
+                "1": "Heat",
+                "2": "Cool"
+            }
+        }
     ],
 
     "platforms": [
