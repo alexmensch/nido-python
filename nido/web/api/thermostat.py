@@ -18,6 +18,7 @@
 
 from flask import Blueprint, current_app, g
 
+from nido.lib import Mode, Status
 from nido.web.api import require_secret, JSONResponse
 from nido.lib.rpc.client import ThermostatClient
 from nido.lib.exceptions import ThermostatClientError
@@ -34,6 +35,24 @@ def json_response():
     return None
 
 
+@bp.route("/get/mode", methods=["POST"])
+@require_secret
+def api_get_mode():
+    """Endpoint to get the current mode setting.
+
+    The value returned is defined by the nido.lib.Mode Enum object.
+    """
+    try:
+        mode = g.tc.get_mode()
+    except ThermostatClientError as e:
+        g.resp.data["error"] = "Error getting mode: {}".format(e)
+        g.resp.status = 400
+    else:
+        g.resp.data["mode"] = {"value": mode, "name": Mode(mode).name}
+
+    return g.resp.get_flask_response(current_app)
+
+
 @bp.route("/set/mode/<string:mode>", methods=["POST"])
 @require_secret
 def api_set_mode(mode):
@@ -42,14 +61,58 @@ def api_set_mode(mode):
     Only setting one of the valid configured modes is possible.
     """
     try:
-        g.resp.data["config"] = g.tc.set_mode(mode)
+        g.tc.set_mode(mode)
     except ThermostatClientError as e:
         g.resp.data["error"] = "Error setting mode: {}".format(e)
         g.resp.status = 400
     else:
         g.resp.data["message"] = "Mode updated successfully."
-    finally:
-        return g.resp.get_flask_response(current_app)
+
+    return g.resp.get_flask_response(current_app)
+
+
+@bp.route("/get/temp/display_units", methods=["POST"])
+@require_secret
+def api_get_temp_units():
+    celsius = g.tc.get_temp_units()
+    if celsius:
+        celsius = True
+    else:
+        celsius = False
+    g.resp.data["celsius"] = celsius
+    return g.resp.get_flask_response(current_app)
+
+
+@bp.route('/set/temp/display_units/<regex("[cCfF]"):units>', methods=["POST"])
+@require_secret
+def api_set_temp_units(units):
+    if units.upper() == "C":
+        units = True
+    else:
+        units = False
+
+    try:
+        g.tc.set_temp_units(units)
+    except ThermostatClientError as e:
+        g.resp.data["error"] = "Error setting temperature display unit: {}".format(e)
+        g.resp.status = 400
+    else:
+        g.resp.data["message"] = "Temperature display units updated successfully."
+
+    return g.resp.get_flask_response(current_app)
+
+
+@bp.route("/get/temp", methods=["POST"])
+@require_secret
+def api_get_temp():
+    """Endpoint to get the current temperature. Always returned in Celsius."""
+    try:
+        g.resp.data["temp"] = {"celsius": g.tc.get_temp()}
+    except ThermostatClientError as e:
+        g.resp.data["error"] = "Error getting temperature from sensor: {}".format(e)
+        g.resp.status = 400
+
+    return g.resp.get_flask_response(current_app)
 
 
 @bp.route(
@@ -65,11 +128,37 @@ def api_set_temp(temp, scale):
     """
     temp = float("{:.1f}".format(float(temp)))
     try:
-        g.resp.data["config"] = g.tc.set_temp(temp, scale)
+        g.tc.set_temp(temp, scale)
     except ThermostatClientError as e:
         g.resp.data["error"] = "Error setting temperature: {}".format(e)
         g.resp.status = 400
     else:
         g.resp.data["message"] = "Temperature updated successfully."
-    finally:
-        return g.resp.get_flask_response(current_app)
+
+    return g.resp.get_flask_response(current_app)
+
+
+@bp.route("/get/conditions", methods=["POST"])
+@require_secret
+def api_get_conditions():
+    try:
+        g.resp.data = g.tc.get_conditions()
+    except ThermostatClientError as e:
+        g.resp.data["error"] = "Error getting sensor data: {}".format(e)
+        g.resp.status = 400
+
+    return g.resp.get_flask_response(current_app)
+
+
+@bp.route("/get/state", methods=["POST"])
+@require_secret
+def api_get_state():
+    try:
+        state = g.tc.get_state()
+    except ThermostatClientError as e:
+        g.resp.data["error"] = "Error getting controller state: {}".format(e)
+        g.resp.status = 400
+    else:
+        g.resp.data["state"] = {"value": state, "name": Status(state).name}
+
+    return g.resp.get_flask_response(current_app)

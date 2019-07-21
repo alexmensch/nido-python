@@ -80,39 +80,45 @@ class NidoDaemonRPCClient(object):
 class ThermostatClient(NidoDaemonRPCClient):
     """RPC client service to get and set thermostat settings."""
 
-    def get_settings(self):
+    def get_mode(self):
         with self._rpc_session():
-            return obtain(self.r.get_settings())
-
-    def set_settings(self, set_temp=None, set_mode=None, celsius=None):
-        with self._rpc_session():
-            self.r.set_settings(set_temp=set_temp, set_mode=set_mode, celsius=celsius)
-            return obtain(self.r.get_settings())
-
-    def set_temp(self, temp, scale):
-        with self._rpc_session():
-            self.r.set_temp(temp, scale)
-            return obtain(self.r.get_settings())
+            mode = self.r.get_mode()
+        return int(mode)
 
     def set_mode(self, mode):
         with self._rpc_session():
             self.r.set_mode(mode)
-            return obtain(self.r.get_settings())
+        return None
 
-    def set_scale(self, scale):
+    def get_temp_units(self):
         with self._rpc_session():
-            self.r.set_scale(scale)
-            return obtain(self.r.get_settings())
+            celsius = self.r.get_temp_units()
+        return celsius
+
+    def set_temp_units(self, units):
+        with self._rpc_session():
+            self.r.set_temp_units(units)
+
+    def get_temp(self):
+        with self._rpc_session():
+            sensor_data = self.r.get_sensor_data()
+            temp = float(sensor_data["conditions"]["temp_c"])
+        return temp
+
+    def set_temp(self, temp, scale):
+        with self._rpc_session():
+            self.r.set_temp(temp, scale)
+
+    def get_conditions(self):
+        with self._rpc_session():
+            sensor_data = self.r.get_sensor_data()
+            conditions = obtain(sensor_data)
+        return conditions
 
     def get_state(self):
         with self._rpc_session():
-            status = self.r.get_controller_status()
-            sensor_data = self.r.get_sensor_data()
-            response = {}
-            response["state"] = {"status": Status(status).name}
-            response["state"].update(obtain(sensor_data))
-
-        return response
+            status = int(self.r.get_controller_status())
+        return status
 
     def wakeup(self):
         with self._rpc_session():

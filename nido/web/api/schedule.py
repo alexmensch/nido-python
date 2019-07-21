@@ -113,8 +113,8 @@ def api_schedule_modify_jobid(id):
         g.sc.modify_scheduled_job(g.resp.process_jobs, id, **job_kwargs)
     except SchedulerClientError as e:
         g.resp.data["error"] = "Error modifying job ID ({}): {}".format(id, e)
-    finally:
-        return g.resp.get_flask_response(current_app)
+
+    return g.resp.get_flask_response(current_app)
 
 
 @bp.route("/reschedule/<string:id>", methods=["POST"])
@@ -141,8 +141,8 @@ def api_schedule_reschedule_jobid(id):
         g.sc.reschedule_job(g.resp.process_jobs, id, **job_kwargs)
     except SchedulerClientError as e:
         g.resp.data["error"] = "Error rescheduling job ID ({}): {}".format(id, e)
-    finally:
-        return g.resp.get_flask_response(current_app)
+
+    return g.resp.get_flask_response(current_app)
 
 
 @bp.route("/pause/<string:id>", methods=["POST"])
@@ -152,8 +152,8 @@ def api_schedule_pause_jobid(id):
         g.sc.pause_scheduled_job(g.resp.process_jobs, id)
     except SchedulerClientError as e:
         g.resp.data["error"] = "Error pausing job: {}".format(e)
-    finally:
-        return g.resp.get_flask_response(current_app)
+
+    return g.resp.get_flask_response(current_app)
 
 
 @bp.route("/resume/<string:id>", methods=["POST"])
@@ -169,8 +169,8 @@ def api_schedule_resume_jobid(id):
             g.resp.data[
                 "message"
             ] = "The job would not have triggered again and has been deleted."
-    finally:
-        return g.resp.get_flask_response(current_app)
+
+    return g.resp.get_flask_response(current_app)
 
 
 @bp.route("/remove/<string:id>", methods=["POST"])
@@ -183,5 +183,5 @@ def api_schedule_remove_jobid(id):
     else:
         g.resp.data["job"] = {"id": "{}".format(id)}
         g.resp.data["message"] = "Job removed successfully."
-    finally:
-        return g.resp.get_flask_response(current_app)
+
+    return g.resp.get_flask_response(current_app)

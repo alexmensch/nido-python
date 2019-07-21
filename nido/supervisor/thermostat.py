@@ -16,14 +16,10 @@
 #   along with this program.
 #   If not, see <http://www.gnu.org/licenses/>.
 
-import logging
-
 from nido.supervisor import db
 from nido.supervisor.config import HardwareConfig
 from nido.lib import Mode
 from nido.lib.exceptions import ThermostatError, DBError
-
-logger = logging.getLogger(__name__)
 
 
 class Thermostat(object):
@@ -65,7 +61,21 @@ class Thermostat(object):
         else:
             raise ThermostatError("Invalid temperature scale.")
 
+    @staticmethod
+    def get_mode():
+        try:
+            settings = db.get_settings()
+        except DBError as e:
+            raise ThermostatError(e)
+        else:
+            return Mode[settings["set_mode"]].value
+
     def set_mode(self, mode):
+        """Set the thermostat mode.
+
+        If we can't find a match against the configured modes
+        in HardwareConfig.MODES, raise an exception.
+        """
         modes = HardwareConfig.MODES
 
         for m in modes:
@@ -73,11 +83,3 @@ class Thermostat(object):
                 return self.set_settings(set_mode=m)
 
         raise ThermostatError("Invalid or unconfigured mode.")
-
-    def set_scale(self, scale):
-        if scale.upper() == "C":
-            return self.set_settings(celsius=True)
-        elif scale.upper() == "F":
-            return self.set_settings(celsius=False)
-        else:
-            raise ThermostatError("Invalid temperature scale.")

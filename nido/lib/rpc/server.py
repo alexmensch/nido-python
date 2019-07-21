@@ -22,6 +22,7 @@ from nido.supervisor.hardware import Controller, Sensor
 from nido.supervisor.thermostat import Thermostat
 from nido.lib.exceptions import ThermostatError
 from nido.supervisor.datalogger import MQTTDataLogger
+from nido.supervisor import db
 
 
 class NidoDaemonService(rpyc.Service):
@@ -83,28 +84,13 @@ class NidoDaemonService(rpyc.Service):
         return None
 
     @staticmethod
-    def get_settings():
-        return Thermostat.get_settings()
-
-    @staticmethod
-    def set_settings(set_temp=None, set_mode=None, celsius=None):
+    def get_mode():
         try:
-            Thermostat.set_settings(
-                set_temp=set_temp, set_mode=set_mode, celsius=celsius
-            )
+            mode = Thermostat.get_mode()
         except ThermostatError:
             raise
         else:
-            return NidoDaemonService.wakeup()
-
-    @staticmethod
-    def set_temp(temp, scale):
-        try:
-            Thermostat().set_temp(temp, scale)
-        except ThermostatError:
-            raise
-        else:
-            return NidoDaemonService.wakeup()
+            return mode
 
     @staticmethod
     def set_mode(mode):
@@ -116,8 +102,23 @@ class NidoDaemonService(rpyc.Service):
             return NidoDaemonService.wakeup()
 
     @staticmethod
-    def set_scale(scale):
-        Thermostat().set_scale(scale)
+    def get_temp_units():
+        settings = db.get_settings()
+        return settings["celsius"]
+
+    @staticmethod
+    def set_temp_units(units):
+        db.set_settings(celsius=units)
+        return None
+
+    @staticmethod
+    def set_temp(temp, scale):
+        try:
+            Thermostat().set_temp(temp, scale)
+        except ThermostatError:
+            raise
+        else:
+            return NidoDaemonService.wakeup()
 
     @staticmethod
     def get_controller_status():
