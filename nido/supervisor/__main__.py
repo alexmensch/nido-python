@@ -19,15 +19,18 @@
 import logging
 import logging.handlers
 import os
-import atexit
+import signal
+import sys
+import time
 
 import paho.mqtt.client as mqtt
 from rpyc.utils.server import ThreadedServer
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+from nido.lib.rpc.server import NidoDaemonService
+from nido.lib import Status
 from nido.supervisor.config import SchedulerConfig, DaemonConfig, MQTTConfig
 from nido.supervisor.hardware import Controller
-from nido.lib.rpc.server import NidoDaemonService
 from nido.supervisor import db
 
 
@@ -83,20 +86,32 @@ class Supervisor(object):
             },
         )
 
-        atexit.register(self.quit)
+        signal.signal(signal.SIGTERM, self.shutdown_handler)
+        signal.signal(signal.SIGINT, self.shutdown_handler)
 
         self.MQTTclient.loop_start()
         self.scheduler.start()
         self.RPCserver.start()  # Blocking
+        return None
 
-    def quit(self):
+    def shutdown_handler(self, sig, frame):
+        self._l.info("Received signal {}, shutting down...".format(sig))
+        self.shutdown()
+        sys.exit(0)
+
+    def shutdown(self):
         self.controller.shutdown()
         self.RPCserver.close()
         self.scheduler.shutdown()
         self.MQTTclient.disconnect()
-        self._l.info("Nido supervisor shutdown")
-        self._l.info("************************")
-        return
+        time.sleep(1)
+        while self.controller.get_status() is not Status.Off.value:
+            supervisor._l.critical("Hardware not shutdown. Retrying...")
+            self.controller.shutdown()
+            time.sleep(1)
+        supervisor._l.info("Shutdown complete")
+        supervisor._l.info("*****************")
+        return None
 
 
 if __name__ == "__main__":

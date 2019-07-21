@@ -7,24 +7,22 @@ RUN apk add tzdata \
 
 RUN pip install pip wheel setuptools --upgrade
 
-COPY ./nido /nido
-WORKDIR /nido
+COPY ./nido /app/nido
+WORKDIR /app/nido
 
 RUN pip wheel --wheel-dir=/wheelhouse -r requirements.txt
-
-COPY ./nido /app
-WORKDIR /app
 
 VOLUME /app/instance
 VOLUME /app/log
 
+RUN pip install -r requirements.txt --find-links /wheelhouse
+
+WORKDIR /app
 
 
 FROM nido-base AS nido-api
 
-RUN pip install -r requirements.txt --find-links /wheelhouse
-
-ENV NIDOD_RPC_PORT 49152
+ENV NIDOD_RPC_PORT=49152
 
 EXPOSE 80
 
@@ -34,15 +32,13 @@ ENTRYPOINT ["gunicorn", "-b 0.0.0.0:80", "nido.web:create_app()"]
 
 FROM nido-base AS nido-supervisor
 
-RUN pip3 install -r requirements.txt --find-links /wheelhouse
+ENV NIDO_BASE=/app \
+    NIDOD_LOG_FILE=/app/log/nidod.log \
+    NIDOD_RPC_PORT=49152 \
+    NIDOD_MQTT_CLIENT_NAME=Nido \
+    NIDOD_MQTT_PORT=1883
 
-ENV NIDO_BASE=/app
-ENV NIDOD_LOG_FILE=/app/log/nidod.log
-ENV NIDOD_RPC_PORT=49152
-ENV NIDOD_MQTT_CLIENT_NAME=Nido
-ENV NIDOD_MQTT_PORT=1883
-
-ENTRYPOINT ["python3", "-m", "nido.supervisor"]
+ENTRYPOINT ["python", "-m", "nido.supervisor"]
 
 
 

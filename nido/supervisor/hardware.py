@@ -135,7 +135,7 @@ class Controller(object):
     def shutdown(self):
         GPIO.output(self._HEATING, False)
         GPIO.output(self._COOLING, False)
-        self._l.debug("Shut down GPIO pins.")
+        self._l.info("Shut down hardware GPIO pins.")
         return
 
     def update(self):
