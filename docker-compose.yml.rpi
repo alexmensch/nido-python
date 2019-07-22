@@ -35,6 +35,7 @@ services:
       context: .
       dockerfile: Dockerfile.rpi
       target: nido-mqtt
+    user: "1000:1000"
     restart: always
     ports:
       - "1883:1883"
