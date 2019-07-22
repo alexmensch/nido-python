@@ -12,7 +12,6 @@ venv/
 # Homebridge
 config/homebridge/*
 !config/homebridge/config.json
-!config/homebridge/startup.sh
 !config/homebridge/package.json
 
 # Database
