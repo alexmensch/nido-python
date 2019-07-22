@@ -40,6 +40,9 @@ services:
       target: nido-mqtt
     ports:
       - "1883:1883"
+    volumes:
+      - ./log:/mosquitto/log
+      - ./instance:/mosquitto/data
   homebridge:
     image: oznu/homebridge:latest
     restart: always
