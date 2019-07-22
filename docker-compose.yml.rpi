@@ -3,6 +3,7 @@ services:
   nido-api:
     build:
       context: .
+      dockerfile: Dockerfile.rpi
       target: nido-api
     restart: always
     ports:
@@ -16,6 +17,7 @@ services:
   nido-supervisor:
     build:
       context: .
+      dockerfile: Dockerfile.rpi
       target: nido-supervisor
     restart: always
     environment:
@@ -29,6 +31,7 @@ services:
   mosquitto:
     build:
       context: .
+      dockerfile: Dockerfile.rpi
       target: nido-mqtt
     restart: always
     ports:
