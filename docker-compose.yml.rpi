@@ -24,6 +24,8 @@ services:
       - NIDOD_MQTT_HOSTNAME=mosquitto
     devices:
       - "/dev/gpiomem:/dev/gpiomem"
+      - "/dev/i2c-0:/dev/i2c-0"
+      - "/dev/i2c-1:/dev/i2c-1"
     volumes:
       - ./instance:/app/instance
       - ./log:/app/log
