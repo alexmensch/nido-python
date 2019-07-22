@@ -1,0 +1,50 @@
+version: "3.4"
+services:
+  nido-api:
+    build:
+      context: .
+      target: nido-api
+    restart: always
+    ports:
+      - "80:80"
+    environment:
+      - NIDOD_RPC_HOST=nido-supervisor
+      - NIDOD_MQTT_HOSTNAME=mosquitto
+    volumes:
+      - ./config:/app/instance
+      - ./nido:/app/nido
+  nido-supervisor:
+    build:
+      context: .
+      target: nido-supervisor
+    restart: always
+    environment:
+      - NIDOD_MQTT_HOSTNAME=mosquitto
+    devices:
+      - "/dev/gpiomem:/dev/gpiomem"
+    volumes:
+      - ./instance:/app/instance
+      - ./log:/app/log
+      - ./nido:/app/nido
+  mosquitto:
+    build:
+      context: .
+      target: nido-mqtt
+    restart: always
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./log:/mosquitto/log
+      - ./instance:/mosquitto/data
+  homebridge:
+    image: oznu/homebridge:arm32v6
+    restart: always
+    network_mode: host
+    volumes:
+      - ./config/homebridge:/homebridge
+    environment:
+      - TZ=America/Los_Angeles
+      - HOMEBRIDGE_CONFIG_UI=1
+      - HOMEBRIDGE_CONFIG_UI_PORT=8080
+    ports:
+      - "8080:8080"
