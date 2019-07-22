@@ -1,0 +1,27 @@
+{
+  "name": "homebridge-nido",
+  "version": "1.0.0",
+  "description": "Nido, a Raspberry Pi-based home thermostat.",
+  "license": "GPL v3+",
+  "keywords": [
+    "homebridge-plugin"
+  ],
+  "engines": {
+    "node": ">=6.9.0",
+    "homebridge": ">=0.4.50"
+  },
+  "author": "Alex Marshall",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alexmensch/nido.git"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "request": "^2.88.0",
+    "url": "^0.11.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}

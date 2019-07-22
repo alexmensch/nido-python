@@ -18,7 +18,7 @@
  *   If not, see <http://www.gnu.org/licenses/>.
  */
 
-const Service, Characteristic;
+var Service, Characteristic;
 
 module.exports = function (homebridge) {
   Service = homebridge.hap.Service;
@@ -95,6 +95,143 @@ NidoThermostat.prototype = {
     this.informationService = informationService;
     this.thermostatService = thermostatService;
     return [informationService, thermostatService];
+  },
+
+  getCurrentHeatingCoolingState: function (callback) {
+    const me = this;
+    const config = {
+      ...me.requestConfig,
+      ...{ url: me.getCHCSUrl }
+    };
+
+    request(
+      config, 
+      function (error, response, body) {
+        if (error) { me.errorHandler(me, callback, error, response); }
+        const r = JSON.parse(body);
+        return callback(null, r.state.value);
+      }
+    );
+  },
+
+  getTargetHeatingCoolingState: function (callback) {
+    const me = this;
+    const config = {
+      ...me.requestConfig,
+      ...{ url: me.getTHCSUrl }
+    };
+
+    request(
+      config,
+      function (error, response, body) {
+        if (error) { me.errorHandler(me, callback, error, response); }
+        const r = JSON.parse(body);
+        return callback(null, r.mode.value);
+      }
+    );
+  },
+
+  setTargetHeatingCoolingState: function (set, callback) {
+    const me = this;
+    const setVal = me.modeMap[set]
+    const setUrl = me.setTHCSUrl.pathname(me.setTHCSUrl.pathname + setVal);
+    const config = {
+        ...me.requestConfig,
+        ...{ url: setUrl }
+    };
+
+    me.issueRequest(me, config, callback);
+  },
+
+  getCurrentTemperature: function (callback) {
+    const me = this;
+    const config = {
+      ...me.requestConfig,
+      ...{ url: me.getCTUrl }
+    };
+
+    request(
+      config,
+      function (error, response, body) {
+        if (error) { me.errorHandler(me, callback, error, response); }
+        const r = JSON.parse(body);
+        return callback(null, r.conditions.temp_c);
+      }
+    );
+  },
+
+  getTargetTemperature: function (callback) {
+    const me = this;
+    const config = {
+      ...me.requestConfig,
+      ...{ url: me.getTTUrl }
+    };
+
+    request(
+      config,
+      function (error, response, body) {
+        if (error) { me.errorHandler(me, callback, error, response); }
+        const r = JSON.parse(body);
+        return callback(null, r.temp.celsius);
+      }
+    );
+  },
+
+  setTargetTemperature: function (set, callback) {
+    const me = this;
+    const setUrl = me.setTTUrl.pathname(me.setTHCSUrl.pathname + set + '/C');
+    const config = {
+        ...me.requestConfig,
+        ...{ url: setUrl }
+    };
+
+    me.issueRequest(me, config, callback);
+  },
+
+  getTemperatureDisplayUnits: function (callback) {
+    const me = this;
+    const config = {
+      ...me.requestConfig,
+      ...{ url: me.getTDUUrl }
+    };
+
+    request(
+      config,
+      function (error, response, body) {
+        if (error) { me.errorHandler(me, callback, error, response); }
+        const r = JSON.parse(body);
+        return callback(null, r.celsius ? 1 : 0);
+      }
+    );
+  },
+
+  setTemperatureDisplayUnits: function (set, callback) {
+    const me = this;
+    const setVal = set ? 'C' : 'F';
+    const setUrl = me.setTDUUrl.pathname(me.setTHCSUrl.pathname + setVal);
+    const config = {
+        ...me.requestConfig,
+        ...{ url: setUrl }
+    };
+
+    me.issueRequest(me, config, callback);  
+  },
+
+  getCurrentRelativeHumidity: function (callback) {
+    const me = this;
+    const config = {
+      ...me.requestConfig,
+      ...{ url: me.getCRHUrl }
+    };
+
+    request(
+      config,
+      function (error, response, body) {
+        if (error) { me.errorHandler(me, callback, error, response); }
+        const r = JSON.parse(body);
+        return callback(null, r.conditions.relative_humidity);
+      }
+    );
   }
 };
 
@@ -136,145 +273,6 @@ function NidoThermostat(log, config) {
       function (error, response, body) {
         if (error) { that.errorHandler(that, callback, error, response); }
         return callback();
-      }
-    );
-  }
-};
-
-NidoThermostat.prototype = {
-  getCurrentHeatingCoolingState: function (callback) {
-    const me = this;
-    const config = {
-      me.requestConfig,
-      { url: me.getCHCSUrl }
-    };
-
-    request(
-      config, 
-      function (error, response, body) {
-        if (error) { me.errorHandler(me, callback, error, response); }
-        const r = JSON.parse(body);
-        return callback(null, r.state.value);
-      }
-    );
-  },
-
-  getTargetHeatingCoolingState: function (callback) {
-    const me = this;
-    const config = {
-      me.requestConfig,
-      { url: me.getTHCSUrl }
-    };
-
-    request(
-      config,
-      function (error, response, body) {
-        if (error) { me.errorHandler(me, callback, error, response); }
-        const r = JSON.parse(body);
-        return callback(null, r.mode.value);
-      }
-    );
-  },
-
-  setTargetHeatingCoolingState: function (set, callback) {
-    const me = this;
-    const setVal = me.modeMap[set]
-    const setUrl = me.setTHCSUrl.pathname(me.setTHCSUrl.pathname + setVal);
-    const config = {
-        me.requestConfig,
-        { url: setUrl }
-    };
-
-    me.issueRequest(me, config, callback);
-  },
-
-  getCurrentTemperature: function (callback) {
-    const me = this;
-    const config = {
-      me.requestConfig,
-      { url: me.getCTUrl }
-    };
-
-    request(
-      config,
-      function (error, response, body) {
-        if (error) { me.errorHandler(me, callback, error, response); }
-        const r = JSON.parse(body);
-        return callback(null, r.conditions.temp_c);
-      }
-    );
-  },
-
-  getTargetTemperature: function (callback) {
-    const me = this;
-    const config = {
-      me.requestConfig,
-      { url: me.getTTUrl }
-    };
-
-    request(
-      config,
-      function (error, response, body) {
-        if (error) { me.errorHandler(me, callback, error, response); }
-        const r = JSON.parse(body);
-        return callback(null, r.temp.celsius);
-      }
-    );
-  },
-
-  setTargetTemperature: function (set, callback) {
-    const me = this;
-    const setUrl = me.setTTUrl.pathname(me.setTHCSUrl.pathname + set + '/C');
-    const config = {
-        me.requestConfig,
-        { url: setUrl }
-    };
-
-    me.issueRequest(me, config, callback);
-  },
-
-  getTemperatureDisplayUnits: function (callback) {
-    const me = this;
-    const config = {
-      me.requestConfig,
-      { url: me.getTDUUrl }
-    };
-
-    request(
-      config,
-      function (error, response, body) {
-        if (error) { me.errorHandler(me, callback, error, response); }
-        const r = JSON.parse(body);
-        return callback(null, r.celsius ? 1 : 0);
-      }
-    );
-  },
-
-  setTemperatureDisplayUnits: function (set, callback) {
-    const me = this;
-    const setVal = set ? 'C' : 'F';
-    const setUrl = me.setTDUUrl.pathname(me.setTHCSUrl.pathname + setVal);
-    const config = {
-        me.requestConfig,
-        { url: setUrl }
-    };
-
-    me.issueRequest(me, config, callback);  
-  },
-
-  getCurrentRelativeHumidity: function (callback) {
-    const me = this;
-    const config = {
-      me.requestConfig,
-      { url: me.getCRHUrl }
-    };
-
-    request(
-      config,
-      function (error, response, body) {
-        if (error) { me.errorHandler(me, callback, error, response); }
-        const r = JSON.parse(body);
-        return callback(null, r.conditions.relative_humidity);
       }
     );
   }

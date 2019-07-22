@@ -12,19 +12,19 @@
         {
             "accessory": "NidoThermostat",
             "name": "Nido",
-            "baseAPIUrl", "http://nido-api/api",
-            "getCHCSUrl", "/get/state",
-            "getTHCSUrl", "/get/mode",
-            "setTHCSUrl", "/set/mode/",
-            "getCTUrl", "/get/conditions",
-            "getTTUrl", "/get/temp/target",
-            "setTTUrl", "/set/temp/target/",
-            "getTDUUrl", "/get/temp/display_units",
-            "setTDUUrl", "/set/temp/display_units/",
-            "getCRHUrl", "/get/conditions",
+            "baseAPIUrl": "http://nido-api/api",
+            "getCHCSUrl": "/get/state",
+            "getTHCSUrl": "/get/mode",
+            "setTHCSUrl": "/set/mode/",
+            "getCTUrl": "/get/conditions",
+            "getTTUrl": "/get/temp/target",
+            "setTTUrl": "/set/temp/target/",
+            "getTDUUrl": "/get/temp/display_units",
+            "setTDUUrl": "/set/temp/display_units/",
+            "getCRHUrl": "/get/conditions",
 
-            "secret", "your-secret",
-            "modemapping", {
+            "secret": "your-secret",
+            "modemapping": {
                 "0": "Off",
                 "1": "Heat",
                 "2": "Cool"
