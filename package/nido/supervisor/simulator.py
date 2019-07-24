@@ -48,6 +48,9 @@ class FakeGPIO(object):
         self._set_pin(pin, state)
         return None
 
+    def cleanup(self):
+        return None
+
     def _set_pin(self, pin, state):
         self._pins[pin] = state
         self._write()

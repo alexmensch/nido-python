@@ -103,13 +103,13 @@ NidoThermostat.prototype = {
       ...me.requestConfig,
       ...{ url: me.getCHCSUrl }
     };
+    me.log(config.url.href);
 
     request(
       config, 
       function (error, response, body) {
         if (error) { me.errorHandler(me, callback, error, response); }
-        const r = JSON.parse(body);
-        return callback(null, r.state.value);
+        else { return callback(null, response.body.state.value); }
       }
     );
   },
@@ -120,13 +120,13 @@ NidoThermostat.prototype = {
       ...me.requestConfig,
       ...{ url: me.getTHCSUrl }
     };
+    me.log(config.url.href);
 
     request(
       config,
       function (error, response, body) {
         if (error) { me.errorHandler(me, callback, error, response); }
-        const r = JSON.parse(body);
-        return callback(null, r.mode.value);
+        else { return callback(null, response.body.mode.value); }
       }
     );
   },
@@ -134,7 +134,7 @@ NidoThermostat.prototype = {
   setTargetHeatingCoolingState: function (set, callback) {
     const me = this;
     const setVal = me.modeMap[set]
-    const setUrl = me.setTHCSUrl.pathname(me.setTHCSUrl.pathname + setVal);
+    const setUrl = url.parse(me.setTHCSUrl.href + setVal);
     const config = {
         ...me.requestConfig,
         ...{ url: setUrl }
@@ -149,13 +149,13 @@ NidoThermostat.prototype = {
       ...me.requestConfig,
       ...{ url: me.getCTUrl }
     };
+    me.log(config.url.href);
 
     request(
       config,
       function (error, response, body) {
         if (error) { me.errorHandler(me, callback, error, response); }
-        const r = JSON.parse(body);
-        return callback(null, r.conditions.temp_c);
+        else { return callback(null, response.body.conditions.temp_c); }
       }
     );
   },
@@ -166,20 +166,20 @@ NidoThermostat.prototype = {
       ...me.requestConfig,
       ...{ url: me.getTTUrl }
     };
+    me.log(config.url.href);
 
     request(
       config,
       function (error, response, body) {
         if (error) { me.errorHandler(me, callback, error, response); }
-        const r = JSON.parse(body);
-        return callback(null, r.temp.celsius);
+        else { return callback(null, response.body.temp.celsius); }
       }
     );
   },
 
   setTargetTemperature: function (set, callback) {
     const me = this;
-    const setUrl = me.setTTUrl.pathname(me.setTHCSUrl.pathname + set + '/C');
+    const setUrl = url.parse(me.setTTUrl.href + set + '/C');
     const config = {
         ...me.requestConfig,
         ...{ url: setUrl }
@@ -194,21 +194,21 @@ NidoThermostat.prototype = {
       ...me.requestConfig,
       ...{ url: me.getTDUUrl }
     };
+    me.log(config.url.href);
 
     request(
       config,
       function (error, response, body) {
-        if (error) { me.errorHandler(me, callback, error, response); }
-        const r = JSON.parse(body);
-        return callback(null, r.celsius ? 1 : 0);
+        if (error) { me.errorHandler(me, callback, error, response); }        
+        else { return callback(null, response.body.celsius ? 1 : 0); }
       }
     );
   },
 
   setTemperatureDisplayUnits: function (set, callback) {
     const me = this;
-    const setVal = set ? 'C' : 'F';
-    const setUrl = me.setTDUUrl.pathname(me.setTHCSUrl.pathname + setVal);
+    const setVal = set ? 'F' : 'C';
+    const setUrl = url.parse(me.setTDUUrl.href + setVal);
     const config = {
         ...me.requestConfig,
         ...{ url: setUrl }
@@ -223,13 +223,13 @@ NidoThermostat.prototype = {
       ...me.requestConfig,
       ...{ url: me.getCRHUrl }
     };
+    me.log(config.url.href);
 
     request(
       config,
       function (error, response, body) {
         if (error) { me.errorHandler(me, callback, error, response); }
-        const r = JSON.parse(body);
-        return callback(null, r.conditions.relative_humidity);
+        else { return callback(null, response.body.conditions.relative_humidity); }
       }
     );
   }
@@ -238,32 +238,34 @@ NidoThermostat.prototype = {
 function NidoThermostat(log, config) {
   this.log = log;
   this.requestConfig = {
-    headers: {'Content-Type': 'application/json'},
     method: 'POST',
-    body: { 'secret': config['secret']}
+    json: true,
+    body: { 'secret': config['secret'] }
   }
   this.modeMap = config['modemapping'];
 
   const base = config['baseAPIUrl'];
 
-  this.getCHCSUrl = url.parse(base + config['getCurrentHeatingCoolingState']);
+  this.getCHCSUrl = url.parse(base + config['getCHCSUrl']);
 
-  this.getTHCSUrl = url.parse(base + config['getTargetHeatingCoolingState']);
-  this.setTHCSUrl = url.parse(base + config['setTargetHeatingCoolingState']);
+  this.getTHCSUrl = url.parse(base + config['getTHCSUrl']);
+  this.setTHCSUrl = url.parse(base + config['setTHCSUrl']);
 
-  this.getCTUrl = url.parse(base + config['getCurrentTemperature']);
+  this.getCTUrl = url.parse(base + config['getCTUrl']);
 
-  this.getTTUrl = url.parse(base + config['getTargetTemperature']);
-  this.setTTUrl = url.parse(base + config['setTargetTemperature']);
+  this.getTTUrl = url.parse(base + config['getTTUrl']);
+  this.setTTUrl = url.parse(base + config['setTTUrl']);
 
-  this.getTDUUrl = url.parse(base + config['getTemperatureDisplayUnits']);
-  this.setTDUUrl = url.parse(base + config['setTemperatureDisplayUnits']);
+  this.getTDUUrl = url.parse(base + config['getTDUUrl']);
+  this.setTDUUrl = url.parse(base + config['setTDUUrl']);
 
-  this.getCRHUrl = url.parse(base + config['getCurrentRelativeHumidity']);
+  this.getCRHUrl = url.parse(base + config['getCRHUrl']);
 
   this.errorHandler = function (that, callback, error, response) {
-    that.log('STATUS: ' + response.statusCode);
     that.log(error.message);
+    if (response) {
+      that.log('STATUS: ' + response.statusCode);
+    }
     return callback(error);
   }
 
@@ -272,7 +274,7 @@ function NidoThermostat(log, config) {
       config,
       function (error, response, body) {
         if (error) { that.errorHandler(that, callback, error, response); }
-        return callback();
+        else { return callback(); }
       }
     );
   }
