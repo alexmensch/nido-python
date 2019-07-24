@@ -2,3 +2,4 @@
 
 bandit
 black
+coverage
