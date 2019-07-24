@@ -82,7 +82,8 @@ class Controller(object):
         # Set up the GPIO pins
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup([self._HEATING, self._COOLING], GPIO.OUT)
+        GPIO.setup(self._HEATING, GPIO.OUT)
+        GPIO.setup(self._COOLING, GPIO.OUT)
         self._l.debug(
             "GPIO pins configured: heat = {} | cool = {}".format(
                 self._HEATING, self._COOLING
@@ -132,7 +133,8 @@ class Controller(object):
         return
 
     def shutdown(self):
-        GPIO.output([self._HEATING, self._COOLING], False)
+        GPIO.output(self._HEATING, False)
+        GPIO.output(self._COOLING, False)
         GPIO.cleanup()
         self._l.info("Shut down hardware GPIO pins.")
         return

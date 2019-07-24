@@ -16,8 +16,8 @@ services:
       - NIDOD_RPC_HOST=nido-supervisor
       - NIDOD_MQTT_HOSTNAME=mosquitto
     volumes:
-      - ./config:/app/instance
-      - ./nido:/app/nido
+      - ./config:/app/nido/instance
+      - ./package:/app/nido
     entrypoint:
       - flask
       - run
@@ -33,7 +33,7 @@ services:
     volumes:
       - ./instance:/app/instance
       - ./log:/app/log
-      - ./nido:/app/nido
+      - ./package:/app/nido
   mosquitto:
     build:
       context: .

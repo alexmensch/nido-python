@@ -7,7 +7,7 @@ RUN apk add tzdata \
 
 RUN pip install pip wheel setuptools --upgrade
 
-COPY ./nido /app/nido
+COPY ./package /app/nido
 WORKDIR /app/nido
 
 RUN pip wheel --wheel-dir=/wheelhouse -r requirements.txt
