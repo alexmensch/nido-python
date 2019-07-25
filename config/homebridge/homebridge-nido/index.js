@@ -61,8 +61,67 @@ Service.Thermostat.UUID = '0000004A-0000-1000-8000-0026BB765291';
  *
  **/
 
-NidoThermostat.prototype = {
-  getServices: function () {
+class NidoThermostat {
+  constructor(log, config) {
+    this.log = log;
+    this.requestConfig = {
+      method: 'POST',
+      json: true,
+      body: { 'secret': config['secret'] }
+    }
+    this.modeMap = config['modemapping'];
+    this.validModes = config['validmodes'];
+
+    const base = config['baseAPIUrl'];
+
+    this.getCHCSUrl = url.parse(base + config['getCHCSUrl']);
+
+    this.getTHCSUrl = url.parse(base + config['getTHCSUrl']);
+    this.setTHCSUrl = url.parse(base + config['setTHCSUrl']);
+
+    this.getCTUrl = url.parse(base + config['getCTUrl']);
+
+    this.getTTUrl = url.parse(base + config['getTTUrl']);
+    this.setTTUrl = url.parse(base + config['setTTUrl']);
+
+    this.getTDUUrl = url.parse(base + config['getTDUUrl']);
+    this.setTDUUrl = url.parse(base + config['setTDUUrl']);
+
+    this.getCRHUrl = url.parse(base + config['getCRHUrl']);
+  }
+
+  errorHandler(that, callback, error, response) {
+    that.log(error.message);
+    if (response) {
+      that.log('STATUS: ' + response.statusCode);
+    }
+    return callback(error);
+  }
+
+  issueRequest(that, config, callback) {
+    request(
+      config,
+      function (error, response, body) {
+        if (error) { that.errorHandler(that, callback, error, response); }
+        else { return callback(); }
+      }
+    );
+  }
+
+  updateStatus() {
+    this.thermostatService
+      .getCharacteristic(Characteristic.CurrentHeatingCoolingState)
+      .getValue();
+    this.thermostatService
+      .getCharacteristic(Characteristic.CurrentTemperature)
+      .getValue();
+    this.thermostatService
+      .getCharacteristic(Characteristic.CurrentRelativeHumidity)
+      .getValue();
+  }
+
+  getServices() {
+    const me = this;
     let informationService = new Service.AccessoryInformation();
     informationService
       .setCharacteristic(Characteristic.Manufacturer, "Moveo Labs")
@@ -75,6 +134,9 @@ NidoThermostat.prototype = {
         .on('get', this.getCurrentHeatingCoolingState.bind(this));
     thermostatService
       .getCharacteristic(Characteristic.TargetHeatingCoolingState)
+        .setProps({
+          validValues: me.validModes
+        })
         .on('get', this.getTargetHeatingCoolingState.bind(this))
         .on('set', this.setTargetHeatingCoolingState.bind(this));
     thermostatService
@@ -94,16 +156,19 @@ NidoThermostat.prototype = {
 
     this.informationService = informationService;
     this.thermostatService = thermostatService;
-    return [informationService, thermostatService];
-  },
 
-  getCurrentHeatingCoolingState: function (callback) {
+    /* Update current state every 5 minutes */
+    setInterval(function() { me.updateStatus(); }, 5 * 60 * 1000);
+
+    return [informationService, thermostatService];
+  }
+
+  getCurrentHeatingCoolingState(callback) {
     const me = this;
     const config = {
       ...me.requestConfig,
-      ...{ url: me.getCHCSUrl }
+      url: me.getCHCSUrl
     };
-    me.log(config.url.href);
 
     request(
       config, 
@@ -112,15 +177,14 @@ NidoThermostat.prototype = {
         else { return callback(null, response.body.state.value); }
       }
     );
-  },
+  }
 
-  getTargetHeatingCoolingState: function (callback) {
+  getTargetHeatingCoolingState(callback) {
     const me = this;
     const config = {
       ...me.requestConfig,
-      ...{ url: me.getTHCSUrl }
+      url: me.getTHCSUrl
     };
-    me.log(config.url.href);
 
     request(
       config,
@@ -129,27 +193,32 @@ NidoThermostat.prototype = {
         else { return callback(null, response.body.mode.value); }
       }
     );
-  },
+  }
 
-  setTargetHeatingCoolingState: function (set, callback) {
+  setTargetHeatingCoolingState(set, callback) {
     const me = this;
     const setVal = me.modeMap[set]
     const setUrl = url.parse(me.setTHCSUrl.href + setVal);
     const config = {
         ...me.requestConfig,
-        ...{ url: setUrl }
+        url: setUrl
     };
 
     me.issueRequest(me, config, callback);
-  },
+    me.thermostatService
+      .getCharacteristic(Characteristic.CurrentHeatingCoolingState)
+      .getValue();
+    me.thermostatService
+      .getCharacteristic(Characteristic.CurrentTemperature)
+      .getValue();
+  }
 
-  getCurrentTemperature: function (callback) {
+  getCurrentTemperature(callback) {
     const me = this;
     const config = {
       ...me.requestConfig,
-      ...{ url: me.getCTUrl }
+      url: me.getCTUrl
     };
-    me.log(config.url.href);
 
     request(
       config,
@@ -158,15 +227,14 @@ NidoThermostat.prototype = {
         else { return callback(null, response.body.conditions.temp_c); }
       }
     );
-  },
+  }
 
-  getTargetTemperature: function (callback) {
+  getTargetTemperature(callback) {
     const me = this;
     const config = {
       ...me.requestConfig,
-      ...{ url: me.getTTUrl }
+      url: me.getTTUrl
     };
-    me.log(config.url.href);
 
     request(
       config,
@@ -175,55 +243,59 @@ NidoThermostat.prototype = {
         else { return callback(null, response.body.temp.celsius); }
       }
     );
-  },
+  }
 
-  setTargetTemperature: function (set, callback) {
+  setTargetTemperature(set, callback) {
     const me = this;
     const setUrl = url.parse(me.setTTUrl.href + set + '/C');
     const config = {
         ...me.requestConfig,
-        ...{ url: setUrl }
+        url: setUrl
     };
 
     me.issueRequest(me, config, callback);
-  },
+    me.thermostatService
+      .getCharacteristic(Characteristic.CurrentHeatingCoolingState)
+      .getValue();
+    me.thermostatService
+      .getCharacteristic(Characteristic.CurrentTemperature)
+      .getValue();
+  }
 
-  getTemperatureDisplayUnits: function (callback) {
+  getTemperatureDisplayUnits(callback) {
     const me = this;
     const config = {
       ...me.requestConfig,
-      ...{ url: me.getTDUUrl }
+      url: me.getTDUUrl
     };
-    me.log(config.url.href);
 
     request(
       config,
       function (error, response, body) {
         if (error) { me.errorHandler(me, callback, error, response); }        
-        else { return callback(null, response.body.celsius ? 1 : 0); }
+        else { return callback(null, response.body.celsius ? 0 : 1); }
       }
     );
-  },
+  }
 
-  setTemperatureDisplayUnits: function (set, callback) {
+  setTemperatureDisplayUnits(set, callback) {
     const me = this;
     const setVal = set ? 'F' : 'C';
     const setUrl = url.parse(me.setTDUUrl.href + setVal);
     const config = {
         ...me.requestConfig,
-        ...{ url: setUrl }
+        url: setUrl
     };
 
     me.issueRequest(me, config, callback);  
-  },
+  }
 
-  getCurrentRelativeHumidity: function (callback) {
+  getCurrentRelativeHumidity(callback) {
     const me = this;
     const config = {
       ...me.requestConfig,
-      ...{ url: me.getCRHUrl }
+      url: me.getCRHUrl
     };
-    me.log(config.url.href);
 
     request(
       config,
@@ -233,49 +305,4 @@ NidoThermostat.prototype = {
       }
     );
   }
-};
-
-function NidoThermostat(log, config) {
-  this.log = log;
-  this.requestConfig = {
-    method: 'POST',
-    json: true,
-    body: { 'secret': config['secret'] }
-  }
-  this.modeMap = config['modemapping'];
-
-  const base = config['baseAPIUrl'];
-
-  this.getCHCSUrl = url.parse(base + config['getCHCSUrl']);
-
-  this.getTHCSUrl = url.parse(base + config['getTHCSUrl']);
-  this.setTHCSUrl = url.parse(base + config['setTHCSUrl']);
-
-  this.getCTUrl = url.parse(base + config['getCTUrl']);
-
-  this.getTTUrl = url.parse(base + config['getTTUrl']);
-  this.setTTUrl = url.parse(base + config['setTTUrl']);
-
-  this.getTDUUrl = url.parse(base + config['getTDUUrl']);
-  this.setTDUUrl = url.parse(base + config['setTDUUrl']);
-
-  this.getCRHUrl = url.parse(base + config['getCRHUrl']);
-
-  this.errorHandler = function (that, callback, error, response) {
-    that.log(error.message);
-    if (response) {
-      that.log('STATUS: ' + response.statusCode);
-    }
-    return callback(error);
-  }
-
-  this.issueRequest = function (that, config, callback) {
-    request(
-      config,
-      function (error, response, body) {
-        if (error) { that.errorHandler(that, callback, error, response); }
-        else { return callback(); }
-      }
-    );
-  }
-};
+}

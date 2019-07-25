@@ -26,12 +26,12 @@
             "secret": "your-secret",
             "modemapping": {
                 "0": "Off",
-                "1": "Heat",
-                "2": "Cool"
-            }
+                "1": "Heat"
+            },
+            /* Limit valid modes to 0 = Off, and 1 = Heat */
+            "validmodes": [0, 1]
         }
     ],
 
-    "platforms": [
-    ]
+    "platforms": []
 }
