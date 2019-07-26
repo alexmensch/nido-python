@@ -51,7 +51,5 @@ services:
       - ./homebridge-nido:/homebridge-nido
     environment:
       - TZ=America/Los_Angeles
-      - HOMEBRIDGE_CONFIG_UI=1
-      - HOMEBRIDGE_CONFIG_UI_PORT=8080
     ports:
       - "8080:8080"
