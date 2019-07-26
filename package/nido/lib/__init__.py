@@ -30,3 +30,17 @@ class Status(Enum):
     Off = 0
     Heating = 1
     Cooling = 2
+
+
+def c_to_f(c):
+    f = (float(c) * 9 / 5) + 32
+    f = round(f * 10) / 10
+    f = float("{0:.1f}".format(f))
+    return f
+
+
+def f_to_c(f):
+    c = (float(f) - 32) * 5 / 9
+    c = round(c * 10) / 10
+    c = float("{0:.1f}".format(c))
+    return c

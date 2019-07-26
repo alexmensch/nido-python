@@ -69,6 +69,7 @@ class NidoThermostat {
       json: true,
       body: { 'secret': config['secret'] }
     }
+
     this.modeMap = config['modemapping'];
     this.validModes = config['validmodes'];
 
@@ -141,6 +142,10 @@ class NidoThermostat {
         .on('set', this.setTargetHeatingCoolingState.bind(this));
     thermostatService
       .getCharacteristic(Characteristic.CurrentTemperature)
+        .setProps({
+          maxValue: 130,
+          minValue: -10
+        })
         .on('get', this.getCurrentTemperature.bind(this));
     thermostatService
       .getCharacteristic(Characteristic.TargetTemperature)
@@ -224,7 +229,12 @@ class NidoThermostat {
       config,
       function (error, response, body) {
         if (error) { me.errorHandler(me, callback, error, response); }
-        else { return callback(null, response.body.conditions.temp_c); }
+        else {
+          return callback(
+            null,
+            response.body.conditions.temp.celsius
+          );
+        }
       }
     );
   }
@@ -240,7 +250,12 @@ class NidoThermostat {
       config,
       function (error, response, body) {
         if (error) { me.errorHandler(me, callback, error, response); }
-        else { return callback(null, response.body.temp.celsius); }
+        else {
+          return callback(
+            null,
+            response.body.temp.celsius
+          );
+        }
       }
     );
   }
@@ -273,7 +288,9 @@ class NidoThermostat {
       config,
       function (error, response, body) {
         if (error) { me.errorHandler(me, callback, error, response); }        
-        else { return callback(null, response.body.celsius ? 0 : 1); }
+        else {
+          return callback(null, response.body.celsius ? 0 : 1);
+        }
       }
     );
   }
@@ -287,7 +304,7 @@ class NidoThermostat {
         url: setUrl
     };
 
-    me.issueRequest(me, config, callback);  
+    me.issueRequest(me, config, callback);
   }
 
   getCurrentRelativeHumidity(callback) {

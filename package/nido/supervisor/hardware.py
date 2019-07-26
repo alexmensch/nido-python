@@ -20,7 +20,7 @@ import os
 import logging
 
 from nido.supervisor.config import HardwareConfig, DaemonConfig
-from nido.lib import Mode, Status
+from nido.lib import Mode, Status, c_to_f
 from nido.lib.exceptions import ControllerError, SensorError
 from nido.supervisor.thermostat import Thermostat
 
@@ -52,7 +52,7 @@ class Sensor(object):
             raise SensorError("Sensor was not detected.")
 
         temp_c = self.sensor.read_temperature()
-        pressure_mb = self.sensor.read_pressure() / 100
+        pressure_mb = round(self.sensor.read_pressure()) / 100
         relative_humidity = self.sensor.read_humidity()
         self._l.debug(
             "Sensor data: T = {}C | P = {} | RH = {}".format(
@@ -60,7 +60,10 @@ class Sensor(object):
             )
         )
         conditions = {
-            "temp_c": temp_c,
+            "temp": {
+                "celsius": temp_c,
+                "fahrenheit": c_to_f(temp_c)
+            },
             "pressure_mb": pressure_mb,
             "relative_humidity": relative_humidity,
         }
@@ -144,7 +147,7 @@ class Controller(object):
         try:
             mode = settings["set_mode"]
             status = self.get_status()
-            temp = Sensor().get_conditions()["conditions"]["temp_c"]
+            temp = Sensor().get_conditions()["conditions"]["temp"]["celsius"]
             set_temp = settings["set_temp"]
             hysteresis = HardwareConfig.HYSTERESIS
         except KeyError as e:

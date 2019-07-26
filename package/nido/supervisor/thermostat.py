@@ -18,7 +18,7 @@
 
 from nido.supervisor import db
 from nido.supervisor.config import HardwareConfig
-from nido.lib import Mode
+from nido.lib import Mode, f_to_c
 from nido.lib.exceptions import ThermostatError, DBError
 
 
@@ -63,10 +63,7 @@ class Thermostat(object):
         if scale.upper() == "C":
             return self.set_settings(set_temp=temp)
         elif scale.upper() == "F":
-            celsius_temp = (temp - 32) * 5 / 9
-            celsius_temp = round(celsius_temp * 10) / 10
-            celsius_temp = float("{0:.1f}".format(celsius_temp))
-            return self.set_settings(set_temp=celsius_temp)
+            return self.set_settings(set_temp=f_to_c(temp))
         else:
             raise ThermostatError("Invalid temperature scale.")
 

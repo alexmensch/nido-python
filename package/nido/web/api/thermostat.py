@@ -18,7 +18,7 @@
 
 from flask import Blueprint, current_app, g
 
-from nido.lib import Mode, Status
+from nido.lib import Mode, Status, c_to_f
 from nido.web.api import require_secret, JSONResponse
 from nido.lib.rpc.client import ThermostatClient
 from nido.lib.exceptions import ThermostatClientError
@@ -107,10 +107,15 @@ def api_set_temp_units(units):
 def api_get_set_temp():
     """Endpoint to get the current temperature. Always returned in Celsius."""
     try:
-        g.resp.data["temp"] = {"celsius": g.tc.get_set_temp()}
+        temp_c = g.tc.get_set_temp()
     except ThermostatClientError as e:
         g.resp.data["error"] = "Error getting temperature from sensor: {}".format(e)
         g.resp.status = 400
+    else:
+        g.resp.data["temp"] = {
+            "celsius": temp_c,
+            "fahrenheit": c_to_f(temp_c)
+        }
 
     return g.resp.get_flask_response(current_app)
 

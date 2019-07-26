@@ -28,7 +28,6 @@
                 "0": "Off",
                 "1": "Heat"
             },
-            /* Limit valid modes to 0 = Off, and 1 = Heat */
             "validmodes": [0, 1]
         }
     ],
