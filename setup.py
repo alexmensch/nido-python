@@ -41,7 +41,7 @@ setup(
     name="nido",
     version="1.0.0",
     author="Alex Marshall",
-    author_email="awm@alumni.stanford.edu",
+    author_email="amars@alumni.stanford.edu",
     description="Nido, a Raspberry Pi-based home thermostat",
     long_description=long_description,
     long_description_content_type="text/markdown",
