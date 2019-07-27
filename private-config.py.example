@@ -1,0 +1,16 @@
+####
+# This file contains instance-specific variables, and you should definitely
+# change them from their defaults!
+#
+# You should edit this file, rename is to "private-config.py", and Flash
+# will look for this file in $PREFIX/var/nido-instance, where $PREFIX is
+# the prefix of your Python installation.
+#
+# See: https://flask.palletsprojects.com/en/1.1.x/config/#instance-folders
+####
+
+# Standard Flask config values
+SECRET_KEY = "your-secret-key"
+
+# Nido API secret key
+PUBLIC_API_SECRET = "your-secret"
