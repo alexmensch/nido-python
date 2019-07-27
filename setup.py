@@ -23,15 +23,15 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 install_requires = [
-    "APScheduler",
-    "flask",
-    "gunicorn",
-    "paho-mqtt",
-    "requests",
-    "PyYAML",
-    "rpyc",
-    "smbus2",
-    "SQLAlchemy",
+    "APScheduler>=3.6,<4",
+    "flask>=1.0.2,<2",
+    "gunicorn>=19.8.1,<20",
+    "paho-mqtt>=1.3.1,<2",
+    "requests>=2.20,<3",
+    "PyYAML>3.12,<4",
+    "rpyc>=4.0.2,<5",
+    "smbus2>=0.2.0,<1",
+    "SQLAlchemy>=1.3,<2",
 ]
 
 if platform.machine() == "armv6l":
@@ -41,11 +41,11 @@ setup(
     name="nido",
     version="1.0.0",
     author="Alex Marshall",
-    author_email="alex@moveolabs.com",
+    author_email="awm@alumni.stanford.edu",
     description="Nido, a Raspberry Pi-based home thermostat",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/alexmensch/nido",
+    url="https://github.com/alexmensch/nido-python",
     classifiers=[
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
