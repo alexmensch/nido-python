@@ -25,8 +25,9 @@ class TestSensor(unittest.TestCase):
 
         p.stop()
 
-        self.assertEqual(r["conditions"]["temp_c"], 17.17)
-        self.assertEqual(r["conditions"]["pressure_mb"], 1013.3101)
+        self.assertEqual(r["conditions"]["temp"]["celsius"], 17.17)
+        self.assertEqual(r["conditions"]["temp"]["fahrenheit"], 62.9)
+        self.assertEqual(r["conditions"]["pressure_mb"], 1013.31)
         self.assertEqual(r["conditions"]["relative_humidity"], 50.05)
 
 
