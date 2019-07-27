@@ -3,3 +3,6 @@
 bandit
 black
 coverage
+setuptools
+wheel
+twine

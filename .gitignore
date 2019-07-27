@@ -10,15 +10,9 @@ __pycache__/
 venv/
 *.egg-info/
 
-# Homebridge
-config/homebridge/*
-!config/homebridge/config.json
-!config/homebridge/package.json
-node_modules/
-
-# Database
-instance/
-log/
-
-# Web server configuration
+# Development and testing
 private-config.py
+
+# Build files
+build/
+dist/
