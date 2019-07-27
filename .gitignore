@@ -2,30 +2,17 @@
 
 *.pyc
 __pycache__/
+.pytest_cache/
 
 *.swp
 *.swo
 
-nido-venv/
-instance/
+venv/
 *.egg-info/
-# wheel
+
+# Development and testing
+private-config.py
+
+# Build files
 build/
 dist/
-
-node_modules/
-npm-debug.log
-.module-cache
-package-lock.json
-
-# Contains private API keys
-config.yaml
-
-# Database
-nido.sqlite
-
-# Webpack'd JS
-nido/static/js/nido.js
-nido/static/js/nido.js.map
-
-nohup.out

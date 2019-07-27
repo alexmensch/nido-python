@@ -17,40 +17,42 @@
 #   If not, see <http://www.gnu.org/licenses/>.
 
 from setuptools import find_packages, setup
+import platform
 
-with open('README.md', 'r') as fh:
+with open("README.md", "r") as fh:
     long_description = fh.read()
 
+install_requires = [
+    "APScheduler>=3.6,<4",
+    "flask>=1.0.2,<2",
+    "gunicorn>=19.8.1,<20",
+    "paho-mqtt>=1.3.1,<2",
+    "requests>=2.20,<3",
+    "PyYAML>3.12,<4",
+    "rpyc>=4.0.2,<5",
+    "smbus2>=0.2.0,<1",
+    "SQLAlchemy>=1.3,<2",
+]
+
+if platform.machine() == "armv6l":
+    install_requires.append("RPi.GPIO")
+
 setup(
-    name='nido',
-    version='0.4.0',
-    author='Alex Marshall',
-    author_name='alex@moveolabs.com',
-    description='Nido, a Raspberry Pi-based home thermostat',
+    name="nido",
+    version="1.0.0",
+    author="Alex Marshall",
+    author_email="awm@alumni.stanford.edu",
+    description="Nido, a Raspberry Pi-based home thermostat",
     long_description=long_description,
-    long_description_content_type='text/markdown',
-    url='https://github.com/alexmensch/nido',
+    long_description_content_type="text/markdown",
+    url="https://github.com/alexmensch/nido-python",
     classifiers=[
-        'Development Status :: 4 - Beta',
-        'License :: OSI Approved :: GNU General Public License v3'
-        ' or later (GPLv3+)',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.2',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.6'
+        "Development Status :: 4 - Beta",
+        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+        "Programming Language :: Python :: 3.7",
     ],
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    install_requires=[
-        'flask',
-        'APScheduler',
-        'paho-mqtt',
-        'RPi.GPIO',
-        'rpyc',
-        'smbus2',
-        'SQLAlchemy'
-    ],
+    install_requires=install_requires,
 )

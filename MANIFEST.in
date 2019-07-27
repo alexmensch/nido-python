@@ -1,6 +1,0 @@
-include nido/cfg/config-example.yaml
-graft nido/static
-graft nido/templates
-prune nido/db
-exclude nido/cfg/config.yaml
-global-exclude *.pyc

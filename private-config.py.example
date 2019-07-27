@@ -1,15 +1,20 @@
 ####
-# Add your private configuration values and move to the instance/ directory
+# This file contains instance-specific variables, and you should definitely
+# change them from their defaults!
+#
+# You should edit this file, rename is to "private-config.py", and Flask
+# will look for this file in $PREFIX/var/nido-instance, where $PREFIX is
+# the prefix of your Python installation.
+#
+# If you are running this package in a development environment, you will
+# place this file with your own settings in a directory called instance/ in
+# the same directory as the root nido/ directory.
+#
+# See: https://flask.palletsprojects.com/en/1.1.x/config/#instance-folders
 ####
 
 # Standard Flask config values
-SECRET_KEY = 'your-secret-key'
+SECRET_KEY = "your-secret-key"
 
-# Nido config values
-USERNAME = 'username'
-PASSWORD = 'password'
-PUBLIC_API_SECRET = 'your-secret'
-
-# 3rd party APIs
-WUNDERGROUND_API_KEY = 'your-api-key'
-GOOGLE_API_KEY = 'your-api-key'
+# Nido API secret key
+PUBLIC_API_SECRET = "your-secret"

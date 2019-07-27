@@ -1,42 +1,21 @@
-# Prerequisites
-- You will need `python3` installed as the installation environment is built within `venv`. The core application code is also compatible with Python 2.7 using `futurize`, but you will need to build your own environment.
-- You will also need an MQTT broker running locally to support the data logging capability. `mosquitto` is a suitable choice, and you may also want to install `mosquitto-clients` to make local command line MQTT tools available.
-```
-sudo apt-get update
-sudo apt-get install python3 python3-venv python3-pip mosquitto mosquitto-clients
-```
-- To build the frontend application, you will need Node.js installed. (The steps below are from the [Node.js website](https://nodejs.org/en/download/package-manager/#debian-and-ubuntu-based-linux-distributions).)
-```
-curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-sudo apt-get install -y nodejs
-```
+# Why build yet another smart thermostat?
 
-# Installation
-Run `source ./install` to install required Python modules and Node.js components.
+> Introduction to use case and background
 
-## Initial application configuration
-1. Rename `private-config.py.example` to `instance/private-config.py` with your own private settings.
+# Running the application on a Raspberry Pi
+## The easy way
+Refer to <https://github.com/alexmensch/nido-deploy> for instructions.
 
-# Running the application
-1. `run-nido.sh -b <base path> [-d]` This runs either Flask/Werkzeug (when the `-d` debug flag is set) or gunicorn. The hardware controller/scheduler daemon is also started.
-> Note: `sudo` access is required due to hardware access to GPIO pins
-2. (Optional) You may want to add this line to your `/etc/rc.local` file so that Nido runs automatically at startup. Output from the server will be output to `nohup.out` in your base path.
-```
-cd <base path> && bash -c "source nido-venv/bin/activate && nohup ./run-nido.sh -b `pwd` &"
-```
+## The hard(er) way
+> List of manual steps
 
-# Stopping the application
-1. `stop-nido.sh -b <base path> [-t]` See below for information on the `-t` option.
+# Running the application locally for development
+## Initial configuration
+1. Rename `config/private-config.py.example` to `config/private-config.py` with your own private settings.
+2. You will need [Docker and Docker Compose](https://www.docker.com/get-started) installed locally.
 
-# Testing and Development
+## Running the application
+Run `docker-compose up` from the base of the project to start all components locally. If you are not running on a Raspberry Pi, a test hardware fixture will be loaded instead of the native GPIO library.
 
-## Generating a test build of the frontend JS
-`npm run build`
-
-#### Optional (automate jsx -> js translation)
-1. Install watchman as per instructions [here](https://facebook.github.io/watchman/docs/install.html)
-2. Watch the React source: `watchman watch ./app`
-3. Run build process on file changes: `watchman -- trigger ./app build-jsx '*.js' -- npm run build`
-
-## Testing on a non-Raspberry Pi platform
-To bypass the hardware libraries, you can run `run-nido.sh` with the `-t` flag. The `Testing.py` library will return static sensor information instead and store GPIO pin status in a file on disk.
+## Stopping the application
+Run `docker-compose down`.
