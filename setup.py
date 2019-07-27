@@ -35,7 +35,7 @@ install_requires = [
 ]
 
 if platform.machine() == "armv6l":
-    install_requires.append("RPi.GPIO")
+    install_requires.append("RPi.GPIO>=0.6,<1")
 
 setup(
     name="nido",
