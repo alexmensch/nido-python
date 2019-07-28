@@ -112,10 +112,7 @@ def api_get_set_temp():
         g.resp.data["error"] = "Error getting temperature from sensor: {}".format(e)
         g.resp.status = 400
     else:
-        g.resp.data["temp"] = {
-            "celsius": temp_c,
-            "fahrenheit": c_to_f(temp_c)
-        }
+        g.resp.data["temp"] = {"celsius": temp_c, "fahrenheit": c_to_f(temp_c)}
 
     return g.resp.get_flask_response(current_app)
 

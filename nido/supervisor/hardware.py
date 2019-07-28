@@ -60,10 +60,7 @@ class Sensor(object):
             )
         )
         conditions = {
-            "temp": {
-                "celsius": temp_c,
-                "fahrenheit": c_to_f(temp_c)
-            },
+            "temp": {"celsius": temp_c, "fahrenheit": c_to_f(temp_c)},
             "pressure_mb": pressure_mb,
             "relative_humidity": relative_humidity,
         }

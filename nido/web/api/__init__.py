@@ -123,10 +123,14 @@ class JSONResponse(object):
         except AttributeError:
             try:
                 # Test if j.trigger is an IntervalTrigger type
-                trigger_interval = str(j.trigger.interval) if j.trigger.interval else None
+                trigger_interval = (
+                    str(j.trigger.interval) if j.trigger.interval else None
+                )
             except AttributeError:
                 try:
-                    trigger["run_date"] = j.trigger.run_date.strftime("%m/%d/%Y %H:%M:%S")
+                    trigger["run_date"] = j.trigger.run_date.strftime(
+                        "%m/%d/%Y %H:%M:%S"
+                    )
                 except AttributeError:
                     raise SchedulerClientError(
                         "Unknown trigger type: {}".format(type(j.trigger))

@@ -47,10 +47,7 @@ class NidoDaemonRPCClient(object):
         self._connection = rpyc.connect(
             self._host,
             self._port,
-            config={
-                "allow_pickle": True,
-                "instantiate_custom_exceptions": True,
-            },
+            config={"allow_pickle": True, "instantiate_custom_exceptions": True},
         )
         self.r = self._connection.root
         return None
