@@ -5,5 +5,3 @@ coverage
 setuptools
 wheel
 twine
-
--e .

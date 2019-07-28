@@ -1,3 +1,4 @@
 #!/bin/zsh
 
-rm -vrf **/__pycache__ build dist *.egg-info
+rm -vrf **/__pycache__
+rm -vrf build dist nido.egg-info instance log
