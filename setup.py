@@ -39,7 +39,7 @@ if platform.machine() in ["armv6l", "armv7l", "armhf"]:
 
 setup(
     name="nido",
-    version="1.0.2",
+    version="1.0.3",
     author="Alex Marshall",
     author_email="amars@alumni.stanford.edu",
     description="Nido, a Raspberry Pi-based home thermostat",
