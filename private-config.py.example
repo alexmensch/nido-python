@@ -8,7 +8,7 @@
 # building the image.
 #
 # If running nido as an installed module, Flask will look for this file in
-# $PREFIX/var/nido-instance, where $PREFIX is the prefix of your Python
+# $PREFIX/var/nido.web-instance, where $PREFIX is the prefix of your Python
 # installation.
 #
 # See: https://flask.palletsprojects.com/en/1.1.x/config/#instance-folders
