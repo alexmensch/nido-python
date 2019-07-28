@@ -37,7 +37,10 @@ class HardwareConfig(object):
 
 
 class MQTTConfig(object):
-    HOSTNAME = os.environ["NIDOD_MQTT_HOSTNAME"]
+    if "NIDOD_MQTT_HOSTNAME" in os.environ:
+        HOSTNAME = os.environ["NIDOD_MQTT_HOSTNAME"]
+    else:
+        HOSTNAME = None
     PORT = os.environ["NIDOD_MQTT_PORT"]
     KEEPALIVE = 60
     CLIENT_NAME = os.environ["NIDOD_MQTT_CLIENT_NAME"]

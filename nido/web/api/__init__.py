@@ -21,11 +21,6 @@ from flask import current_app, request
 from werkzeug.routing import BaseConverter
 import json
 
-from apscheduler.job import Job
-from apscheduler.triggers.cron import CronTrigger
-from apscheduler.triggers.interval import IntervalTrigger
-from apscheduler.triggers.date import DateTrigger
-
 from nido.lib.exceptions import SchedulerClientError
 
 
@@ -73,9 +68,7 @@ class JSONResponse(object):
         """This method is only passed as a callback reference to
         nido.lib.rpc.client.SchedulerClient.
         """
-        if isinstance(jobs, Job):
-            self.data["job"] = self._jsonify_job(jobs)
-        elif isinstance(jobs, list):
+        if isinstance(jobs, list):
             job_list = []
             for j in jobs:
                 if j is None:
@@ -83,7 +76,7 @@ class JSONResponse(object):
                 job_list.append(self._jsonify_job(j))
             self.data["jobs"] = job_list
         else:
-            self.data = {}
+            self.data["job"] = self._jsonify_job(jobs)
         return None
 
     def _jsonify_job(self, j):
@@ -103,9 +96,11 @@ class JSONResponse(object):
         """
         if j is None:
             raise SchedulerClientError("No job exists with that ID.")
-        if isinstance(j.trigger, DateTrigger):
+
+        try:
+            # Test if j.trigger is a DateTrigger type
             trigger = {"timezone": str(j.trigger.run_date.tzinfo)}
-        else:
+        except AttributeError:
             trigger_start_date = (
                 j.trigger.start_date.strftime("%m/%d/%Y %H:%M:%S")
                 if j.trigger.start_date
@@ -122,19 +117,26 @@ class JSONResponse(object):
                 "timezone": str(j.trigger.timezone),
             }
 
-        if isinstance(j.trigger, CronTrigger):
+        try:
+            # Test if j.trigger is a CronTrigger type
+            j.trigger.fields
+        except AttributeError:
+            try:
+                # Test if j.trigger is an IntervalTrigger type
+                trigger_interval = str(j.trigger.interval) if j.trigger.interval else None
+            except AttributeError:
+                try:
+                    trigger["run_date"] = j.trigger.run_date.strftime("%m/%d/%Y %H:%M:%S")
+                except AttributeError:
+                    raise SchedulerClientError(
+                        "Unknown trigger type: {}".format(type(j.trigger))
+                    )
+            else:
+                trigger["interval"] = trigger_interval
+        else:
             trigger["cron"] = {}
             for f in j.trigger.fields:
                 trigger["cron"][f.name] = str(f)
-        elif isinstance(j.trigger, IntervalTrigger):
-            trigger_interval = str(j.trigger.interval) if j.trigger.interval else None
-            trigger["interval"] = trigger_interval
-        elif isinstance(j.trigger, DateTrigger):
-            trigger["run_date"] = j.trigger.run_date.strftime("%m/%d/%Y %H:%M:%S")
-        else:
-            raise SchedulerClientError(
-                "Unknown trigger type: {}".format(type(j.trigger))
-            )
 
         job = {
             "id": str(j.id),

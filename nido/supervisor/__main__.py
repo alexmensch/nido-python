@@ -44,14 +44,6 @@ class Supervisor(object):
     def run(self):
         self._l.debug("Starting Nido supervisor...")
 
-        self.MQTTclient = mqtt.Client(MQTTConfig.CLIENT_NAME, clean_session=False)
-        self.MQTTclient.enable_logger()
-        self.MQTTclient.connect_async(
-            MQTTConfig.HOSTNAME,
-            port=int(MQTTConfig.PORT),
-            keepalive=MQTTConfig.KEEPALIVE,
-        )
-
         jobstores = {
             "default": {"type": "memory"},
             "schedule": SQLAlchemyJobStore(
@@ -67,21 +59,29 @@ class Supervisor(object):
             seconds=SchedulerConfig.POLL_INTERVAL,
             name="Poll",
         )
-        self.scheduler.add_job(
-            NidoDaemonService.log_data,
-            args=[self.MQTTclient],
-            trigger="interval",
-            seconds=MQTTConfig.POLL_INTERVAL,
-            name="DataLogger",
-        )
+
+        if MQTTConfig.HOSTNAME:
+            self.MQTTclient = mqtt.Client(MQTTConfig.CLIENT_NAME, clean_session=False)
+            self.MQTTclient.enable_logger()
+            self.MQTTclient.connect_async(
+                MQTTConfig.HOSTNAME,
+                port=int(MQTTConfig.PORT),
+                keepalive=MQTTConfig.KEEPALIVE,
+            )
+            self.scheduler.add_job(
+                NidoDaemonService.log_data,
+                args=[self.MQTTclient],
+                trigger="interval",
+                seconds=MQTTConfig.POLL_INTERVAL,
+                name="DataLogger",
+            )
 
         self.RPCserver = ThreadedServer(
             NidoDaemonService(self.scheduler),
             port=int(os.environ["NIDOD_RPC_PORT"]),
             protocol_config={
-                "allow_all_attrs": True,
-                "allow_public_attrs": True,
                 "allow_pickle": True,
+                "allow_all_attrs": True,
                 "instantiate_custom_exceptions": True,
             },
         )
@@ -89,7 +89,8 @@ class Supervisor(object):
         signal.signal(signal.SIGTERM, self.shutdown_handler)
         signal.signal(signal.SIGINT, self.shutdown_handler)
 
-        self.MQTTclient.loop_start()
+        if MQTTConfig.HOSTNAME:
+            self.MQTTclient.loop_start()
         self.scheduler.start()
         self.RPCserver.start()  # Blocking
         return None
@@ -103,8 +104,8 @@ class Supervisor(object):
         self.controller.shutdown()
         self.RPCserver.close()
         self.scheduler.shutdown()
-        self.MQTTclient.disconnect()
-        time.sleep(1)
+        if MQTTConfig.HOSTNAME:
+            self.MQTTclient.disconnect()
         while self.controller.get_status() is not Status.Off.value:
             supervisor._l.critical("Hardware not shutdown. Retrying...")
             self.controller.shutdown()

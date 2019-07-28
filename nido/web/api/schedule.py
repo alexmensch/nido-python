@@ -46,9 +46,10 @@ def api_schedule_get_all():
 @require_secret
 def api_schedule_get_jobid(id):
     """Endpoint that returns a scheduled job with a specific id."""
-    g.sc.get_scheduled_job(g.resp.process_jobs, id)
-    if g.resp.data == {}:
-        g.resp.data["error"] = "Job with ID ({}) does not exist.".format(id)
+    try:
+        g.sc.get_scheduled_job(g.resp.process_jobs, id)
+    except SchedulerClientError as e:
+        g.resp.data["error"] = "Error getting job: {}".format(e)
     return g.resp.get_flask_response(current_app)
 
 

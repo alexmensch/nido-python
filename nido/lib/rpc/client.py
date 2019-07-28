@@ -48,10 +48,8 @@ class NidoDaemonRPCClient(object):
             self._host,
             self._port,
             config={
-                "allow_all_attrs": True,
-                "allow_public_attrs": True,
-                "instantiate_custom_exceptions": True,
                 "allow_pickle": True,
+                "instantiate_custom_exceptions": True,
             },
         )
         self.r = self._connection.root
