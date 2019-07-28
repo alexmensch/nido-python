@@ -1,4 +1,4 @@
-*This respository is the primary library that the Nido smart thermostat is built around. If you're looking for instruction on how to run Nido on a Raspberry Pi, see <https://github.com/alexmensch/nido> for instructions and the full project background.*
+*This respository is the primary library that the Nido smart thermostat is built around. If you're looking for instructions on how to run Nido on a Raspberry Pi, see <https://github.com/alexmensch/nido> for instructions and the full project background.*
 
 ## Running the application locally for development
 ### Requirements and initial configuration
