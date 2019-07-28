@@ -34,12 +34,12 @@ install_requires = [
     "SQLAlchemy>=1.3,<2",
 ]
 
-if platform.machine() == "armv6l":
+if platform.machine() in ["armv6l", "armv7l", "armhf"]:
     install_requires.append("RPi.GPIO>=0.6,<1")
 
 setup(
     name="nido",
-    version="1.0.1",
+    version="1.0.2",
     author="Alex Marshall",
     author_email="amars@alumni.stanford.edu",
     description="Nido, a Raspberry Pi-based home thermostat",
