@@ -11,7 +11,7 @@
 
 Run Docker Compose from the base of the project to run the Nido thermostat and API locally. If you are not running on a Raspberry Pi, a test hardware fixture will be loaded instead of the native Raspberry Pi GPIO library.
 
-**Docker volume mappings**
+**Docker local volume mappings**
 
 - `nido/` Local changes to the package source code are mapped to the Docker containers.
 - `instance/` Nido settings and scheduler database entries are stored outside the container.
