@@ -1,0 +1,10 @@
+Dockerfile
+build/
+dist/
+*.egg-info/
+tests/
+venv/
+clean.sh
+dev_requirements.txt
+*.yaml
+*.example

@@ -1,0 +1,9 @@
+# Local development tools
+bandit
+black
+coverage
+setuptools
+wheel
+twine
+
+-e .

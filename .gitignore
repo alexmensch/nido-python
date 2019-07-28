@@ -12,6 +12,8 @@ venv/
 
 # Development and testing
 private-config.py
+instance/
+log/
 
 # Build files
 build/
