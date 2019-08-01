@@ -1,5 +1,10 @@
 *This respository is the primary library that the Nido smart thermostat is built around. If you're looking for instructions on how to run Nido on a Raspberry Pi, see <https://github.com/alexmensch/nido> for instructions and the full project background.*
 
+## Quickstart
+```bash
+npm install nido
+```
+
 ## Running the application locally for development
 ### Requirements and initial configuration
 1. Nido has been tested with Python 3.6.5 and higher. Python 2 is not supported.
