@@ -2,7 +2,7 @@
 
 ## Quickstart
 ```bash
-npm install nido
+pip install nido
 ```
 
 ## Running the application locally for development
