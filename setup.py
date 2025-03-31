@@ -25,7 +25,7 @@ with open("README.md", "r") as fh:
 install_requires = [
     "APScheduler>=3.6,<4",
     "flask>=1.0.2,<4",
-    "gunicorn>=19.8.1,<23",
+    "gunicorn>=19.8.1,<24",
     "paho-mqtt>=1.3.1,<2",
     "requests>=2.20,<3",
     "PyYAML>=5.4",
